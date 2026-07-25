@@ -3,6 +3,7 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import prettier from 'prettier';
 
 const root = process.cwd();
 const phasesDir = path.join(root, 'markdown', 'phases');
@@ -79,7 +80,9 @@ if (active.length === 0) {
   }
 }
 
-const generated = `${lines.join('\n')}\n`;
+const generated = await prettier.format(`${lines.join('\n')}\n`, {
+  filepath: outputPath,
+});
 
 if (checkOnly) {
   let existing;

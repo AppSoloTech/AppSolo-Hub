@@ -1,7 +1,7 @@
 ---
 id: P001
 title: Local Foundation And Change-Request Vertical Slice
-status: review_pending
+status: changes_requested
 owner: codex
 reviewer: claude
 prompt: prompts/active/P001-local-foundation-and-change-request-vertical-slice.md
@@ -70,34 +70,34 @@ None approved.
 
 ## Automated Validation
 
-| ID | Command | Result | Evidence |
-| --- | --- | --- | --- |
-| V1 | `node scripts/check-scaffolding.mjs` | Passed | 27 required files and 11 phase records validated. |
-| V2 | `pnpm install` | Passed | Lockfile created; esbuild build approval is narrowly configured in `pnpm-workspace.yaml`. |
-| V3 | `pnpm docker:up` | Not run | Docker Engine/Compose is unavailable in the implementation environment; Compose configuration is supplied. |
-| V4 | `pnpm db:migrate` and `pnpm --filter @appsolo/database test:prepare` | Passed | Generated migration applied to separate WSL development/test databases; guarded reset recreates migration and seed. |
-| V5 | `pnpm db:seed` twice | Passed | Fake multi-tenant seed completed twice without duplicate rows. |
-| V6 | `pnpm lint` | Passed | ESLint completed with no errors. |
-| V7 | `pnpm typecheck` | Passed | Strict shared, database, API, and web TypeScript checks completed. |
-| V8 | `pnpm test` | Passed | 4 shared/database unit tests passed. |
-| V9 | `pnpm test:api` | Passed | Isolated database reset plus 8 API/environment/health/integration tests passed. |
-| V10 | `pnpm test:web` | Passed | 1 React Testing Library form/validation test passed. |
-| V11 | `pnpm build` | Passed | Shared, database, API, and Vite web production builds completed. |
-| V12 | `pnpm exec playwright install chromium` | Passed | Chromium and headless shell installed. |
-| V13 | `pnpm test:e2e` | Passed | Isolated test reset plus seeded list/create/refresh Playwright smoke passed. |
-| V14 | direct `curl` health and authenticated list requests | Passed | Assembled API returned documented `200` readiness and seeded list responses. |
-| V15 | `node scripts/generate-phase-index.mjs --check` | Passed | Canonical phase index is current. |
-| V16 | `git diff --check 2769ccd4a429425e778b070ea98f6fd241188a0f..e656d900a0462511e3e8293bcfc2dababb599ba5` | Passed | No whitespace errors in the immutable candidate range. |
+| ID  | Command                                                              | Result  | Evidence                                                                                                            |
+| --- | -------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| V1  | `node scripts/check-scaffolding.mjs`                                 | Passed  | 27 required files and 11 phase records validated.                                                                   |
+| V2  | `pnpm install`                                                       | Passed  | Lockfile created; esbuild build approval is narrowly configured in `pnpm-workspace.yaml`.                           |
+| V3  | `pnpm docker:up`                                                     | Not run | Docker Engine/Compose is unavailable in the implementation environment; Compose configuration is supplied.          |
+| V4  | `pnpm db:migrate` and `pnpm --filter @appsolo/database test:prepare` | Passed  | Generated migration applied to separate WSL development/test databases; guarded reset recreates migration and seed. |
+| V5  | `pnpm db:seed` twice                                                 | Passed  | Fake multi-tenant seed completed twice without duplicate rows.                                                      |
+| V6  | `pnpm lint`                                                          | Passed  | ESLint and Prettier check completed with no errors.                                                                 |
+| V7  | `pnpm typecheck`                                                     | Passed  | Strict shared, database, API, and web TypeScript checks completed.                                                  |
+| V8  | `pnpm test`                                                          | Passed  | 5 shared/database unit tests passed.                                                                                |
+| V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 11 API/environment/health/integration tests passed.                                        |
+| V10 | `pnpm test:web`                                                      | Passed  | 5 React Testing Library environment and UI tests passed.                                                            |
+| V11 | `pnpm build`                                                         | Passed  | Shared, database, API, and Vite web production builds completed.                                                    |
+| V12 | `pnpm exec playwright install chromium`                              | Passed  | Chromium and headless shell installed.                                                                              |
+| V13 | `pnpm test:e2e`                                                      | Passed  | Isolated test reset plus seeded list/create/refresh Playwright smoke passed.                                        |
+| V14 | direct `curl` health and authenticated list requests                 | Passed  | Assembled API returned documented `200` readiness and seeded list responses.                                        |
+| V15 | `node scripts/generate-phase-index.mjs --check`                      | Passed  | Canonical phase index is current.                                                                                   |
+| V16 | `git diff --check`                                                   | Passed  | No whitespace errors in the accepted review corrections.                                                            |
 
 ## Review
 
 - Handoff: `notes/P001/implementation-handoff.md`
 - Review: `notes/P001/claude-review.md`
-- Verdict: pending.
+- Verdict: `changes requested`; C1-C15 accepted by the human for in-scope correction.
 
 ## Finding Disposition
 
-See `notes/P001/review-disposition.md`. No findings exist yet.
+See `notes/P001/review-disposition.md`. C1-C15 were accepted by the human and corrected in the review-fix commit; Claude re-review remains pending.
 
 ## Human QA
 
@@ -107,7 +107,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 
 - Base: `2769ccd4a429425e778b070ea98f6fd241188a0f` on `main`.
 - Candidate: `e656d900a0462511e3e8293bcfc2dababb599ba5` (`P001: implement local foundation vertical slice`).
-- Review fixes: none.
+- Review fixes: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a` (`P001: address accepted review findings`).
 - Final: pending.
 
 ## Deferred Work
@@ -126,7 +126,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Requirements satisfied: Implemented; awaiting independent review.
 - Automated validation satisfied: Yes, except Docker Compose could not be executed because Docker is unavailable in this environment.
 - Review clear: No.
-- Findings dispositioned: Not applicable yet.
+- Findings dispositioned: Yes; C1-C15 accepted and corrected, pending Claude verification.
 - Required QA complete: No.
-- Durable docs updated: Yes; candidate handoff pending review.
-- Ready for integration: Awaiting Claude review and required human QA.
+- Durable docs updated: Yes; review-fix handoff pending focused re-review.
+- Ready for integration: Awaiting focused Claude review and required human QA.
