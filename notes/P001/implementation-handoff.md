@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Ready for focused Claude re-review of accepted fourth re-review correction R13. Codex did not mark the phase complete.
+> Status: Claude review is clear and P001 is ready for required human QA. Codex did not mark the phase complete.
 
 ## Review Target
 
@@ -22,7 +22,8 @@
 ## Revalidation Result
 
 - Current repository evidence: the approved control-plane scaffold existed as uncommitted setup work; no workspace or application implementation existed at the base.
-- Tool versions: Node `v24.15.0`, Corepack `0.34.6`, pnpm `11.10.0`, PostgreSQL client `17.9`; Docker/Compose unavailable.
+- Initial tool versions: Node `v24.15.0`, Corepack `0.34.6`, pnpm `11.10.0`, PostgreSQL client `17.9`; Docker/Compose was initially unavailable.
+- Post-review Docker versions: Docker Desktop `4.83.0`, Engine/CLI `29.6.2`, Compose `5.3.1`.
 - Prompt verdict: valid with no scope revision.
 - Git boundary: `phase/P001-local-foundation` from the recorded `main` SHA.
 
@@ -42,17 +43,17 @@
 
 ## Acceptance-Criteria Evidence
 
-| Item      | Evidence                                                                                                                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC1       | `pnpm install`, lint, typecheck, and all required root scripts are present and use real tooling.                                                               |
-| AC2       | Compose configuration defines healthy PostgreSQL and distinct dev/test DB initialization; actual Docker execution is unverified because Docker is unavailable. |
-| AC3       | API Zod configuration tests cover valid config, invalid port/missing URL, and production development-auth rejection.                                           |
-| AC4-AC5   | Generated `0000_spicy_leader.sql` applied to separate WSL dev/test databases; seed rerun is idempotent.                                                        |
-| AC6       | Web/API consume `@appsolo/shared`; attachment interface has no provider/AWS implementation.                                                                    |
-| AC7-AC8   | Health success/failure tests and stable envelope/request ID middleware pass.                                                                                   |
-| AC9-AC12  | Isolated API integration tests cover create/history, list scope, forbidden tenant list/detail, and validation.                                                 |
-| AC13-AC15 | Playwright creates a request through browser/API, reloads it from PostgreSQL, and passes.                                                                      |
-| AC16      | README, contract, phase record, candidate SHA, and this handoff are updated; Docker limitation is explicit.                                                    |
+| Item      | Evidence                                                                                                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| AC1       | `pnpm install`, lint, typecheck, and all required root scripts are present and use real tooling.                                     |
+| AC2       | Compose PostgreSQL 16 started healthy on host port 5433; dev/test initialization and named-volume restart persistence were verified. |
+| AC3       | API Zod configuration tests cover valid config, invalid port/missing URL, and production development-auth rejection.                 |
+| AC4-AC5   | Generated `0000_spicy_leader.sql` applied to separate WSL dev/test databases; seed rerun is idempotent.                              |
+| AC6       | Web/API consume `@appsolo/shared`; attachment interface has no provider/AWS implementation.                                          |
+| AC7-AC8   | Health success/failure tests and stable envelope/request ID middleware pass.                                                         |
+| AC9-AC12  | Isolated API integration tests cover create/history, list scope, forbidden tenant list/detail, and validation.                       |
+| AC13-AC15 | Playwright creates a request through browser/API, reloads it from PostgreSQL, and passes.                                            |
+| AC16      | README, contract, phase record, candidate SHA, review disposition, and this handoff are updated with exact evidence.                 |
 
 ## Files Changed
 
@@ -71,24 +72,25 @@
 
 ## Validation
 
-| ID    | Command                                         | Result  | Evidence                                                         |
-| ----- | ----------------------------------------------- | ------- | ---------------------------------------------------------------- |
-| V1    | `node scripts/check-scaffolding.mjs`            | Passed  | 27 required files, 11 phase records.                             |
-| V2    | `pnpm install`                                  | Passed  | Lockfile created; esbuild build allowed narrowly.                |
-| V3    | `pnpm docker:up`                                | Not run | Docker unavailable.                                              |
-| V4-V5 | migration, seed, guarded test reset             | Passed  | Separate WSL dev/test databases migrated and seeded.             |
-| V6    | `pnpm lint`                                     | Passed  | ESLint and Prettier check passed.                                |
-| V7    | `pnpm typecheck`                                | Passed  | All four workspace packages.                                     |
-| V8    | `pnpm test`                                     | Passed  | 5 shared/database unit tests.                                    |
-| V9    | `pnpm test:api`                                 | Passed  | 14 API/environment/health/PostgreSQL tests.                      |
-| V10   | `pnpm test:web`                                 | Passed  | 6 environment and user-observable UI tests.                      |
-| V11   | `pnpm build`                                    | Passed  | Shared, database, API, and web builds.                           |
-| V12   | `pnpm exec playwright install chromium`         | Passed  | Browser installed.                                               |
-| V13   | `pnpm test:e2e`                                 | Passed  | 1 real browser/API/test-PostgreSQL list/create/refresh test.     |
-| V14   | direct health/list curl                         | Passed  | `200` safe readiness and seeded list response.                   |
-| V15   | `node scripts/generate-phase-index.mjs --check` | Passed  | Index regenerated after review state update.                     |
-| V16   | `git diff --check`                              | Passed  | No whitespace errors in accepted corrections.                    |
-| V17   | `pnpm --filter @appsolo/database generate`      | Passed  | No schema changes; `0001_snapshot.json` matches migration state. |
+| ID    | Command                                         | Result | Evidence                                                         |
+| ----- | ----------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| V1    | `node scripts/check-scaffolding.mjs`            | Passed | 27 required files, 11 phase records.                             |
+| V2    | `pnpm install`                                  | Passed | Lockfile created; esbuild build allowed narrowly.                |
+| V3    | `POSTGRES_PORT=5433 pnpm docker:up`             | Passed | Compose PostgreSQL 16 reached healthy state.                     |
+| V4-V5 | migration, seed, guarded test reset             | Passed | Separate Compose dev/test databases migrated and seeded.         |
+| V6    | `pnpm lint`                                     | Passed | ESLint and Prettier check passed.                                |
+| V7    | `pnpm typecheck`                                | Passed | All four workspace packages.                                     |
+| V8    | `pnpm test`                                     | Passed | 5 shared/database unit tests.                                    |
+| V9    | `pnpm test:api`                                 | Passed | 14 API/environment/health/PostgreSQL tests.                      |
+| V10   | `pnpm test:web`                                 | Passed | 6 environment and user-observable UI tests.                      |
+| V11   | `pnpm build`                                    | Passed | Shared, database, API, and web builds.                           |
+| V12   | `pnpm exec playwright install chromium`         | Passed | Browser installed.                                               |
+| V13   | `pnpm test:e2e`                                 | Passed | 1 real browser/API/test-PostgreSQL list/create/refresh test.     |
+| V14   | direct health/list curl                         | Passed | `200` safe readiness and seeded list response.                   |
+| V15   | `node scripts/generate-phase-index.mjs --check` | Passed | Index regenerated after review state update.                     |
+| V16   | `git diff --check`                              | Passed | No whitespace errors in accepted corrections.                    |
+| V17   | `pnpm --filter @appsolo/database generate`      | Passed | No schema changes; `0001_snapshot.json` matches migration state. |
+| V18   | `pnpm docker:down` then `pnpm docker:up`        | Passed | Named volume persisted both databases and two dev seed rows.     |
 
 ## Manual Testing Already Performed
 
@@ -96,8 +98,7 @@ Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P0
 
 ## Known Gaps
 
-- Docker Compose was not executable in this environment; human Q1/Q8 should verify the documented Compose path.
-- Required human QA and focused Claude re-review remain.
+- Required human QA Q1-Q8 remains. The Docker portion now has technical execution evidence, but Codex did not substitute it for human QA results.
 
 ## Review-Fix Verification
 
@@ -132,6 +133,17 @@ Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P0
 - R13: a database-backed integration test builds the normal application with a real Drizzle/PostgreSQL client pointed at an unreachable local endpoint. It proves the assembled middleware returns `503` and `DATABASE_UNAVAILABLE`, preserves the response request ID, and does not expose driver or address details.
 - Final rerun passed lint, typecheck, 5 shared/database unit tests, 14 API tests, 6 web tests, all builds, the real Playwright list/create/refresh smoke, scaffolding validation, phase-index validation, Drizzle generation validation, and diff checks. Docker remains not run because it is unavailable.
 
-## Requested Review Focus
+## Fifth Focused Re-Review Result
 
-Verify R13 through the normal assembled application, including the safe `503` envelope and request-ID correlation; confirm R11-R12 remain closed and no AWS or out-of-scope work was introduced.
+- Claude independently verified R13 fixed, confirmed R11-R12 remained closed, and raised no new finding.
+- Verdict: `ready with non-blocking observations`.
+- All C1-C15 and R1-R13 findings are verified fixed; the only remaining gate is human QA.
+
+## Post-Review Docker Validation
+
+- Docker Desktop networking was repaired by preferring IPv4 over IPv6 on the Windows host; `docker pull postgres:16-alpine` then succeeded.
+- `POSTGRES_PORT=5433 pnpm docker:up` passed and left the Compose PostgreSQL 16 container healthy while preserving the existing WSL PostgreSQL service on port 5432.
+- `appsolo_client_hub_dev` and `appsolo_client_hub_test` both exist in the container.
+- Migrate, twice-idempotent seed, guarded test preparation, 14 API tests, and the Playwright browser/API/test-PostgreSQL smoke passed against the Compose databases.
+- `POSTGRES_PORT=5433 pnpm docker:down` removed the container and network without deleting the named volume. After `pnpm docker:up`, both databases remained and `change_requests` still contained the two seeded development rows.
+- The Compose stack is intentionally left running on port 5433 for human QA.

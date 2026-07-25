@@ -27,7 +27,7 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
 - Node.js `24.15.0` was verified (Node 22+ supported).
 - pnpm `11.10.0` was verified; the repository pins this version.
 - PostgreSQL 16-compatible server (PostgreSQL 17.9 client/server tooling was used during implementation).
-- Docker Compose v2 is supported for the supplied local container setup, but Docker was not available in the implementation environment.
+- Docker Desktop `4.83.0`, Engine/CLI `29.6.2`, and Compose `5.3.1` were verified with the supplied local container setup.
 
 ## Installation and local configuration
 
@@ -53,6 +53,8 @@ pnpm docker:up
 pnpm db:migrate
 pnpm db:seed
 ```
+
+If another PostgreSQL service already uses port 5432, choose a free host port in `.env` (for example `POSTGRES_PORT=5433`) and use that same port in `DATABASE_URL` and `TEST_DATABASE_URL`. The container still listens on port 5432 internally.
 
 ### Existing local PostgreSQL instance
 

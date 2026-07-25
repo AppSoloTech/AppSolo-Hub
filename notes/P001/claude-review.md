@@ -807,7 +807,7 @@ No Blocker or High finding remains open. Every earlier fix was re-checked this p
 - **Q7** (keyboard and narrow viewport) has no automated proxy at all; nothing in the suite covers it.
 - Q2, Q3, and Q4 have automated analogues that pass, but human confirmation is still required by the phase record.
 
-## Verdict
+## Verdict (fourth focused re-review — superseded by the fifth focused re-review below)
 
 `ready with non-blocking observations`
 
@@ -821,3 +821,93 @@ Two things stand between this and `complete`, and neither is mine to close:
 2. **All eight human QA cases remain unrun.** `notes/P001/qa.md` records `Not run` for Q1-Q8.
 
 R13 is a Low observation about test coverage of the assembled `503` path and needs only a disposition.
+
+---
+
+# Fifth Focused Re-Review — Accepted Fourth Re-Review Finding
+
+## Re-Review Target
+
+- Third re-review-fix SHA: `29fdf5e`
+- Fourth re-review-fix SHA: `5885db4` (exists, `P001: cover assembled health failure`)
+- Reviewed range: `git diff 29fdf5e..5885db4` — the only source change is a new case in `apps/api/src/modules/change-requests/change-requests.integration.test.ts`; everything else is control-plane evidence.
+- Working tree at re-review time: clean at `57b3484` (`P001: record fourth re-review fix handoff`). `5885db4..57b3484` touches only the P001 phase record and `notes/P001/*`.
+- Disposition source: `notes/P001/review-disposition.md` — R13 `Accepted`.
+
+## Validation Rerun
+
+| Command                                                                                                       | Result      | Notes                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `git cat-file -t 5885db4`                                                                                     | Passed      | Fix SHA exists.                                                                                       |
+| `pnpm lint`                                                                                                   | Passed      | ESLint + `prettier --check .`.                                                                        |
+| `pnpm typecheck`                                                                                              | Passed      | Four packages, strict.                                                                                |
+| `pnpm test`                                                                                                   | Passed      | 5 tests (shared 2, database 3).                                                                       |
+| `pnpm test:api`                                                                                               | Passed      | 14 tests — `env.test.ts` (6), `health.routes.test.ts` (2), `change-requests.integration.test.ts` (6). |
+| `pnpm test:web`                                                                                               | Passed      | 6 tests.                                                                                              |
+| `pnpm build`                                                                                                  | Passed      | All packages.                                                                                         |
+| `pnpm test:e2e`                                                                                               | Passed      | 1 Playwright test against the real stack.                                                             |
+| `pnpm --filter @appsolo/database generate`                                                                    | Passed      | `No schema changes, nothing to migrate`.                                                              |
+| `node scripts/check-scaffolding.mjs`, `generate-phase-index.mjs --check`, `git diff --check 29fdf5e..5885db4` | Passed      | Clean.                                                                                                |
+| `pnpm docker:up`                                                                                              | **Not run** | `docker: command not found` — rechecked again this pass.                                              |
+
+Codex's recorded counts (5 / 14 / 6) match exactly what I observed.
+
+## Accepted-Fix Verification
+
+| Finding | Severity | Status             | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------- | -------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R13     | Low      | **Verified fixed** | [change-requests.integration.test.ts:41-65](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L41-L65) now builds the ordinary application through `createApp({ db, config })` with a real Drizzle/`pg` client pointed at `127.0.0.1:1`, then asserts `503`, the exact `DATABASE_UNAVAILABLE` code and safe message, that `error.requestId` equals the `x-request-id` response header, and that neither `ECONNREFUSED` nor the address appears in the body. The pool is closed in a `finally`. This is the assembled middleware chain, not a hand-built app, so the gap the finding named is closed. |
+
+The assertions are substantive rather than incidental — status, code, message, correlation, and two distinct redaction checks — so a regression in the shared error middleware or in the health route would fail this test rather than pass silently. The unreachable endpoint is a privileged local port, so the case is deterministic and needs no network access, satisfying `markdown/TESTING.md`'s rule that tests must not depend on external services.
+
+## Regression And Scope Checks
+
+- No production source changed in this commit; no new dependency.
+- `grep -riE "aws|@aws-sdk|cognito"` across `apps/`, `packages/`, and `e2e/` returns nothing. NG1-NG10 hold; the branch is unpushed and `origin/main` is still the base SHA.
+- Migrations untouched; `db:generate` reports nothing pending.
+- R11 and R12 re-checked and still closed: `createApp` retains one dependency shape, and the environment-precedence regression test still passes.
+- C1's isolation boundary re-verified: `test:prepare`, the API integration suite, and the Playwright API process all resolve only to `appsolo_client_hub_test`.
+
+## Cumulative Finding Status
+
+| Pass                     | Findings                                                   | Status             |
+| ------------------------ | ---------------------------------------------------------- | ------------------ |
+| Initial review           | C1 (Blocker), C2-C3 (High), C4-C10 (Medium), C11-C15 (Low) | All verified fixed |
+| Focused re-review        | R1, R7 (Medium), R2-R6 (Low)                               | All verified fixed |
+| Second focused re-review | R8 (High), R9-R10 (Low)                                    | All verified fixed |
+| Third focused re-review  | R12 (High), R11 (Low)                                      | All verified fixed |
+| Fourth focused re-review | R13 (Low)                                                  | Verified fixed     |
+| This pass                | none                                                       | —                  |
+
+**No finding of any severity remains open.** Every accepted correction has been verified by independent reproduction, and no earlier fix regressed under re-check.
+
+## Remaining Gates — Not Claude's To Close
+
+### AC2 has no execution evidence from any agent
+
+`pnpm docker:up` has never been run. Docker Compose was unavailable to Codex during implementation and to all five of my review passes (`docker: command not found`). The Compose service definition, its `pg_isready` health check, the named volume, and `docker/init-test-db.sql`'s creation of `appsolo_client_hub_test` have been reviewed by reading only. Per this repository's review contract, that is missing evidence, not a pass. AC2 can only be closed by human QA on a machine with Docker.
+
+### Human QA Q1-Q8 remain unrun
+
+`notes/P001/qa.md` still records `Not run` for every case and `Required QA complete: No`. Points worth carrying into that session:
+
+- **Q1 and Q8** are the only path to AC2. Q8 should also confirm the documented volume/reset behavior, since `docker/init-test-db.sql` runs only on first volume initialization — a pre-existing volume will not contain `appsolo_client_hub_test`, which the README troubleshooting section already warns about.
+- **Q5** should exercise both denial identities: `20000000-…-000000000005` (member of the second client tenant, Acme Demo Co.) and `20000000-…-000000000006` (internal-only). They prove two different authorization rules — cross-tenant membership scoping and the ADR-0003 rule that internal membership alone grants nothing.
+- **Q6** now has automated coverage through the assembled app (R13), but the _browser-side_ retry state has none; confirm the UI shows the retryable error rather than a blank or stuck view.
+- **Q7** (keyboard navigation, focus order, narrow viewport) has no automated proxy anywhere in the suite.
+- **Q3** should include a browser refresh directly on the create form and on a detail page, since those deep-link paths were the subject of R8.
+
+## Verdict
+
+`ready with non-blocking observations`
+
+The code is ready for human QA. Across six passes I raised one Blocker, three High, nine Medium, and twelve Low findings; all are now verified fixed by independent reproduction rather than by accepting the handoff's account, and re-checks in each pass confirmed no earlier fix regressed.
+
+The implementation matches the phase contracts on every point I was able to execute: tenant authorization is enforced by a single scoped query and proven against two real client tenants plus an internal-only user across list, detail, and create; creation and its initial status history commit in one transaction; error envelopes, status codes, redaction, and request correlation hold under adversarial probing; the schema and its additive migrations match `DATA_MODEL.md` with a consistent snapshot chain; development authentication cannot start in production; test and development databases are isolated under every configuration I could construct; and no AWS, production-auth, or other out-of-scope work entered the phase.
+
+The observations are the two gates that remain, neither of which a reviewer can discharge:
+
+1. **AC2 is unproven.** No agent has executed `pnpm docker:up`. It must be verified by human QA.
+2. **Human QA Q1-Q8 has not started.**
+
+P001 should not be marked `complete` until both are satisfied and recorded in `notes/P001/qa.md`.
