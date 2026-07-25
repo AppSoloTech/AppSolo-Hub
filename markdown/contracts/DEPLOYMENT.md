@@ -8,17 +8,17 @@ The application must run with Node.js, pnpm, Docker Compose, and local PostgreSQ
 
 ## Planned AWS Topology
 
-| Concern | Planned AWS Service |
-| --- | --- |
-| React hosting | AWS Amplify Hosting |
-| API image registry | Amazon ECR |
-| API runtime | ECS Express Mode or ECS Fargate |
-| Relational database | Amazon RDS for PostgreSQL |
-| Authentication | Amazon Cognito |
-| Attachments | Amazon S3 |
-| Runtime secrets | AWS Secrets Manager |
-| Logs and monitoring | Amazon CloudWatch |
-| Transactional email | Amazon SES |
+| Concern             | Planned AWS Service                    |
+| ------------------- | -------------------------------------- |
+| React hosting       | AWS Amplify Hosting                    |
+| API image registry  | Amazon ECR                             |
+| API runtime         | ECS Express Mode or ECS Fargate        |
+| Relational database | Amazon RDS for PostgreSQL              |
+| Authentication      | Amazon Cognito                         |
+| Attachments         | Amazon S3                              |
+| Runtime secrets     | AWS Secrets Manager                    |
+| Logs and monitoring | Amazon CloudWatch                      |
+| Transactional email | Amazon SES                             |
 | Deployment identity | GitHub Actions with AWS OpenID Connect |
 
 This table is direction, not authorization to provision resources.

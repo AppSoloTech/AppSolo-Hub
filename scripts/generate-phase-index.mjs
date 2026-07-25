@@ -31,9 +31,7 @@ function parseFrontmatter(contents, file) {
   return metadata;
 }
 
-const files = (await readdir(phasesDir))
-  .filter((file) => /^P\d{3}-.+\.md$/.test(file))
-  .sort();
+const files = (await readdir(phasesDir)).filter((file) => /^P\d{3}-.+\.md$/.test(file)).sort();
 
 const phases = [];
 for (const file of files) {
@@ -54,9 +52,7 @@ const lines = [
 
 for (const phase of phases) {
   const phaseLink = `[${phase.id}](phases/${phase.file})`;
-  const prompt = phase.prompt
-    ? `[active prompt](../${phase.prompt})`
-    : 'Not drafted';
+  const prompt = phase.prompt ? `[active prompt](../${phase.prompt})` : 'Not drafted';
   lines.push(
     `| ${phaseLink} | ${phase.title ?? ''} | \`${phase.status ?? ''}\` | ${phase.risk ?? ''} | ${phase.depends_on ?? '[]'} | ${prompt} |`,
   );
@@ -64,9 +60,15 @@ for (const phase of phases) {
 
 lines.push('', '## Active Work', '');
 const active = phases.filter((phase) =>
-  ['approved', 'implementing', 'review_pending', 'changes_requested', 'reviewed', 'qa_pending', 'blocked'].includes(
-    phase.status,
-  ),
+  [
+    'approved',
+    'implementing',
+    'review_pending',
+    'changes_requested',
+    'reviewed',
+    'qa_pending',
+    'blocked',
+  ].includes(phase.status),
 );
 
 if (active.length === 0) {

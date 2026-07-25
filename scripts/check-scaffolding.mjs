@@ -113,9 +113,15 @@ for (const file of phaseFiles) {
     errors.push(`${relative}: invalid status ${metadata.status}`);
   }
 
-  const needsPrompt = ['approved', 'implementing', 'review_pending', 'changes_requested', 'reviewed', 'qa_pending', 'complete'].includes(
-    metadata.status,
-  );
+  const needsPrompt = [
+    'approved',
+    'implementing',
+    'review_pending',
+    'changes_requested',
+    'reviewed',
+    'qa_pending',
+    'complete',
+  ].includes(metadata.status);
   if (needsPrompt && !metadata.prompt) {
     errors.push(`${relative}: ${metadata.status} phase must reference a prompt`);
   }
@@ -136,4 +142,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Scaffolding is valid: ${requiredFiles.length} required files and ${phaseFiles.length} phase records.`);
+console.log(
+  `Scaffolding is valid: ${requiredFiles.length} required files and ${phaseFiles.length} phase records.`,
+);

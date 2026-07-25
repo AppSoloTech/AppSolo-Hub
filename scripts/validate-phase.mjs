@@ -14,7 +14,9 @@ if (!phaseId) {
 
 const root = process.cwd();
 const phaseDir = path.join(root, 'markdown', 'phases');
-const matches = (await readdir(phaseDir)).filter((file) => file.startsWith(`${phaseId}-`) && file.endsWith('.md'));
+const matches = (await readdir(phaseDir)).filter(
+  (file) => file.startsWith(`${phaseId}-`) && file.endsWith('.md'),
+);
 
 if (matches.length !== 1) {
   console.error(`Expected one phase record for ${phaseId}, found ${matches.length}.`);

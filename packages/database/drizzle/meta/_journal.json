@@ -8,6 +8,13 @@
       "when": 1784992015592,
       "tag": "0000_spicy_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784996316000,
+      "tag": "0001_normalized_email",
+      "breakpoints": true
     }
   ]
 }

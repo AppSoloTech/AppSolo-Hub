@@ -11,8 +11,17 @@ export const paginationSchema = z
 
 export const changeRequestPriorities = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const;
 export const changeRequestStatuses = [
-  'DRAFT', 'SUBMITTED', 'AWAITING_ESTIMATE', 'AWAITING_APPROVAL', 'APPROVED', 'REJECTED',
-  'NEEDS_CLARIFICATION', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'COMPLETED', 'CANCELLED',
+  'DRAFT',
+  'SUBMITTED',
+  'AWAITING_ESTIMATE',
+  'AWAITING_APPROVAL',
+  'APPROVED',
+  'REJECTED',
+  'NEEDS_CLARIFICATION',
+  'IN_PROGRESS',
+  'READY_FOR_REVIEW',
+  'COMPLETED',
+  'CANCELLED',
 ] as const;
 export type ChangeRequestPriority = (typeof changeRequestPriorities)[number];
 export type ChangeRequestStatus = (typeof changeRequestStatuses)[number];
@@ -46,10 +55,16 @@ export type ChangeRequestDto = z.infer<typeof changeRequestDtoSchema>;
 
 export type ErrorDetail = { path: string; message: string };
 export type SuccessEnvelope<T> = { data: T; meta: Record<string, unknown> };
-export type ErrorEnvelope = { error: { code: string; message: string; details: ErrorDetail[]; requestId?: string } };
+export type ErrorEnvelope = {
+  error: { code: string; message: string; details: ErrorDetail[]; requestId?: string };
+};
 
 export interface AttachmentStorage {
-  createUploadTarget(input: { changeRequestId: string; filename: string; mimeType: string }): Promise<{ storageKey: string; url: string }>;
+  createUploadTarget(input: {
+    changeRequestId: string;
+    filename: string;
+    mimeType: string;
+  }): Promise<{ storageKey: string; url: string }>;
   createDownloadTarget(input: { storageKey: string }): Promise<{ url: string }>;
   deleteObject(storageKey: string): Promise<void>;
 }

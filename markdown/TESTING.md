@@ -124,9 +124,9 @@ Claude should independently rerun the most important commands, especially typech
 
 Each phase record must contain:
 
-| ID | Command | Result | Evidence |
-| --- | --- | --- | --- |
-| V1 | exact command | Passed/Failed/Not run | concise output or reason |
+| ID  | Command       | Result                | Evidence                 |
+| --- | ------------- | --------------------- | ------------------------ |
+| V1  | exact command | Passed/Failed/Not run | concise output or reason |
 
 Do not record “tests passed” without naming the commands and test counts or relevant result summary.
 

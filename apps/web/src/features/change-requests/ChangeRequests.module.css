@@ -1,1 +1,80 @@
-.list { display: grid; gap: 12px; } .row { background: white; color: inherit; border: 1px solid var(--border); border-radius: 9px; padding: 18px 20px; text-decoration: none; display: flex; justify-content: space-between; gap: 16px; transition: border .15s; } .row:hover { border-color: var(--blue); } .row h2 { font-size: 1.05rem; margin: 9px 0 6px; } .row p { color: var(--muted); margin: 0; max-width: 650px; } .status { font-size: .72rem; font-weight: 800; color: #1e40af; } .AWAITING_ESTIMATE { color: #a15c00; } .meta { display: grid; align-content: start; gap: 12px; color: var(--muted); font-size: .82rem; text-align: right; } .form { display: grid; gap: 7px; max-width: 720px; } .form label { font-weight: 700; display: grid; gap: 6px; } .form input, .form textarea, .form select { border: 1px solid #b7c2d3; border-radius: 6px; padding: 10px; background: white; } .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 10px 0; } @media (max-width: 600px) { .row, .fields { grid-template-columns: 1fr; display: grid; } .meta { text-align: left; grid-auto-flow: column; justify-content: start; } }
+.list {
+  display: grid;
+  gap: 12px;
+}
+.row {
+  background: white;
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 18px 20px;
+  text-decoration: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  transition: border 0.15s;
+}
+.row:hover {
+  border-color: var(--blue);
+}
+.row h2 {
+  font-size: 1.05rem;
+  margin: 9px 0 6px;
+}
+.row p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 650px;
+}
+.status {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #1e40af;
+}
+.AWAITING_ESTIMATE {
+  color: #a15c00;
+}
+.meta {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: right;
+}
+.form {
+  display: grid;
+  gap: 7px;
+  max-width: 720px;
+}
+.form label {
+  font-weight: 700;
+  display: grid;
+  gap: 6px;
+}
+.form input,
+.form textarea,
+.form select {
+  border: 1px solid #b7c2d3;
+  border-radius: 6px;
+  padding: 10px;
+  background: white;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 10px 0;
+}
+@media (max-width: 600px) {
+  .row,
+  .fields {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+  .meta {
+    text-align: left;
+    grid-auto-flow: column;
+    justify-content: start;
+  }
+}

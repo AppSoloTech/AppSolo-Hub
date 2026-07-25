@@ -113,15 +113,15 @@ P001 creation produces `SUBMITTED`. Saving drafts is deferred.
 
 ### users
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key, default generated |
-| email | varchar(320) | required, stored lowercase, unique |
-| first_name | varchar(100) | required |
-| last_name | varchar(100) | required |
-| status | user_status | required, default `ACTIVE` for directly created dev users |
-| created_at | timestamptz | required, default now |
-| updated_at | timestamptz | required, default now |
+| Column     | Type         | Rules                                                     |
+| ---------- | ------------ | --------------------------------------------------------- |
+| id         | uuid         | primary key, default generated                            |
+| email      | varchar(320) | required, stored lowercase, unique                        |
+| first_name | varchar(100) | required                                                  |
+| last_name  | varchar(100) | required                                                  |
+| status     | user_status  | required, default `ACTIVE` for directly created dev users |
+| created_at | timestamptz  | required, default now                                     |
+| updated_at | timestamptz  | required, default now                                     |
 
 Indexes:
 
@@ -129,26 +129,26 @@ Indexes:
 
 ### organizations
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| name | varchar(200) | required |
-| slug | varchar(120) | required, lowercase URL-safe, unique |
-| type | organization_type | required |
-| status | organization_status | required, default `ACTIVE` |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column     | Type                | Rules                                |
+| ---------- | ------------------- | ------------------------------------ |
+| id         | uuid                | primary key                          |
+| name       | varchar(200)        | required                             |
+| slug       | varchar(120)        | required, lowercase URL-safe, unique |
+| type       | organization_type   | required                             |
+| status     | organization_status | required, default `ACTIVE`           |
+| created_at | timestamptz         | required                             |
+| updated_at | timestamptz         | required                             |
 
 ### organization_memberships
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| user_id | uuid | required, FK users, restrict delete |
-| organization_id | uuid | required, FK organizations, restrict delete |
-| role | organization_role | required |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column          | Type              | Rules                                       |
+| --------------- | ----------------- | ------------------------------------------- |
+| id              | uuid              | primary key                                 |
+| user_id         | uuid              | required, FK users, restrict delete         |
+| organization_id | uuid              | required, FK organizations, restrict delete |
+| role            | organization_role | required                                    |
+| created_at      | timestamptz       | required                                    |
+| updated_at      | timestamptz       | required                                    |
 
 Constraints and indexes:
 
@@ -160,16 +160,16 @@ A user needing access to a client tenant must have a membership in that client o
 
 ### projects
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| organization_id | uuid | required, FK organizations, restrict delete |
-| name | varchar(200) | required |
-| slug | varchar(120) | required, lowercase URL-safe |
-| description | text | nullable |
-| status | project_status | required, default `ACTIVE` |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column          | Type           | Rules                                       |
+| --------------- | -------------- | ------------------------------------------- |
+| id              | uuid           | primary key                                 |
+| organization_id | uuid           | required, FK organizations, restrict delete |
+| name            | varchar(200)   | required                                    |
+| slug            | varchar(120)   | required, lowercase URL-safe                |
+| description     | text           | nullable                                    |
+| status          | project_status | required, default `ACTIVE`                  |
+| created_at      | timestamptz    | required                                    |
+| updated_at      | timestamptz    | required                                    |
 
 Constraints and indexes:
 
@@ -180,18 +180,18 @@ A project must belong to a `CLIENT` organization. Enforce this in the service la
 
 ### change_requests
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| project_id | uuid | required, FK projects, restrict delete |
-| submitted_by_user_id | uuid | required, FK users, restrict delete |
-| title | varchar(160) | required |
-| description | text | required |
-| priority | change_request_priority | required, default `NORMAL` |
-| status | change_request_status | required, default `SUBMITTED` for P001 create use case |
-| requested_completion_date | date | nullable |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column                    | Type                    | Rules                                                  |
+| ------------------------- | ----------------------- | ------------------------------------------------------ |
+| id                        | uuid                    | primary key                                            |
+| project_id                | uuid                    | required, FK projects, restrict delete                 |
+| submitted_by_user_id      | uuid                    | required, FK users, restrict delete                    |
+| title                     | varchar(160)            | required                                               |
+| description               | text                    | required                                               |
+| priority                  | change_request_priority | required, default `NORMAL`                             |
+| status                    | change_request_status   | required, default `SUBMITTED` for P001 create use case |
+| requested_completion_date | date                    | nullable                                               |
+| created_at                | timestamptz             | required                                               |
+| updated_at                | timestamptz             | required                                               |
 
 Constraints and indexes:
 
@@ -205,18 +205,18 @@ P001 does not accept `status`, `submittedByUserId`, timestamps, or project owner
 
 ### estimates
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| change_request_id | uuid | required, FK change_requests, restrict delete |
-| created_by_user_id | uuid | required, FK users, restrict delete |
-| estimated_hours | numeric(8,2) | required, greater than 0 |
-| hourly_rate | numeric(12,2) | required, non-negative |
-| estimated_cost | numeric(12,2) | required, non-negative |
-| scope_notes | text | required |
-| status | estimate_status | required |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column             | Type            | Rules                                         |
+| ------------------ | --------------- | --------------------------------------------- |
+| id                 | uuid            | primary key                                   |
+| change_request_id  | uuid            | required, FK change_requests, restrict delete |
+| created_by_user_id | uuid            | required, FK users, restrict delete           |
+| estimated_hours    | numeric(8,2)    | required, greater than 0                      |
+| hourly_rate        | numeric(12,2)   | required, non-negative                        |
+| estimated_cost     | numeric(12,2)   | required, non-negative                        |
+| scope_notes        | text            | required                                      |
+| status             | estimate_status | required                                      |
+| created_at         | timestamptz     | required                                      |
+| updated_at         | timestamptz     | required                                      |
 
 Indexes:
 
@@ -227,15 +227,15 @@ Application services must calculate and persist monetary values using decimal-sa
 
 ### comments
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| change_request_id | uuid | required, FK change_requests, restrict delete |
-| author_user_id | uuid | required, FK users, restrict delete |
-| body | text | required |
-| visibility | comment_visibility | required |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column            | Type               | Rules                                         |
+| ----------------- | ------------------ | --------------------------------------------- |
+| id                | uuid               | primary key                                   |
+| change_request_id | uuid               | required, FK change_requests, restrict delete |
+| author_user_id    | uuid               | required, FK users, restrict delete           |
+| body              | text               | required                                      |
+| visibility        | comment_visibility | required                                      |
+| created_at        | timestamptz        | required                                      |
+| updated_at        | timestamptz        | required                                      |
 
 Indexes:
 
@@ -246,15 +246,15 @@ Client roles must never receive `INTERNAL_ONLY` rows. Comment APIs are deferred.
 
 ### status_history
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| change_request_id | uuid | required, FK change_requests, restrict delete |
-| changed_by_user_id | uuid | required, FK users, restrict delete |
-| previous_status | change_request_status | nullable for initial creation |
-| new_status | change_request_status | required |
-| note | text | nullable |
-| created_at | timestamptz | required |
+| Column             | Type                  | Rules                                         |
+| ------------------ | --------------------- | --------------------------------------------- |
+| id                 | uuid                  | primary key                                   |
+| change_request_id  | uuid                  | required, FK change_requests, restrict delete |
+| changed_by_user_id | uuid                  | required, FK users, restrict delete           |
+| previous_status    | change_request_status | nullable for initial creation                 |
+| new_status         | change_request_status | required                                      |
+| note               | text                  | nullable                                      |
+| created_at         | timestamptz           | required                                      |
 
 Indexes:
 
@@ -265,16 +265,16 @@ P001 creates an initial history row in the same transaction as the change reques
 
 ### time_entries
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| change_request_id | uuid | required, FK change_requests, restrict delete |
-| user_id | uuid | required, FK users, restrict delete |
-| duration_minutes | integer | required, greater than 0 |
-| description | text | required |
-| work_date | date | required |
-| created_at | timestamptz | required |
-| updated_at | timestamptz | required |
+| Column            | Type        | Rules                                         |
+| ----------------- | ----------- | --------------------------------------------- |
+| id                | uuid        | primary key                                   |
+| change_request_id | uuid        | required, FK change_requests, restrict delete |
+| user_id           | uuid        | required, FK users, restrict delete           |
+| duration_minutes  | integer     | required, greater than 0                      |
+| description       | text        | required                                      |
+| work_date         | date        | required                                      |
+| created_at        | timestamptz | required                                      |
+| updated_at        | timestamptz | required                                      |
 
 Indexes:
 
@@ -283,16 +283,16 @@ Indexes:
 
 ### attachments
 
-| Column | Type | Rules |
-| --- | --- | --- |
-| id | uuid | primary key |
-| change_request_id | uuid | required, FK change_requests, restrict delete |
-| uploaded_by_user_id | uuid | required, FK users, restrict delete |
-| original_filename | varchar(255) | required |
-| storage_key | varchar(1024) | required, unique |
-| mime_type | varchar(255) | required |
-| size_bytes | bigint | required, non-negative |
-| created_at | timestamptz | required |
+| Column              | Type          | Rules                                         |
+| ------------------- | ------------- | --------------------------------------------- |
+| id                  | uuid          | primary key                                   |
+| change_request_id   | uuid          | required, FK change_requests, restrict delete |
+| uploaded_by_user_id | uuid          | required, FK users, restrict delete           |
+| original_filename   | varchar(255)  | required                                      |
+| storage_key         | varchar(1024) | required, unique                              |
+| mime_type           | varchar(255)  | required                                      |
+| size_bytes          | bigint        | required, non-negative                        |
+| created_at          | timestamptz   | required                                      |
 
 Indexes:
 

@@ -12,13 +12,13 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
                        shared Zod contracts (packages/shared)
 ```
 
-| Area | Responsibility |
-| --- | --- |
-| `apps/web` | React Router, TanStack Query, React Hook Form, CSS Modules dashboard |
-| `apps/api` | Express routes, development auth adapter, authorization, errors, logging |
-| `packages/shared` | Zod schemas, DTOs, enums, provider-neutral interfaces |
-| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset |
-| `e2e` | Playwright seeded list/create/refresh smoke test |
+| Area                | Responsibility                                                           |
+| ------------------- | ------------------------------------------------------------------------ |
+| `apps/web`          | React Router, TanStack Query, React Hook Form, CSS Modules dashboard     |
+| `apps/api`          | Express routes, development auth adapter, authorization, errors, logging |
+| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces                    |
+| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset       |
+| `e2e`               | Playwright seeded list/create/refresh smoke test                         |
 
 `markdown/` is the canonical product and delivery control plane.
 
@@ -34,6 +34,7 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
 ```bash
 pnpm install
 cp .env.example .env
+cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
@@ -62,13 +63,13 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-To prepare the test database, use the guarded reset. It only permits local `appsolo_client_hub_dev` and `appsolo_client_hub_test` database names and rejects production or non-local targets.
+To prepare the test database, use the guarded reset. It uses `TEST_DATABASE_URL` when set, otherwise the local `DB_*` connection components with the fixed `appsolo_client_hub_test` database name; it never uses `DATABASE_URL`. It rejects production or non-local targets.
 
 ```bash
 pnpm --filter @appsolo/database test:prepare
 ```
 
-`pnpm db:reset` performs the same guarded destructive reset for the configured local development database. It drops only the allowlisted database's `public` and Drizzle journal schemas, then reapplies the migration and seed.
+`pnpm db:reset` performs a guarded destructive reset only for the configured local `appsolo_client_hub_dev` database. It drops only that database's `public` and Drizzle journal schemas, then reapplies the migration and seed.
 
 ## Run the application
 
@@ -82,11 +83,11 @@ pnpm dev
 
 The default development identity is the seeded client administrator:
 
-| Identity | ID | Access |
-| --- | --- | --- |
-| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar Demo Co. project |
-| Client member | `20000000-0000-4000-8000-000000000004` | Northstar Demo Co. project |
-| Other tenant user | `20000000-0000-4000-8000-000000000005` | Denied from the seeded project |
+| Identity             | ID                                     | Access                         |
+| -------------------- | -------------------------------------- | ------------------------------ |
+| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar Demo Co. project     |
+| Client member        | `20000000-0000-4000-8000-000000000004` | Northstar Demo Co. project     |
+| Other tenant user    | `20000000-0000-4000-8000-000000000005` | Denied from the seeded project |
 
 Change `VITE_DEV_AUTH_USER_ID` and the API `DEV_AUTH_USER_ID`, or send `x-dev-user-id` directly to the API, to test a seeded identity. Development authentication is prohibited when `NODE_ENV=production`.
 
@@ -112,7 +113,7 @@ pnpm docker:down    # stop local PostgreSQL Compose service
 ## Troubleshooting
 
 - **Migration says a relation already exists:** confirm `.env` points at `appsolo_client_hub_dev`, not another application's database. P001 migrations are initial-schema migrations and must not be applied to an unrelated database.
-- **`db:reset` refuses to run:** it intentionally requires a local host and an allowlisted P001 development/test database name.
+- **`db:reset` refuses to run:** it intentionally requires a local `appsolo_client_hub_dev` target; `test:prepare` accepts only the separate `appsolo_client_hub_test` target.
 - **Browser shows a retryable error:** verify the API health endpoint and that `CORS_ORIGIN` includes the web origin (`localhost` and `127.0.0.1` are included in the examples).
 - **Development auth returns 401:** use an active seeded UUID and rerun `pnpm db:seed` if needed.
 - **Compose does not initialize the test database:** use a fresh Compose volume or create the named test database once; initialization SQL runs only for new volumes.

@@ -7,7 +7,9 @@ test('seeded list, create, and refreshed detail persist through the real API', a
   await expect(page.getByRole('heading', { name: 'Export dashboard data' })).toBeVisible();
   await page.getByRole('link', { name: 'New request' }).click();
   await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Description').fill('A real browser smoke test creates and verifies this persisted request.');
+  await page
+    .getByLabel('Description')
+    .fill('A real browser smoke test creates and verifies this persisted request.');
   await page.getByRole('button', { name: 'Submit request' }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await page.reload();

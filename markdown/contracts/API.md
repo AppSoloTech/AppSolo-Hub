@@ -52,15 +52,15 @@ Error responses may also include a non-sensitive `requestId` either in `error` o
 
 ### Stable Error Codes
 
-| Code | HTTP | Meaning |
-| --- | ---: | --- |
-| `VALIDATION_ERROR` | 400 | External input failed validation |
-| `UNAUTHENTICATED` | 401 | No valid authenticated user context |
-| `FORBIDDEN` | 403 | Authenticated user lacks required tenant/project access |
-| `NOT_FOUND` | 404 | Route or authorized resource not found |
-| `CONFLICT` | 409 | Request conflicts with current resource state |
-| `DATABASE_UNAVAILABLE` | 503 | Health/readiness database check failed |
-| `INTERNAL_ERROR` | 500 | Unexpected internal failure |
+| Code                   | HTTP | Meaning                                                 |
+| ---------------------- | ---: | ------------------------------------------------------- |
+| `VALIDATION_ERROR`     |  400 | External input failed validation                        |
+| `UNAUTHENTICATED`      |  401 | No valid authenticated user context                     |
+| `FORBIDDEN`            |  403 | Authenticated user lacks required tenant/project access |
+| `NOT_FOUND`            |  404 | Route or authorized resource not found                  |
+| `CONFLICT`             |  409 | Request conflicts with current resource state           |
+| `DATABASE_UNAVAILABLE` |  503 | Health/readiness database check failed                  |
+| `INTERNAL_ERROR`       |  500 | Unexpected internal failure                             |
 
 Messages are safe for users. Raw exceptions, SQL, stack traces, environment values, and secrets are never returned.
 
