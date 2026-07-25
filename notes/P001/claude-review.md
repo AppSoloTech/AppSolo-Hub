@@ -258,10 +258,190 @@ Codex's recorded validation table is honest about what it ran and about the Dock
 - Unnecessary complexity: None. No base repository or service framework, no speculative abstraction; the `AttachmentStorage` interface is the only forward-looking seam and it is required by R4.
 - Deferred risk: The largest maintainability drag is formatting (C12) and the flattened API composition (C13), both cheap to fix now and progressively more expensive later. C9 will force UI rework in P002 when a second tenant becomes reachable.
 
-## Verdict
+## Verdict (initial review — superseded by the focused re-review below)
 
 `changes requested`
 
 C1 is a Blocker: following the repository's own README destroys the developer's database on the next test run, and the guard reports success while doing it. C2 and C3 are High: the documented startup path fails from a clean checkout, and several contract-required authorization and route tests are absent, so the phase's central tenant-safety claim is under-evidenced. AC2 additionally has no execution evidence from either agent and must be treated as missing until human QA covers Q1/Q8.
 
 The underlying implementation is otherwise sound — the schema is a faithful rendering of the contract, the authorization query is correct, the transaction and error envelope behave as specified, and every command I reran passed. The blocking issues are configuration and coverage defects, not design defects.
+
+---
+
+# Focused Re-Review — Accepted Review Fixes
+
+## Re-Review Target
+
+- Candidate SHA: `e656d900a0462511e3e8293bcfc2dababb599ba5`
+- Review-fix SHA: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a` (exists, `P001: address accepted review findings`)
+- Reviewed range: `git diff e656d900a0462511e3e8293bcfc2dababb599ba5..82e16fce38c69ea7e8961a654ccdeaeb4f06c07a` (68 files, +2115 / -603)
+- Working tree at re-review time: clean at `e1f1bd2` (`P001: record review-fix handoff`). `82e16fc..e1f1bd2` touches only `markdown/PHASE_INDEX.md`, the P001 phase record, `notes/P001/*`, and a Prettier-only reformat of `scripts/generate-phase-index.mjs`. No application source differs between the fix commit and the tree I executed.
+- Disposition source: `notes/P001/review-disposition.md` — all of C1-C15 `Accepted`, none rejected or deferred.
+- Scope of this pass: every accepted finding, plus regression and scope-drift checks across the fix diff. Per `markdown/FLOW.md` step 9 this is mandatory for the Blocker and High items; I verified all fifteen because the human accepted all fifteen.
+
+## Validation Rerun
+
+| Command                                                                                                                | Result                 | Notes                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `git cat-file -t 82e16fc`                                                                                              | Passed                 | Fix SHA exists.                                                                                                     |
+| `pnpm lint`                                                                                                            | Passed                 | Now `eslint . && prettier --check .`; `All matched files use Prettier code style!`                                  |
+| `pnpm typecheck`                                                                                                       | Passed                 | Four packages, strict.                                                                                              |
+| `pnpm test`                                                                                                            | Passed                 | 5 tests (shared 2, database 3).                                                                                     |
+| `pnpm test:api`                                                                                                        | Passed                 | 11 tests — `env.test.ts` (4), `app.test.ts` (3), `change-requests.integration.test.ts` (4).                         |
+| `pnpm test:web`                                                                                                        | Passed                 | 5 tests — `env.test.ts` (3), `ChangeRequestList.test.tsx` (1), `NewChangeRequest.test.tsx` (1).                     |
+| `pnpm build`                                                                                                           | Passed                 | All four packages; Vite production bundle.                                                                          |
+| `pnpm test:e2e`                                                                                                        | Passed                 | 1 Playwright test against the real stack.                                                                           |
+| `pnpm --filter @appsolo/database generate`                                                                             | **Failed expectation** | Re-emits migration `0001`'s statements as a new `0002`. See R1. Generated files were deleted and the tree restored. |
+| `pnpm docker:up`                                                                                                       | **Not run**            | Docker still unavailable. AC2 remains without execution evidence.                                                   |
+| Probe: test-URL resolution under four configurations                                                                   | Passed                 | See C1 below.                                                                                                       |
+| Probe: `test:prepare` with `TEST_DATABASE_URL` aimed at the dev database                                               | Passed                 | Guard refuses.                                                                                                      |
+| Probe: `pnpm dev` with both package `dist/` directories deleted                                                        | Passed                 | See C2 below.                                                                                                       |
+| Probe: live malformed / oversized bodies, cross-tenant detail, internal-only user, list `meta`, ordering, log contents | Mixed                  | C5/C6/C7/C9 confirmed fixed; R7 found.                                                                              |
+
+Codex's recorded test counts (5 / 11 / 5) match exactly what I observed.
+
+## Accepted-Fix Verification
+
+| Finding | Severity | Status              | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------- | -------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1      | Blocker  | **Verified fixed**  | See detail below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| C2      | High     | **Verified fixed**  | See detail below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| C3      | High     | **Verified fixed**  | See detail below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| C4      | Medium   | Verified fixed      | `TEST_DATABASE_URL` is now the primary test target ([index.ts:20-29](packages/database/src/index.ts#L20-L29)); [config/env.ts:6-10](apps/api/src/config/env.ts#L6-L10) loads `apps/api/.env` with `override: true`, so the shipped `apps/api/.env.example` is no longer inert; README documents the copy step.                                                                                                                                                                                                                                                        |
+| C5      | Medium   | Verified fixed      | [app.ts:46-56](apps/api/src/app.ts#L46-L56) maps `entity.parse.failed` → 400 and `entity.too.large` → 413, and suppresses the bogus `unhandled request error` log. Live: malformed → `400 VALIDATION_ERROR` with `details: [{path: "body"}]`; 1.2 MiB body → `413`. Covered by a test ([app.test.ts:33-45](apps/api/src/app.test.ts#L33-L45)). Residual naming issue in R4.                                                                                                                                                                                           |
+| C6      | Medium   | Verified fixed      | [repository.ts:53-76](apps/api/src/modules/change-requests/repository.ts#L53-L76) `findAuthorizedById` joins project → organization → membership in one scoped query; [service.ts:41-45](apps/api/src/modules/change-requests/service.ts#L41-L45) returns `404` uniformly. Live probe as the Acme member: existing-elsewhere `404`, nonexistent `404` — the oracle is gone. Asserted at [integration.test.ts:82](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L82).                                                                       |
+| C7      | Medium   | Verified fixed      | Seed now creates a real second tenant (`Acme Demo Co.` + `Acme client portal`) with `otherTenantUser` as its `CLIENT_MEMBER`, plus `internalOnlyUser` holding only an `INTERNAL` membership ([seed.ts:14-144](packages/database/src/seed.ts#L14-L144)). Both are asserted denied (`403`) at [integration.test.ts:71-85](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L71-L85); I reproduced both live. This now proves membership scoping and the ADR-0003 internal-membership rule, not merely "no membership".                          |
+| C8      | Medium   | Verified fixed      | [env.test.ts](apps/api/src/config/env.test.ts) splits missing-`DATABASE_URL` from invalid-`PORT` and asserts the thrown message does **not** contain a planted credential; new [apps/web/src/env.test.ts](apps/web/src/env.test.ts) covers missing and non-URL `VITE_API_BASE_URL`.                                                                                                                                                                                                                                                                                   |
+| C9      | Medium   | **Partially fixed** | List page and shell are now data-driven ([service.ts:32-38](apps/api/src/modules/change-requests/service.ts#L32-L38) returns `projectName`/`organizationName`; [ChangeRequestList.tsx:26-36](apps/web/src/features/change-requests/ChangeRequestList.tsx#L26-L36) renders them; sidebar literal replaced with "Authorized workspace"). Live `meta` confirmed. **Residual: R2.**                                                                                                                                                                                       |
+| C10     | Medium   | Verified fixed      | [ChangeRequestList.tsx:17](apps/web/src/features/change-requests/ChangeRequestList.tsx#L17) and [ChangeRequestDetail.tsx:18](apps/web/src/features/change-requests/ChangeRequestDetail.tsx#L18) branch on `ApiError.status`; `ApiError` now carries `code` ([api.ts:3-11](apps/web/src/api.ts#L3-L11)). New [ChangeRequestList.test.tsx](apps/web/src/features/change-requests/ChangeRequestList.test.tsx) deliberately throws a 403 whose message is `'Different text'` and asserts the forbidden copy still renders — exactly the regression the finding described. |
+| C11     | Low      | Verified fixed      | [ChangeRequestDetail.tsx:6-7,29-33](apps/web/src/features/change-requests/ChangeRequestDetail.tsx#L29-L33) reads the navigation state and renders the previously-unused `.notice` with `role="status"`.                                                                                                                                                                                                                                                                                                                                                               |
+| C12     | Low      | Verified fixed      | `pnpm lint` now runs `prettier --check .`; the whole tree passes, including the previously non-compliant 60 files. Contract and README table churn in this commit is Prettier reformatting only — I diffed `DATA_MODEL.md`, `API.md`, `ENVIRONMENT.md`, `TESTING.md`, and `scripts/` and found no substantive content change except the ENVIRONMENT.md test-database rule, which correctly documents the new behavior.                                                                                                                                                |
+| C13     | Low      | Verified fixed      | `middleware/request-id.ts`, `middleware/development-auth.ts`, `modules/health/health.routes.ts`, and `modules/change-requests/change-request.routes.ts` now exist; `app.ts` is composition only.                                                                                                                                                                                                                                                                                                                                                                      |
+| C14     | Low      | Verified fixed      | Additive migration [0001_normalized_email.sql](packages/database/drizzle/0001_normalized_email.sql) adds `users_email_lowercase` CHECK and a unique index on `lower(email)`; `0000_spicy_leader.sql` is byte-identical to the candidate and `0000_snapshot.json` is semantically identical (formatting only), so no already-applied migration was rewritten. **But see R1.**                                                                                                                                                                                          |
+| C15     | Low      | **Partially fixed** | `styles[item.status]` replaced with a single `.status` class; `request.authenticatedUser!` replaced by a throwing `userId()` accessor ([change-request.routes.ts:6-9](apps/api/src/modules/change-requests/change-request.routes.ts#L6-L9)); duplicate `requestId` log field removed. `db: {} as never` remains at [app.test.ts:16,27,34](apps/api/src/app.test.ts#L16). The de-duplication also introduced **R7**.                                                                                                                                                   |
+
+### C1 — verified fixed (Blocker)
+
+`resolvedTestDatabaseUrl` ([index.ts:20-29](packages/database/src/index.ts#L20-L29)) never consults `DATABASE_URL`, `DB_NAME`, or `APPSOLO_DB_NAME`; it uses `TEST_DATABASE_URL` or pins the literal `appsolo_client_hub_test` onto the `DB_*` components. `test:prepare` now runs [test-reset.ts](packages/database/src/test-reset.ts), whose guard requires a local host and the exact `appsolo_client_hub_test` name, and `db:reset` is narrowed to `appsolo_client_hub_dev` only ([reset.ts:6-12](packages/database/src/reset.ts#L6-L12)). The integration suite and the Playwright API server both go through the test resolver.
+
+Four probes against the built package, using the committed `.env.example` values that triggered the original Blocker:
+
+```
+A  DATABASE_URL=dev + TEST_DATABASE_URL=test  -> .../appsolo_client_hub_test     (was: .../dev)
+B  DATABASE_URL=dev only, no DB_*             -> THROWS "TEST_DATABASE_URL is required ..."
+C  DB_* + APPSOLO_DB_NAME=dev + DB_NAME=other -> .../appsolo_client_hub_test
+D  resolvedDatabaseUrl (dev path) unchanged   -> .../appsolo_client_hub_dev
+E  test:prepare with TEST_DATABASE_URL=dev    -> "test:prepare only permits the local appsolo_client_hub_test database."
+```
+
+Case B is the important one: the failure mode is now a loud error rather than a silent fallback onto the development database.
+
+### C2 — verified fixed (High)
+
+`dev`, `typecheck`, and `test:e2e` all build `@appsolo/database` as well as `@appsolo/shared` ([package.json:7,10,14](package.json#L7)). I deleted **both** `packages/database/dist` and `packages/shared/dist` and ran `pnpm dev`: zero `ERR_MODULE_NOT_FOUND`, and both processes started (`API listening at http://localhost:4000`, `VITE ready in 106 ms`). The tree was restored afterwards.
+
+### C3 — verified fixed (High)
+
+All five gaps are closed in [change-requests.integration.test.ts](apps/api/src/modules/change-requests/change-requests.integration.test.ts) and [app.test.ts](apps/api/src/app.test.ts):
+
+- real-database health (`200` against the live test database) and `401` for both a missing identity and an unknown UUID — lines 32-39;
+- authorized detail success — lines 67-70;
+- cross-tenant **create** denial (`403`) — lines 75-84;
+- deterministic ordering — line 66 asserts `[requestTwo, requestOne]`. This is a genuine check: both seeded rows share a `createdAt` (one transaction, `now()`), so it exercises the `id DESC` tiebreak specifically;
+- internal-only user denial — line 85.
+
+## New And Residual Findings
+
+### R1 — Migration `0001` has no Drizzle snapshot, so `db:generate` will re-emit it
+
+- Severity: **Medium**
+- Requirement or invariant: `markdown/contracts/DATA_MODEL.md` ("Drizzle schema definitions and checked-in migrations are authoritative"; migrations must not be destructive or conflicting); R3.
+- Evidence: `packages/database/drizzle/meta/` contains only `0000_snapshot.json` and `_journal.json`, while `_journal.json` lists both `0000_spicy_leader` and `0001_normalized_email`. `0001_normalized_email.sql` was hand-authored rather than produced by `drizzle-kit generate`, so no `0001_snapshot.json` exists.
+- Impact: Drizzle diffs the schema against the newest snapshot it has, which is `0000`. The next `pnpm db:generate` — in P002 or any later phase — silently reintroduces the `0001` statements into the new migration. Applying that migration to any database that already ran `0001` fails on the duplicate index/constraint, which will look like a P002 defect rather than a P001 one.
+- Reproduction: `pnpm --filter @appsolo/database generate` on the fix commit produced `0002_petite_purifiers.sql` containing exactly:
+  ```sql
+  CREATE UNIQUE INDEX "users_email_lower_unique" ON "users" USING btree (lower("email"));
+  ALTER TABLE "users" ADD CONSTRAINT "users_email_lowercase" CHECK ("users"."email" = lower("users"."email"));
+  ```
+  (I deleted the generated files and restored `_journal.json`; the tree is clean.)
+- Recommended correction: Regenerate the email change through `drizzle-kit generate` so the matching `0001_snapshot.json` is checked in, or add the snapshot for the hand-written migration. Nothing about the applied SQL needs to change.
+
+### R2 — `NewChangeRequest` still hardcodes the seeded project name (residual C9)
+
+- Severity: Low
+- Requirement or invariant: R8 project heading; the same Product Vision tenant-context concern as C9.
+- Evidence: [NewChangeRequest.tsx:30](apps/web/src/features/change-requests/NewChangeRequest.tsx#L30) still renders the literal eyebrow `Northstar client portal`, although the list page and sidebar are now driven by API `meta`. The create page never fetches project context.
+- Impact: The creation form labels every project "Northstar client portal". Smaller than the original finding — the list and shell are correct now — but C9 named this file explicitly and it was not changed.
+- Recommended correction: Reuse the cached list `meta` (same query key) or drop the eyebrow on the create page.
+
+### R3 — `APPSOLO_USE_TEST_DATABASE` is undocumented and bypasses validated configuration
+
+- Severity: Low
+- Requirement or invariant: `markdown/contracts/ENVIRONMENT.md` API variable table and "API startup validates configuration with Zod before opening a listener"; AC16.
+- Evidence: [server.ts:5-8](apps/api/src/server.ts#L5-L8) reads `process.env.APPSOLO_USE_TEST_DATABASE` directly, outside the Zod schema, and redirects the whole API to the test database. It is set only by [e2e/playwright.config.ts:8](e2e/playwright.config.ts#L8) and appears in no `.env.example`, in `ENVIRONMENT.md`, or in the README.
+- Impact: A new operational switch that changes which database the API serves is invisible to anyone reading the environment contract, and it is the one configuration input not validated at startup.
+- Recommended correction: Add it to the ENVIRONMENT.md API table and to `.env.example` as a test-only flag, and parse it through the Zod schema alongside the rest.
+
+### R4 — Two new response behaviors are not reflected in the API contract
+
+- Severity: Low
+- Requirement or invariant: `markdown/contracts/API.md` stable error-code table and P001 route descriptions; AC16.
+- Evidence: [app.ts:54-55](apps/api/src/app.ts#L54-L55) returns code `VALIDATION_ERROR` with HTTP **413**, but the contract table pairs `VALIDATION_ERROR` with 400 only and lists no 413 row (the table was reformatted in this commit but not extended). Separately, the detail route now returns **404** where an unauthorized caller previously got 403 — the correct fix for C6 — yet `markdown/contracts/API.md` still documents only "Unauthorized access returns `403`" and says nothing about the detail route's uniform 404.
+- Impact: A client implementing against the contract would treat `VALIDATION_ERROR` as always-400, and would expect 403 from the detail route. The behavior is right; the documentation is stale.
+- Recommended correction: Add a `PAYLOAD_TOO_LARGE`/413 row (or document the 413 pairing explicitly) and state the detail route's uniform 404-on-unauthorized rule in the route section.
+
+### R5 — `ChangeRequestRepository.findById` is now dead code
+
+- Severity: Low
+- Requirement or invariant: `markdown/REVIEW_CHECKLIST.md` maintainability.
+- Evidence: [repository.ts:86-90](apps/api/src/modules/change-requests/repository.ts#L86-L90); the only reference in the repository is its own declaration — the C6 fix replaced its caller with `findAuthorizedById`.
+- Impact: An unscoped-by-membership lookup left in the tenant-critical repository is exactly the method a future contributor might reach for by name.
+- Recommended correction: Delete it.
+
+### R6 — README seeded-identity table is out of date
+
+- Severity: Low
+- Requirement or invariant: R10 (README documents seeded identities); AC16; QA case Q5.
+- Evidence: The README identity table still lists three identities and describes `…000005` only as "Denied from the seeded project". The seed now also creates `internalOnlyUser` (`…000006`, internal-organization `DEVELOPER`), and `…000005` is now a `CLIENT_MEMBER` of the new `Acme Demo Co.` tenant.
+- Impact: The human running Q5 cannot tell from the README that there are now two distinct denial identities exercising two different rules.
+- Recommended correction: Add the internal-only row and note the Acme tenant membership.
+
+### R7 — The correlation request ID was dropped from structured request logs
+
+- Severity: **Medium**
+- Requirement or invariant: `markdown/ARCHITECTURE.md` ("A request-scoped logger includes request ID, method, route, status, duration, and authenticated user ID when available"); `markdown/contracts/API.md` Request Correlation ("Include it in structured request and error logs"); `markdown/contracts/SECURITY.md` ("Structured logs include request ID"); AC8.
+- Evidence: The C15 de-duplication removed `requestId` from `customProps` entirely rather than removing the duplicate serializer field — [app.ts:35](apps/api/src/app.ts#L35) now reads `customProps: (request) => ({ userId: request.authenticatedUser?.userId })`. In the candidate it was `({ requestId: request.requestId, userId: ... })`.
+- Impact: The UUID returned to the client in the `x-request-id` header and in `error.requestId` is no longer emitted as a log field. `req.id` in the log line is pino-http's per-process counter, not that UUID. Log lines written through `request.log.error` do not receive `customProps` at all, so an internal error cannot be tied to the ID the user was shown — which is the entire purpose of the correlation ID.
+- Reproduction: From the live API log for a request whose response carried `x-request-id: 0fe7a4bd-…`:
+  ```
+  req.id                     = 1
+  top-level requestId present = False
+  ```
+  The UUID survives only incidentally inside `res.headers` on request-completion lines.
+- Recommended correction: Restore `requestId: request.requestId` in `customProps`, and if the duplicate must go, remove it from the serializer side instead — or bind it into the request child logger so error lines carry it too.
+
+## Regression And Scope Checks
+
+- No new dependency was added in the fix commit; every `package.json` change is Prettier reformatting plus the four script changes.
+- `grep -riE "aws|@aws-sdk|cognito|s3"` across `apps/`, `packages/`, and `e2e/` still returns nothing. NG1-NG10 continue to hold; `phase/P001-local-foundation` is still unpushed and `origin/main` is still the base SHA.
+- `0000_spicy_leader.sql` is unchanged and `0000_snapshot.json` is semantically identical, so no previously-applied migration was rewritten.
+- Contract edits in the fix commit are formatting-only except the ENVIRONMENT.md test-database rule, which honestly documents the new behavior. No acceptance criterion was weakened to fit the implementation.
+- The one code change outside the fix commit (`scripts/generate-phase-index.mjs` in `e1f1bd2`) is a Prettier reformat.
+- Live re-probe confirmed no request body content, credential, or connection string appears in the API log output.
+
+## Updated Requirement Status
+
+- R9 (tests) moves from **not met** to met: the TESTING.md required case list and both ENVIRONMENT.md validation proofs are now covered, and the denial evidence uses two real tenants.
+- AC8 moves from **fail** to met for status/code mapping; the correlation half is now weakened by R7.
+- AC9, AC11, AC14, AC15, AC16 move from partial to met, except the documentation residuals in R3, R4, and R6.
+- **AC2 is still unproven.** Docker was unavailable to Codex and to both of my passes. This is missing evidence, not a pass, and only human QA Q1/Q8 can close it.
+
+## Verdict
+
+`ready with non-blocking observations`
+
+The Blocker and both High findings are verified fixed by direct reproduction, not by reading the fix: the test paths can no longer resolve to the development database under any configuration I could construct, `pnpm dev` works from a fully unbuilt checkout, and the missing authorization, detail, ordering, and readiness tests now exist and fail for the right reasons. Every accepted Medium and Low is also fixed, with two partial applications noted (R2, and the `as never` remnant of C15).
+
+Seven items remain for human disposition, none of them blocking: R1 and R7 are Medium and should be fixed before P002 begins, since one will surface as a spurious P002 migration conflict and the other quietly removes the operational thread that ties a user-visible error to a log line. R2-R6 are Low documentation and cleanup items.
+
+AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.

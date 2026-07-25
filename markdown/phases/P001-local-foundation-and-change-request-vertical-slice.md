@@ -80,7 +80,7 @@ None approved.
 | V6  | `pnpm lint`                                                          | Passed  | ESLint and Prettier check completed with no errors.                                                                 |
 | V7  | `pnpm typecheck`                                                     | Passed  | Strict shared, database, API, and web TypeScript checks completed.                                                  |
 | V8  | `pnpm test`                                                          | Passed  | 5 shared/database unit tests passed.                                                                                |
-| V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 11 API/environment/health/integration tests passed.                                        |
+| V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 12 API/environment/health/integration tests passed.                                        |
 | V10 | `pnpm test:web`                                                      | Passed  | 5 React Testing Library environment and UI tests passed.                                                            |
 | V11 | `pnpm build`                                                         | Passed  | Shared, database, API, and Vite web production builds completed.                                                    |
 | V12 | `pnpm exec playwright install chromium`                              | Passed  | Chromium and headless shell installed.                                                                              |
@@ -88,16 +88,17 @@ None approved.
 | V14 | direct `curl` health and authenticated list requests                 | Passed  | Assembled API returned documented `200` readiness and seeded list responses.                                        |
 | V15 | `node scripts/generate-phase-index.mjs --check`                      | Passed  | Canonical phase index is current.                                                                                   |
 | V16 | `git diff --check`                                                   | Passed  | No whitespace errors in the accepted review corrections.                                                            |
+| V17 | `pnpm --filter @appsolo/database generate`                           | Passed  | No schema changes; checked-in Drizzle snapshots match the current schema.                                           |
 
 ## Review
 
 - Handoff: `notes/P001/implementation-handoff.md`
 - Review: `notes/P001/claude-review.md`
-- Verdict: `changes requested`; C1-C15 accepted by the human for in-scope correction.
+- Verdict: focused re-review was `ready with non-blocking observations`; R1-R7 were accepted by the human for in-scope correction and await verification.
 
 ## Finding Disposition
 
-See `notes/P001/review-disposition.md`. C1-C15 were accepted by the human and corrected in the review-fix commit; Claude re-review remains pending.
+See `notes/P001/review-disposition.md`. C1-C15 were verified fixed by focused review; R1-R7 were accepted by the human and corrected in the re-review-fix commit, pending verification.
 
 ## Human QA
 
@@ -108,6 +109,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Base: `2769ccd4a429425e778b070ea98f6fd241188a0f` on `main`.
 - Candidate: `e656d900a0462511e3e8293bcfc2dababb599ba5` (`P001: implement local foundation vertical slice`).
 - Review fixes: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a` (`P001: address accepted review findings`).
+- Re-review fixes: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d` (`P001: address accepted re-review observations`).
 - Final: pending.
 
 ## Deferred Work
@@ -126,7 +128,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Requirements satisfied: Implemented; awaiting independent review.
 - Automated validation satisfied: Yes, except Docker Compose could not be executed because Docker is unavailable in this environment.
 - Review clear: No.
-- Findings dispositioned: Yes; C1-C15 accepted and corrected, pending Claude verification.
+- Findings dispositioned: Yes; C1-C15 verified fixed, R1-R7 accepted and corrected pending Claude verification.
 - Required QA complete: No.
-- Durable docs updated: Yes; review-fix handoff pending focused re-review.
+- Durable docs updated: Yes; re-review-fix handoff pending focused re-review.
 - Ready for integration: Awaiting focused Claude review and required human QA.

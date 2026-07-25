@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Ready for focused Claude re-review of accepted corrections. Codex did not mark the phase complete.
+> Status: Ready for focused Claude re-review of accepted re-review corrections. Codex did not mark the phase complete.
 
 ## Review Target
 
@@ -8,8 +8,10 @@
 - Base SHA: `2769ccd4a429425e778b070ea98f6fd241188a0f`
 - Candidate SHA: `e656d900a0462511e3e8293bcfc2dababb599ba5`
 - Review-fix SHA: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
+- Re-review-fix SHA: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
 - Original implementation diff: `git diff 2769ccd4a429425e778b070ea98f6fd241188a0f..e656d900a0462511e3e8293bcfc2dababb599ba5`
 - Accepted-fix diff: `git diff e656d900a0462511e3e8293bcfc2dababb599ba5..82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
+- Re-review-fix diff: `git diff 82e16fce38c69ea7e8961a654ccdeaeb4f06c07a..bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
 
 ## Revalidation Result
 
@@ -27,6 +29,7 @@
 - React/Vite dashboard with list, detail, creation form, validation, loading/empty/error/success states, and query invalidation.
 - Unit, database-backed API integration, component, and Playwright tests; README and environment contract updates.
 - All human-accepted C1-C15 corrections: isolated test URL resolution, clean-checkout database build, expanded route/environment/UI coverage, safe body-parser errors, scoped detail reads, realistic denial seed data, metadata-driven UI context, feedback states, enforced formatting, lightweight API modules, normalized email constraints, and narrowed logging/types.
+- All human-accepted R1-R7 corrections: generated Drizzle snapshot chain, cache-driven create-form context, validated/documented E2E database switch, exact API behavior documentation, dead-query removal, complete seeded-identity guidance, and one request UUID per structured log line.
 
 ## Acceptance-Criteria Evidence
 
@@ -57,23 +60,24 @@
 
 ## Validation
 
-| ID    | Command                                         | Result  | Evidence                                                     |
-| ----- | ----------------------------------------------- | ------- | ------------------------------------------------------------ |
-| V1    | `node scripts/check-scaffolding.mjs`            | Passed  | 27 required files, 11 phase records.                         |
-| V2    | `pnpm install`                                  | Passed  | Lockfile created; esbuild build allowed narrowly.            |
-| V3    | `pnpm docker:up`                                | Not run | Docker unavailable.                                          |
-| V4-V5 | migration, seed, guarded test reset             | Passed  | Separate WSL dev/test databases migrated and seeded.         |
-| V6    | `pnpm lint`                                     | Passed  | ESLint and Prettier check passed.                            |
-| V7    | `pnpm typecheck`                                | Passed  | All four workspace packages.                                 |
-| V8    | `pnpm test`                                     | Passed  | 5 shared/database unit tests.                                |
-| V9    | `pnpm test:api`                                 | Passed  | 11 API/environment/health/PostgreSQL tests.                  |
-| V10   | `pnpm test:web`                                 | Passed  | 5 environment and user-observable UI tests.                  |
-| V11   | `pnpm build`                                    | Passed  | Shared, database, API, and web builds.                       |
-| V12   | `pnpm exec playwright install chromium`         | Passed  | Browser installed.                                           |
-| V13   | `pnpm test:e2e`                                 | Passed  | 1 real browser/API/test-PostgreSQL list/create/refresh test. |
-| V14   | direct health/list curl                         | Passed  | `200` safe readiness and seeded list response.               |
-| V15   | `node scripts/generate-phase-index.mjs --check` | Passed  | Index regenerated after review state update.                 |
-| V16   | `git diff --check`                              | Passed  | No whitespace errors in accepted corrections.                |
+| ID    | Command                                         | Result  | Evidence                                                         |
+| ----- | ----------------------------------------------- | ------- | ---------------------------------------------------------------- |
+| V1    | `node scripts/check-scaffolding.mjs`            | Passed  | 27 required files, 11 phase records.                             |
+| V2    | `pnpm install`                                  | Passed  | Lockfile created; esbuild build allowed narrowly.                |
+| V3    | `pnpm docker:up`                                | Not run | Docker unavailable.                                              |
+| V4-V5 | migration, seed, guarded test reset             | Passed  | Separate WSL dev/test databases migrated and seeded.             |
+| V6    | `pnpm lint`                                     | Passed  | ESLint and Prettier check passed.                                |
+| V7    | `pnpm typecheck`                                | Passed  | All four workspace packages.                                     |
+| V8    | `pnpm test`                                     | Passed  | 5 shared/database unit tests.                                    |
+| V9    | `pnpm test:api`                                 | Passed  | 12 API/environment/health/PostgreSQL tests.                      |
+| V10   | `pnpm test:web`                                 | Passed  | 5 environment and user-observable UI tests.                      |
+| V11   | `pnpm build`                                    | Passed  | Shared, database, API, and web builds.                           |
+| V12   | `pnpm exec playwright install chromium`         | Passed  | Browser installed.                                               |
+| V13   | `pnpm test:e2e`                                 | Passed  | 1 real browser/API/test-PostgreSQL list/create/refresh test.     |
+| V14   | direct health/list curl                         | Passed  | `200` safe readiness and seeded list response.                   |
+| V15   | `node scripts/generate-phase-index.mjs --check` | Passed  | Index regenerated after review state update.                     |
+| V16   | `git diff --check`                              | Passed  | No whitespace errors in accepted corrections.                    |
+| V17   | `pnpm --filter @appsolo/database generate`      | Passed  | No schema changes; `0001_snapshot.json` matches migration state. |
 
 ## Manual Testing Already Performed
 
@@ -92,6 +96,13 @@ Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P0
 - C13-C15: API composition is split into middleware and route modules; lowercase email is constrained and indexed; duplicate log fields and unsafe rendering/type assertions were removed.
 - Final accepted-fix rerun: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:api`, `pnpm test:web`, `pnpm build`, `pnpm test:e2e`, scaffolding validation, phase-index check, and diff check all passed. Docker remains not run because it is unavailable.
 
+## Re-Review-Fix Verification
+
+- R1: Drizzle now has `0001_snapshot.json`; a fresh `pnpm --filter @appsolo/database generate` reports no schema changes.
+- R2-R6: create context reads cached API metadata, the test-database flag is validated/documented, the API contract records 413 and scoped-detail 404 behavior, dead repository code is removed, and README lists both denial identities.
+- R7: request logs and health-error logs contain the response `x-request-id` exactly once; API integration output verifies the correlation line.
+- Final rerun passed `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:api`, `pnpm test:web`, `pnpm build`, `pnpm test:e2e`, scaffolding validation, phase-index check, Drizzle generation check, and diff check. Docker remains not run because it is unavailable.
+
 ## Requested Review Focus
 
-Verify the C1 test-target isolation boundary, C5/C6 error and scope semantics, C7 denial seed proof, C10 status-driven UI test, email normalization migration, and that no AWS or out-of-scope work was added.
+Verify the R1 snapshot prevents duplicate Drizzle output, R3 configuration remains test-only and validated, R4 contract fidelity, and R7 emits exactly one request UUID on normal and error logs. Confirm no AWS or out-of-scope work was added.

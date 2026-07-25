@@ -30,15 +30,23 @@ Every Claude finding, including Medium and Low observations, must appear below.
 | C13     | Low      | Accepted    | Restore lightweight API module boundaries.                             | `82e16fc`              |
 | C14     | Low      | Accepted    | Enforce lowercase-normalized user-email uniqueness.                    | `82e16fc`              |
 | C15     | Low      | Accepted    | Address listed type-safety, logging, and rendering rough edges.        | `82e16fc`              |
+| R1      | Medium   | Accepted    | Check in Drizzle metadata matching the normalized-email migration.     | `bc45e4f`              |
+| R2      | Low      | Accepted    | Remove the remaining seeded project label from the create form.        | `bc45e4f`              |
+| R3      | Low      | Accepted    | Document and validate the Playwright test-database switch.             | `bc45e4f`              |
+| R4      | Low      | Accepted    | Align payload/detail behavior with the API contract.                   | `bc45e4f`              |
+| R5      | Low      | Accepted    | Remove the obsolete unscoped repository lookup.                        | `bc45e4f`              |
+| R6      | Low      | Accepted    | Document all seeded denial identities for QA.                          | `bc45e4f`              |
+| R7      | Medium   | Accepted    | Restore one structured request UUID on normal and error logs.          | `bc45e4f`              |
 
 ## Product Or Architecture Decisions
 
 Record any human decision needed to resolve findings. Promote cross-phase decisions to an ADR or technical contract rather than leaving them only here.
 
 - Human decision: All C1-C15 are accepted as in-scope P001 corrections. Codex may implement them, rerun applicable validation, create review-fix commit(s), and update the handoff. P001 remains incomplete pending Claude verification and human QA.
+- Human decision: All focused re-review observations R1-R7 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
 
 ## Fix Verification
 
-- Blocker/High findings verified by Claude: Pending focused re-review.
-- Remaining accepted findings: C1-C15 implemented in `82e16fc` and validated by Codex; pending focused Claude re-review.
+- Blocker/High findings verified by Claude: C1-C3 verified fixed by focused re-review.
+- Remaining accepted findings: C1-C15 were verified or partially verified by the focused review; R1-R7 are implemented in `bc45e4f`, validated by Codex, and pending focused Claude verification.
 - Deferred items added to destination phase: Not applicable yet.
