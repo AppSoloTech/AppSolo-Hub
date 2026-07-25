@@ -42,6 +42,7 @@ Every Claude finding, including Medium and Low observations, must appear below.
 | R10     | Low      | Accepted    | Replace the residual unsafe health-test database cast.                 | `9693281`              |
 | R11     | Low      | Accepted    | Keep the application composition root free of test-only route modes.   | `29fdf5e`              |
 | R12     | High     | Accepted    | Guarantee E2E environment precedence and fresh isolated API processes. | `29fdf5e`              |
+| R13     | Low      | Accepted    | Cover the assembled application's safe database-unavailable response.  | `5885db4`              |
 
 ## Product Or Architecture Decisions
 
@@ -51,9 +52,10 @@ Record any human decision needed to resolve findings. Promote cross-phase decisi
 - Human decision: All focused re-review observations R1-R7 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
 - Human decision: All second focused re-review findings R8-R10 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
 - Human decision: All third focused re-review findings R11-R12 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
+- Human decision: Fourth focused re-review finding R13 is accepted as an in-scope P001 correction. P001 remains incomplete pending verification and human QA.
 
 ## Fix Verification
 
-- Earlier findings: C1-C15, R1-R7, and R8-R10 were verified fixed by Claude's focused reviews.
-- Latest accepted findings: R11-R12 are implemented in `29fdf5e`, validated by Codex, and pending focused Claude verification.
+- Earlier findings: C1-C15 and R1-R12 were verified fixed by Claude's focused reviews.
+- Latest accepted finding: R13 is implemented in `5885db4`, validated by Codex, and pending focused Claude verification.
 - Deferred items added to destination phase: Not applicable yet.

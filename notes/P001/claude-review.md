@@ -680,7 +680,7 @@ log msg='request errored'                  requestId='d93b7280-…'  leaks datab
 - I re-verified the C1 boundary: `test:prepare` and the API integration suite still resolve exclusively through `resolvedTestDatabaseUrl`, and both still reset/read only `appsolo_client_hub_test`. R12 affects the Playwright API server process, not the reset path — nothing destructive reaches the development database.
 - Live probes confirmed no request body, credential, or connection string appears in API log output, including the database-failure path.
 
-## Verdict
+## Verdict (third focused re-review — superseded by the fourth focused re-review below)
 
 `changes requested`
 
@@ -691,3 +691,133 @@ The blocking issue is R12: `apps/api/src/config/env.ts` loads `apps/api/.env` wi
 R11 is a Low observation about the shape of the R10 fix and may reasonably be rejected.
 
 AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.
+
+---
+
+# Fourth Focused Re-Review — Accepted Third Re-Review Findings
+
+## Re-Review Target
+
+- Second re-review-fix SHA: `9693281`
+- Third re-review-fix SHA: `29fdf5e` (exists, `P001: address accepted third re-review findings`)
+- Reviewed range: `git diff 9693281..29fdf5e` — source changes confined to `apps/api/src`, `apps/web/src`, `e2e/playwright.config.ts`, `README.md`, and `markdown/contracts/ENVIRONMENT.md`
+- Working tree at re-review time: clean at `f9986bd` (`P001: record third re-review fix handoff`). `29fdf5e..f9986bd` touches only the P001 phase record and `notes/P001/*`.
+- Disposition source: `notes/P001/review-disposition.md` — R11 and R12 both `Accepted`.
+
+## Validation Rerun
+
+| Command                                                                                                       | Result      | Notes                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
+| `git cat-file -t 29fdf5e`                                                                                     | Passed      | Fix SHA exists.                                                                                        |
+| `pnpm lint`                                                                                                   | Passed      | ESLint + `prettier --check .`.                                                                         |
+| `pnpm typecheck`                                                                                              | Passed      | Four packages, strict.                                                                                 |
+| `pnpm test`                                                                                                   | Passed      | 5 tests (shared 2, database 3).                                                                        |
+| `pnpm test:api`                                                                                               | Passed      | 13 tests — `env.test.ts` (6), `health.routes.test.ts` (2), `change-requests.integration.test.ts` (5).  |
+| `pnpm test:web`                                                                                               | Passed      | 6 tests.                                                                                               |
+| `pnpm build`                                                                                                  | Passed      | All packages.                                                                                          |
+| `pnpm test:e2e`                                                                                               | Passed      | 1 Playwright test against the real stack, now with forced fresh servers.                               |
+| `pnpm --filter @appsolo/database generate`                                                                    | Passed      | `No schema changes, nothing to migrate`.                                                               |
+| `node scripts/check-scaffolding.mjs`, `generate-phase-index.mjs --check`, `git diff --check 9693281..29fdf5e` | Passed      | Clean.                                                                                                 |
+| `pnpm docker:up`                                                                                              | **Not run** | `docker: command not found` — rechecked this pass. AC2 still has no execution evidence from any agent. |
+| Probe: API database resolution with `apps/api/.env` present, three precedence cases                           | Passed      | R12 confirmed — see below.                                                                             |
+| Probe: live `503` health through the assembled app with an unreachable database                               | Passed      | Envelope, redaction, and correlation intact after the health-route rework.                             |
+
+Codex's recorded counts (5 / 13 / 6) match exactly what I observed.
+
+## Accepted-Fix Verification
+
+| Finding | Severity | Status             | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------- | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R11     | Low      | **Verified fixed** | `AppDependencies` is a single `{ db, config }` shape again and `createApp` always mounts the real authentication middleware and change-request router ([app.ts:17-20,47-55](apps/api/src/app.ts#L17-L20)). `grep -rn "testOnly\|changeRequestTestRouter\|as never"` across `apps/`, `packages/`, and `e2e/` returns nothing, so neither the test-only branch nor the original unsafe cast survives. `HealthDatabase` now lives with the health route, and the `checkDatabase` injection hole is gone entirely — the route always executes `db.execute('select 1')`. |
+| R12     | High     | **Verified fixed** | See detail below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+### R11 — verified fixed, and the test fidelity improved
+
+The fix went further than my recommendation in a way worth recording: the malformed-body and oversized-body cases moved out of the stubbed app and into the database-backed integration suite ([change-requests.integration.test.ts:98-110](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L98-L110)), so they now exercise the fully assembled application — real middleware chain, real router, real database — instead of an empty router. Health success and failure are covered directly in the new [health.routes.test.ts](apps/api/src/modules/health/health.routes.test.ts) against a two-line `HealthDatabase` stub.
+
+I confirmed the assembled `503` path still behaves correctly after the rework, since no test exercises it end to end (see R13). Against an unreachable database:
+
+```
+HTTP/1.1 503 Service Unavailable
+{"error":{"code":"DATABASE_UNAVAILABLE","message":"The service is temporarily unavailable.",
+          "details":[],"requestId":"bf2bd9f2-…"}}
+log msg='database readiness check failed'  requestId='bf2bd9f2-…'  leaks database name: False
+log msg='request errored'                  requestId='bf2bd9f2-…'  leaks database name: False
+```
+
+### R12 — verified fixed
+
+[config/env.ts:12-30](apps/api/src/config/env.ts#L12-L30) replaces the two `loadEnv` calls with `loadApiEnvironment`, which parses each file into a private object via dotenv's `processEnv` option and then copies in only the keys the environment does not already define, root file first. Exported values therefore win, and root `.env` wins over duplicate `apps/api/.env` keys — the precedence now documented in both `README.md` and `markdown/contracts/ENVIRONMENT.md`. A regression test writes conflicting fixture files to a temp directory and asserts the exported values survive ([env.test.ts:37-56](apps/api/src/config/env.test.ts#L37)).
+
+I re-ran the exact scenario that produced the finding, with `apps/api/.env` copied from the example as the README instructs:
+
+```
+A  apps/api/.env present + APPSOLO_USE_TEST_DATABASE=true exported (Playwright's case)
+   config.APPSOLO_USE_TEST_DATABASE = true
+   database served = …/appsolo_client_hub_test        (was: …/appsolo_client_hub_dev)
+
+B  apps/api/.env present, nothing exported (normal development)
+   config.APPSOLO_USE_TEST_DATABASE = false
+   database served = …/appsolo_client_hub_dev          (unchanged, correct)
+
+C  PORT=4999 exported against files declaring 4001 and 4002
+   PORT = 4999                                          (exported value wins)
+```
+
+The probe file was created for the test and deleted afterwards. `e2e/playwright.config.ts` additionally sets `reuseExistingServer: false` on both servers, closing the related path where an already-running development API could serve the smoke test, and the README documents that the ports must be free.
+
+## New Findings
+
+### R13 — The assembled application's `503` health path has no automated coverage
+
+- Severity: Low
+- Requirement or invariant: `markdown/TESTING.md` required case "health endpoint reports unavailability safely when the database check fails"; AC7.
+- Evidence: [health.routes.test.ts:10-29](apps/api/src/modules/health/health.routes.test.ts#L10-L29) builds its own express instance with a locally-defined error handler rather than using `createApp`, so the `503` assertion does not exercise the application's real error middleware. The integration suite covers `/health` only on the success path ([change-requests.integration.test.ts:33](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L33)). This is a consequence of removing the `checkDatabase` injection point, which is otherwise a good simplification.
+- Impact: A future change to the shared error middleware — for example adding a branch above the `AppError` case — could alter the real `503` envelope while both health tests still pass. Risk is low: I verified the assembled behavior manually this pass and the envelope was correct, redacted, and correlated.
+- Recommended correction: Add one integration case that constructs the app with a database pool pointed at an unreachable database (or a `Database`-shaped stub whose `execute` rejects) and asserts `503`, the `DATABASE_UNAVAILABLE` code, and the absence of driver text. Alternatively record that the hand-assembled coverage is accepted.
+
+## Regression And Scope Checks
+
+- No new dependency. Source changes stay inside the phase's own files.
+- `grep -riE "aws|@aws-sdk|cognito|s3"` across `apps/`, `packages/`, and `e2e/` still returns nothing. NG1-NG10 hold; the branch is unpushed and `origin/main` is still the base SHA.
+- Migrations untouched; `db:generate` reports nothing pending, so R1 stays closed.
+- C1's isolation boundary re-verified: `test:prepare` and the integration suite resolve only through `resolvedTestDatabaseUrl`, and with R12 fixed the Playwright API process now also lands on `appsolo_client_hub_test` under the documented configuration. All three routes into the test databases are now consistent.
+- R8 re-checked by test: `NewChangeRequest.test.tsx` still renders the create route with a bare `QueryClient` and passes.
+- Live probe confirmed no request body, credential, or connection string in API log output, including the database-failure path.
+
+## Cumulative Finding Status
+
+| Pass                     | Findings                                                   | Status             |
+| ------------------------ | ---------------------------------------------------------- | ------------------ |
+| Initial review           | C1 (Blocker), C2-C3 (High), C4-C10 (Medium), C11-C15 (Low) | All verified fixed |
+| Focused re-review        | R1, R7 (Medium), R2-R6 (Low)                               | All verified fixed |
+| Second focused re-review | R8 (High), R9-R10 (Low)                                    | All verified fixed |
+| Third focused re-review  | R12 (High), R11 (Low)                                      | All verified fixed |
+| This pass                | R13 (Low)                                                  | Open, non-blocking |
+
+No Blocker or High finding remains open. Every earlier fix was re-checked this pass and none regressed.
+
+## Human QA Status
+
+`notes/P001/qa.md` still records every case as `Not run`, with `Required QA complete: No`. Claude cannot perform or substitute for human QA, and this review does not discharge it. The following remain outstanding and are the gating items for `complete`:
+
+- **Q1 and Q8 are the only evidence path for AC2.** Docker Compose has been unavailable to Codex and to all four of my passes (`docker: command not found`), so the Compose service, its health check, and the `docker/init-test-db.sql` creation of `appsolo_client_hub_test` have never been executed by anyone. AC2 is unproven, not passed.
+- **Q6 deserves particular attention**, because the database-failure path is the one behavior I verified only by manual probe rather than by an automated test through the assembled app (R13).
+- **Q5** should exercise both seeded denial identities now documented in the README — `…000005` (Acme Demo Co. member) and `…000006` (internal-only) — since they prove two different authorization rules.
+- **Q7** (keyboard and narrow viewport) has no automated proxy at all; nothing in the suite covers it.
+- Q2, Q3, and Q4 have automated analogues that pass, but human confirmation is still required by the phase record.
+
+## Verdict
+
+`ready with non-blocking observations`
+
+Both accepted findings are verified fixed by direct reproduction. R12 in particular is closed at the root: environment files now fill only unset values, so exported variables win, and the scenario that previously routed the browser smoke at the development database now correctly resolves to `appsolo_client_hub_test` with `apps/api/.env` present exactly as the README instructs. A regression test pins the precedence, and forced fresh Playwright servers close the adjacent reuse path. R11's rework also improved test fidelity rather than merely reverting.
+
+Across five passes, one Blocker, three High, nine Medium, and eleven Low findings have been raised and every one is now verified fixed. The implementation matches the phase contracts: tenant authorization is enforced in a single scoped query and proven against two real client tenants plus an internal-only user, the create transaction and status history behave as specified, error envelopes and redaction hold under adversarial probing, migrations are additive with a consistent snapshot chain, and no AWS or out-of-scope work entered the phase.
+
+Two things stand between this and `complete`, and neither is mine to close:
+
+1. **AC2 has no execution evidence.** Docker was unavailable in every environment available to Codex and to me. The Compose path must be exercised by human QA Q1/Q8 before the completion gate can be satisfied.
+2. **All eight human QA cases remain unrun.** `notes/P001/qa.md` records `Not run` for Q1-Q8.
+
+R13 is a Low observation about test coverage of the assembled `503` path and needs only a disposition.

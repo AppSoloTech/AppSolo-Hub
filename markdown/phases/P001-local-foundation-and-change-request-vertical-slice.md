@@ -80,7 +80,7 @@ None approved.
 | V6  | `pnpm lint`                                                          | Passed  | ESLint and Prettier check completed with no errors.                                                                 |
 | V7  | `pnpm typecheck`                                                     | Passed  | Strict shared, database, API, and web TypeScript checks completed.                                                  |
 | V8  | `pnpm test`                                                          | Passed  | 5 shared/database unit tests passed.                                                                                |
-| V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 13 API/environment/health/integration tests passed.                                        |
+| V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 14 API/environment/health/integration tests passed.                                        |
 | V10 | `pnpm test:web`                                                      | Passed  | 6 React Testing Library environment and UI tests passed.                                                            |
 | V11 | `pnpm build`                                                         | Passed  | Shared, database, API, and Vite web production builds completed.                                                    |
 | V12 | `pnpm exec playwright install chromium`                              | Passed  | Chromium and headless shell installed.                                                                              |
@@ -94,11 +94,11 @@ None approved.
 
 - Handoff: `notes/P001/implementation-handoff.md`
 - Review: `notes/P001/claude-review.md`
-- Verdict: third focused re-review was `changes requested`; R11-R12 were accepted by the human, corrected in `29fdf5e`, and await verification.
+- Verdict: fourth focused re-review was `ready with non-blocking observations`; R11-R12 were verified fixed, and accepted R13 was corrected in `5885db4` pending verification.
 
 ## Finding Disposition
 
-See `notes/P001/review-disposition.md`. C1-C15, R1-R7, and R8-R10 were verified fixed by focused review; R11-R12 were accepted by the human and corrected in the third re-review-fix commit, pending verification.
+See `notes/P001/review-disposition.md`. C1-C15 and R1-R12 were verified fixed by focused review; R13 was accepted by the human and corrected in the fourth re-review-fix commit, pending verification.
 
 ## Human QA
 
@@ -112,6 +112,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Re-review fixes: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d` (`P001: address accepted re-review observations`).
 - Second re-review fixes: `9693281248e7f8a45eb4ae5fc0a62e336cf166dc` (`P001: address accepted second re-review findings`).
 - Third re-review fixes: `29fdf5efc62b0bc06aea5946271edcf3799e924a` (`P001: address accepted third re-review findings`).
+- Fourth re-review fixes: `5885db4890d5f7240166088e2674434a1e9d6eb1` (`P001: cover assembled health failure`).
 - Final: pending.
 
 ## Deferred Work
@@ -130,7 +131,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Requirements satisfied: Implemented; awaiting independent review.
 - Automated validation satisfied: Yes, except Docker Compose could not be executed because Docker is unavailable in this environment.
 - Review clear: No.
-- Findings dispositioned: Yes; C1-C15, R1-R7, and R8-R10 verified fixed; R11-R12 accepted and corrected pending Claude verification.
+- Findings dispositioned: Yes; C1-C15 and R1-R12 verified fixed; R13 accepted and corrected pending Claude verification.
 - Required QA complete: No.
-- Durable docs updated: Yes; third re-review-fix handoff prepared for focused re-review.
+- Durable docs updated: Yes; fourth re-review-fix handoff prepared for focused re-review.
 - Ready for integration: Awaiting focused Claude review and required human QA.
