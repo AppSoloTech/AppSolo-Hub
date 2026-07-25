@@ -560,7 +560,7 @@ A user-visible error ID now ties directly to the internal log line, which is wha
 - I re-verified that the C1 isolation boundary still holds after these changes: `test:prepare` and the integration suite still resolve only through `resolvedTestDatabaseUrl`, and `pnpm test:api`/`pnpm test:e2e` still touch only `appsolo_client_hub_test`.
 - Live re-probe confirmed no request body content, credential, or connection string appears in API log output, including the database-failure path.
 
-## Verdict
+## Verdict (second focused re-review — superseded by the third focused re-review below)
 
 `changes requested`
 
@@ -569,5 +569,125 @@ R1 and R7 — the two Medium items that mattered — are verified fixed by direc
 The blocking issue is R8, a High regression introduced by the R2 fix in this very commit: the change-request creation route now throws during render whenever the list query is not already cached, and with no error boundary the whole application unmounts to a blank page. Direct navigation, a refresh on the form, and opening the form in a new tab all hit it. Neither the Playwright smoke nor the component test can catch it, because both pre-populate the exact cache entry whose absence causes the crash — so this would most likely have surfaced first during human QA on Q3 or Q4. The fix is a one-line guard plus a test that renders the form with an empty cache.
 
 R9 and R10 are Low and need only a disposition.
+
+AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.
+
+---
+
+# Third Focused Re-Review — Accepted Second Re-Review Findings
+
+## Re-Review Target
+
+- Re-review-fix SHA: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
+- Second re-review-fix SHA: `9693281` (exists, `P001: address accepted second re-review findings`)
+- Reviewed range: `git diff bc45e4f7030f5521ddfc3a9e50c270da1a81c99d..9693281` (11 files, +302 / -51; source changes confined to `apps/api/src` and `apps/web/src`, the rest is control-plane evidence including my own second re-review text)
+- Working tree at re-review time: clean at `4ab700a` (`P001: record second re-review fix handoff`). `9693281..4ab700a` touches only the P001 phase record and `notes/P001/*`.
+- Disposition source: `notes/P001/review-disposition.md` — R8, R9, R10 all `Accepted`.
+
+## Validation Rerun
+
+| Command                                                                                                       | Result      | Notes                                                             |
+| ------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `git cat-file -t 9693281`                                                                                     | Passed      | Fix SHA exists.                                                   |
+| `pnpm lint`                                                                                                   | Passed      | ESLint + `prettier --check .`, both clean.                        |
+| `pnpm typecheck`                                                                                              | Passed      | Four packages, strict.                                            |
+| `pnpm test`                                                                                                   | Passed      | 5 tests (shared 2, database 3).                                   |
+| `pnpm test:api`                                                                                               | Passed      | 12 tests.                                                         |
+| `pnpm test:web`                                                                                               | Passed      | 6 tests — `NewChangeRequest.test.tsx` is now 2.                   |
+| `pnpm build`                                                                                                  | Passed      | All packages.                                                     |
+| `pnpm test:e2e`                                                                                               | Passed      | 1 Playwright test against the real stack.                         |
+| `pnpm --filter @appsolo/database generate`                                                                    | Passed      | `No schema changes, nothing to migrate`.                          |
+| `node scripts/check-scaffolding.mjs`, `generate-phase-index.mjs --check`, `git diff --check bc45e4f..9693281` | Passed      | Clean.                                                            |
+| `pnpm docker:up`                                                                                              | **Not run** | Docker still unavailable. AC2 remains without execution evidence. |
+| Probe: real-browser deep link to the create route with a cold cache                                           | Passed      | R8 confirmed — see below.                                         |
+| Probe: live request/error logging, authenticated + unauthenticated + failing database                         | Passed      | R9 confirmed — see below.                                         |
+| Probe: API database resolution with `apps/api/.env` present, as the README instructs                          | **Failed**  | See R12.                                                          |
+
+## Accepted-Fix Verification
+
+| Finding | Severity | Status                              | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------- | -------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R8      | High     | **Verified fixed**                  | [NewChangeRequest.tsx:23-24](apps/web/src/features/change-requests/NewChangeRequest.tsx#L23-L24) now destructures `(requestList?.meta ?? {})`, and a second component test renders the form with a bare `QueryClient` and asserts both the heading and the `Authorized organization · Project` fallback. Re-running the exact Chromium deep link that previously produced a blank page now yields `h1 count: 1`, the full shell and form, and `page errors: []`. |
+| R9      | Low      | **Verified fixed**                  | The library-timing dependency is gone. [app.ts:41-44](apps/api/src/app.ts#L41-L44) now sets `genReqId: (request) => request.requestId`, `quietReqLogger: true`, and `customAttributeKeys: { reqId: 'requestId' }`, leaving `customProps` to contribute only `userId`. Correlation no longer relies on `customProps` being evaluated before authentication.                                                                                                       |
+| R10     | Low      | Verified fixed, with an observation | `db: {} as never` is gone. `createApp` now takes a discriminated union and the health tests pass a structurally-typed `HealthDatabase` ([app.ts:17-31](apps/api/src/app.ts#L17-L31), [app.test.ts:15-26](apps/api/src/app.test.ts#L15-L26)). The unsafe cast the finding named no longer exists. See R11 for the cost.                                                                                                                                           |
+
+### R8 — verified fixed
+
+```
+--- direct deep link to /projects/<seeded>/change-requests/new (cold query cache) ---
+h1 count:   1
+root text:  "AppSolo Client Hub … Authorized workspace … Change requests … ← Change requests …
+             AUTHORIZED ORGANIZATION · PROJECT … New change request … Descr"
+page errors: []
+```
+
+The new test also guards the regression at the unit level, and `afterEach(cleanup)` was added so the two cases in that file stay independent.
+
+### R9 — verified fixed
+
+Live requests through the assembled API — an authenticated `200`, an unknown-user `401`, and a health request:
+
+```
+status=200 requestId='7c6de50e-…' userId='20000000-…-000000000003' req.id='7c6de50e-…' header='7c6de50e-…'
+status=401 requestId='3389e994-…' userId=None                      req.id='3389e994-…' header='3389e994-…'
+status=200 requestId='88e6bed7-…' userId=None                      req.id='88e6bed7-…' header='88e6bed7-…'
+```
+
+Every line carries exactly one `"requestId"` key (`awk` count = 1 on each), and on each line it equals that request's own `x-request-id` response header. Pointing the API at an unreachable database still correlates the failure end to end:
+
+```
+response 503, x-request-id d93b7280-…, body error.requestId d93b7280-…
+log msg='database readiness check failed'  requestId='d93b7280-…'  leaks database name: False
+log msg='request errored'                  requestId='d93b7280-…'  leaks database name: False
+```
+
+## New Findings
+
+### R12 — `apps/api/.env` overrides exported variables, so Playwright's test-database switch is silently disabled
+
+- Severity: **High**
+- Requirement or invariant: `markdown/TESTING.md` ("Development and test databases must be separate"; "Integration and E2E test processes use `TEST_DATABASE_URL` or an explicitly injected test URL"); `markdown/contracts/ENVIRONMENT.md` (`APPSOLO_USE_TEST_DATABASE` is a "validated test-only switch"); AC15.
+- Evidence:
+  - [apps/api/src/config/env.ts:6-10](apps/api/src/config/env.ts#L6-L10) loads `apps/api/.env` with `override: true`, which inverts the normal precedence — values in the file beat variables already exported into the process environment.
+  - [apps/api/.env.example:2](apps/api/.env.example#L2) ships `APPSOLO_USE_TEST_DATABASE=false` and line 3 ships the development `DATABASE_URL`.
+  - [README.md:37](README.md#L37) instructs `cp apps/api/.env.example apps/api/.env` as part of normal installation.
+  - [e2e/playwright.config.ts:8](e2e/playwright.config.ts#L8) starts the API with `APPSOLO_USE_TEST_DATABASE=true` in the command environment — exactly the kind of value the `override: true` load discards.
+- Impact: For any developer who followed the documented setup, `pnpm test:e2e` runs the API against **`appsolo_client_hub_dev`**. `test:prepare` still correctly resets only the test database, so the browser smoke then reads and writes the developer's development data instead — it creates a `Browser request <timestamp>` change request there on every run. The test still passes, because the development database is seeded identically, so nothing signals the loss of isolation. This is not destructive — no `DROP` or `TRUNCATE` reaches the development database — but it defeats the isolation guarantee AC15 asserts, under the configuration the README tells people to create.
+- Reproduction: with `apps/api/.env` copied from the example, and `APPSOLO_USE_TEST_DATABASE=true` exported exactly as Playwright sets it:
+  ```
+  exported APPSOLO_USE_TEST_DATABASE=true
+  config.APPSOLO_USE_TEST_DATABASE = false
+  database the API would serve     = postgresql://appsolo:appsolo_local_only@localhost:5432/appsolo_client_hub_dev
+  ```
+  (The file was created for this probe and deleted afterwards; `apps/api/.env` is gitignored and the tree is clean.)
+- Note on origin: the `override: true` load arrived with the C4 fix in `82e16fc` and became harmful in `bc45e4f`, when `APPSOLO_USE_TEST_DATABASE` moved into the dotenv-loaded configuration and into `apps/api/.env.example`. My second re-review verified R3's validation and documentation but did not test the interaction with the overriding loader; this pass did.
+- Recommended correction: Load `apps/api/.env` without `override`, so explicitly exported variables win — that is the conventional precedence and it restores the Playwright switch. If per-app override is genuinely wanted for the other keys, exclude the test switch, or have Playwright inject `TEST_DATABASE_URL`/the database choice through a channel the loader cannot overwrite. A regression test that boots `parseApiConfig` with both an exported `true` and a file-provided `false` would pin the precedence.
+- Related, pre-existing: `reuseExistingServer: !process.env.CI` in the Playwright config means a developer's already-running `pnpm dev` API (serving the development database) is reused for the smoke run. Worth closing in the same change.
+
+### R11 — The R10 fix puts a test-only branch in the application composition root
+
+- Severity: Low
+- Requirement or invariant: `markdown/REVIEW_CHECKLIST.md` maintainability ("No speculative base repository/service framework was added"; "Functions and modules have focused responsibilities"); `markdown/ARCHITECTURE.md` backend composition.
+- Evidence: `AppDependencies` is now a discriminated union on a `testOnly` flag, and [app.ts:66-75](apps/api/src/app.ts#L66-L75) branches on it, mounting a caller-supplied `changeRequestTestRouter` instead of the real authentication middleware and change-request router. Production call sites must now pass `testOnly: false` ([server.ts:9](apps/api/src/server.ts#L9), [change-requests.integration.test.ts:20](apps/api/src/modules/change-requests/change-requests.integration.test.ts#L20)).
+- Impact: The application factory now has a mode that exists only for tests, and the health tests no longer assemble the real route stack — the malformed-body and oversized-body cases run against a stub router. Those assertions remain valid (the body parser throws before routing), so nothing is currently mistested; the cost is that the composition root is shaped by its tests and could drift further. This is a smaller problem than the `as never` it replaced, but it is a larger change than the finding required.
+- Recommended correction: Consider testing `healthRouter` directly against a small express app in `health.routes.test.ts` and reverting `createApp` to a single dependency shape. This is a judgment call and a `Rejected` disposition would be entirely reasonable.
+
+## Regression And Scope Checks
+
+- No new dependency; no source file outside `apps/api/src` and `apps/web/src` changed in the fix commit.
+- `grep -riE "aws|@aws-sdk|cognito|s3"` across `apps/`, `packages/`, and `e2e/` still returns nothing. NG1-NG10 hold; the branch is unpushed and `origin/main` is still the base SHA.
+- Migrations untouched; `db:generate` still reports no pending changes, so R1 remains closed.
+- I re-verified the C1 boundary: `test:prepare` and the API integration suite still resolve exclusively through `resolvedTestDatabaseUrl`, and both still reset/read only `appsolo_client_hub_test`. R12 affects the Playwright API server process, not the reset path — nothing destructive reaches the development database.
+- Live probes confirmed no request body, credential, or connection string appears in API log output, including the database-failure path.
+
+## Verdict
+
+`changes requested`
+
+R8 is verified fixed in a real browser — the deep-linked create route renders the full shell with the neutral fallback and throws nothing — and it is now pinned by a component test that renders with an empty cache. R9 is verified fixed and is a genuine improvement: correlation now comes from `genReqId`/`customAttributeKeys` rather than from an incidental detail of when `pino-http` evaluates `customProps`. R10's unsafe cast is gone.
+
+The blocking issue is R12: `apps/api/src/config/env.ts` loads `apps/api/.env` with `override: true`, so the `APPSOLO_USE_TEST_DATABASE=true` that Playwright exports is overwritten by the `false` shipped in `apps/api/.env.example` — the file the README tells every developer to create. Under the documented setup, `pnpm test:e2e` therefore runs the browser smoke against the development database and writes a new change request into it on every run, while still reporting success. It is not destructive, but it silently voids the isolation AC15 asserts, and it is the third variant of the same configuration-precedence problem in this phase. The fix is to drop `override` so exported variables win, plus a test that pins that precedence.
+
+R11 is a Low observation about the shape of the R10 fix and may reasonably be rejected.
 
 AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.

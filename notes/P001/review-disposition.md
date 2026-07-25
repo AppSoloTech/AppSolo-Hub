@@ -40,6 +40,8 @@ Every Claude finding, including Medium and Low observations, must appear below.
 | R8      | High     | Accepted    | Make direct navigation to the create route safe without a warm cache.  | `9693281`              |
 | R9      | Low      | Accepted    | Bind request correlation without `customProps` timing dependence.      | `9693281`              |
 | R10     | Low      | Accepted    | Replace the residual unsafe health-test database cast.                 | `9693281`              |
+| R11     | Low      | Accepted    | Keep the application composition root free of test-only route modes.   | `29fdf5e`              |
+| R12     | High     | Accepted    | Guarantee E2E environment precedence and fresh isolated API processes. | `29fdf5e`              |
 
 ## Product Or Architecture Decisions
 
@@ -48,10 +50,10 @@ Record any human decision needed to resolve findings. Promote cross-phase decisi
 - Human decision: All C1-C15 are accepted as in-scope P001 corrections. Codex may implement them, rerun applicable validation, create review-fix commit(s), and update the handoff. P001 remains incomplete pending Claude verification and human QA.
 - Human decision: All focused re-review observations R1-R7 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
 - Human decision: All second focused re-review findings R8-R10 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
+- Human decision: All third focused re-review findings R11-R12 are accepted as in-scope P001 corrections. P001 remains incomplete pending verification and human QA.
 
 ## Fix Verification
 
-- Blocker/High findings verified by Claude: C1-C3 verified fixed by focused re-review.
-- Remaining accepted findings: C1-C15 were verified or partially verified by the focused review; R1-R7 are implemented in `bc45e4f`, validated by Codex, and pending focused Claude verification.
-- Latest accepted findings: R8-R10 are implemented in `9693281`, validated by Codex, and pending focused Claude verification.
+- Earlier findings: C1-C15, R1-R7, and R8-R10 were verified fixed by Claude's focused reviews.
+- Latest accepted findings: R11-R12 are implemented in `29fdf5e`, validated by Codex, and pending focused Claude verification.
 - Deferred items added to destination phase: Not applicable yet.

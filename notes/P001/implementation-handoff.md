@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Ready for focused Claude re-review of accepted second re-review corrections. Codex did not mark the phase complete.
+> Status: Ready for focused Claude re-review of accepted third re-review corrections. Codex did not mark the phase complete.
 
 ## Review Target
 
@@ -10,10 +10,12 @@
 - Review-fix SHA: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
 - Re-review-fix SHA: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
 - Second-re-review-fix SHA: `9693281248e7f8a45eb4ae5fc0a62e336cf166dc`
+- Third-re-review-fix SHA: `29fdf5efc62b0bc06aea5946271edcf3799e924a`
 - Original implementation diff: `git diff 2769ccd4a429425e778b070ea98f6fd241188a0f..e656d900a0462511e3e8293bcfc2dababb599ba5`
 - Accepted-fix diff: `git diff e656d900a0462511e3e8293bcfc2dababb599ba5..82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
 - Re-review-fix diff: `git diff 82e16fce38c69ea7e8961a654ccdeaeb4f06c07a..bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
 - Second-re-review-fix diff: `git diff bc45e4f7030f5521ddfc3a9e50c270da1a81c99d..9693281248e7f8a45eb4ae5fc0a62e336cf166dc`
+- Third-re-review-fix diff: `git diff 9693281248e7f8a45eb4ae5fc0a62e336cf166dc..29fdf5efc62b0bc06aea5946271edcf3799e924a`
 
 ## Revalidation Result
 
@@ -33,6 +35,7 @@
 - All human-accepted C1-C15 corrections: isolated test URL resolution, clean-checkout database build, expanded route/environment/UI coverage, safe body-parser errors, scoped detail reads, realistic denial seed data, metadata-driven UI context, feedback states, enforced formatting, lightweight API modules, normalized email constraints, and narrowed logging/types.
 - All human-accepted R1-R7 corrections: generated Drizzle snapshot chain, cache-driven create-form context, validated/documented E2E database switch, exact API behavior documentation, dead-query removal, complete seeded-identity guidance, and one request UUID per structured log line.
 - All human-accepted R8-R10 corrections: safe uncached create-form rendering with regression coverage, stable pino request-ID binding, and a typed health-only test database boundary.
+- All human-accepted R11-R12 corrections: production-shaped API composition, direct health-router tests, deterministic shell-over-dotenv precedence, and Playwright servers that cannot reuse a development API.
 
 ## Acceptance-Criteria Evidence
 
@@ -59,6 +62,8 @@
 - The user authorized creation of `appsolo_client_hub_dev` and `appsolo_client_hub_test` on the supplied WSL PostgreSQL instance after the initial configured database was found to be unrelated. No unrelated tables were changed.
 - `APPSOLO_DB_NAME` permits safe selection of the development database while reusing local `DB_*` connection components.
 - Test commands use `TEST_DATABASE_URL`, or derive only the fixed local `appsolo_client_hub_test` target from `DB_*`; they never reset `DATABASE_URL`.
+- Explicit process values override root and API dotenv files; Playwright's test switch therefore cannot be replaced by the documented API-local development file.
+- Playwright starts fresh API and web processes, failing on occupied ports instead of silently reusing a development stack.
 - No AWS resources, SDK packages, production authentication, uploads, billing, or deployment work was added.
 
 ## Validation
@@ -72,7 +77,7 @@
 | V6    | `pnpm lint`                                     | Passed  | ESLint and Prettier check passed.                                |
 | V7    | `pnpm typecheck`                                | Passed  | All four workspace packages.                                     |
 | V8    | `pnpm test`                                     | Passed  | 5 shared/database unit tests.                                    |
-| V9    | `pnpm test:api`                                 | Passed  | 12 API/environment/health/PostgreSQL tests.                      |
+| V9    | `pnpm test:api`                                 | Passed  | 13 API/environment/health/PostgreSQL tests.                      |
 | V10   | `pnpm test:web`                                 | Passed  | 6 environment and user-observable UI tests.                      |
 | V11   | `pnpm build`                                    | Passed  | Shared, database, API, and web builds.                           |
 | V12   | `pnpm exec playwright install chromium`         | Passed  | Browser installed.                                               |
@@ -110,9 +115,15 @@ Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P0
 
 - R8: direct create-route rendering now falls back to neutral project context when no list query is cached; a component test renders the route with a new `QueryClient` and verifies the page remains usable.
 - R9: `pino-http` now derives its request ID from the already-validated API UUID through `genReqId` and emits it under the stable `requestId` key; health-error logs use the same bound logger.
-- R10: health tests use an explicit `HealthDatabase` interface plus a test-only empty router, with no `any`, `never`, or database cast.
+- R10: the unsafe health database cast was removed; R11 subsequently refined the test boundary without reintroducing a cast.
 - Final rerun passed lint, typecheck, unit/API/web/E2E tests, build, scaffolding, phase-index, and diff checks. Docker remains not run because it is unavailable.
+
+## Third-Re-Review-Fix Verification
+
+- R11: `createApp` again has one real dependency shape and always assembles authentication plus change-request routes. Health success/failure behavior is tested directly in `health.routes.test.ts`; malformed and oversized body coverage now exercises the real assembled app in the database-backed integration suite.
+- R12: dotenv files only fill missing values, so exported values retain precedence. A regression test loads conflicting root/API fixtures and proves the exported Playwright switch remains `true`. Playwright also sets `reuseExistingServer: false` for both servers.
+- Final rerun passed lint, typecheck, 5 shared/database unit tests, 13 API tests, 6 web tests, all builds, the real Playwright list/create/refresh smoke, scaffolding validation, phase-index validation, Drizzle generation validation, and diff checks. Docker remains not run because it is unavailable.
 
 ## Requested Review Focus
 
-Verify R8 direct navigation with an empty cache, R9's `genReqId` request correlation on normal and error logs, R10's test-only typed boundary, and the absence of AWS or out-of-scope work.
+Verify R11's production-only composition shape and direct health-router coverage; verify R12's exported-environment precedence and forced fresh Playwright servers; confirm R8-R10 remain closed and no AWS or out-of-scope work was introduced.
