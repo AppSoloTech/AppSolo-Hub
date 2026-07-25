@@ -83,11 +83,12 @@ pnpm dev
 
 The default development identity is the seeded client administrator:
 
-| Identity             | ID                                     | Access                         |
-| -------------------- | -------------------------------------- | ------------------------------ |
-| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar Demo Co. project     |
-| Client member        | `20000000-0000-4000-8000-000000000004` | Northstar Demo Co. project     |
-| Other tenant user    | `20000000-0000-4000-8000-000000000005` | Denied from the seeded project |
+| Identity             | ID                                     | Access                                                      |
+| -------------------- | -------------------------------------- | ----------------------------------------------------------- |
+| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar Demo Co. project                                  |
+| Client member        | `20000000-0000-4000-8000-000000000004` | Northstar Demo Co. project                                  |
+| Other tenant user    | `20000000-0000-4000-8000-000000000005` | Acme Demo Co. client member; denied from Northstar project  |
+| Internal-only user   | `20000000-0000-4000-8000-000000000006` | AppSolo internal developer; denied from all client projects |
 
 Change `VITE_DEV_AUTH_USER_ID` and the API `DEV_AUTH_USER_ID`, or send `x-dev-user-id` directly to the API, to test a seeded identity. Development authentication is prohibited when `NODE_ENV=production`.
 

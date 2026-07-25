@@ -1,6 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createChangeRequestSchema, type CreateChangeRequestInput } from '@appsolo/shared';
+import {
+  createChangeRequestSchema,
+  type ChangeRequestDto,
+  type CreateChangeRequestInput,
+  type SuccessEnvelope,
+} from '@appsolo/shared';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { z } from 'zod';
@@ -11,6 +16,14 @@ export function NewChangeRequest() {
   const { projectId = '' } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const requestList = queryClient.getQueryData<SuccessEnvelope<ChangeRequestDto[]>>([
+    'change-requests',
+    projectId,
+  ]);
+  const { organizationName = 'Authorized organization', projectName = 'Project' } = requestList?.meta as {
+    organizationName?: string;
+    projectName?: string;
+  };
   const form = useForm<FormInput, unknown, CreateChangeRequestInput>({
     resolver: zodResolver(createChangeRequestSchema),
     defaultValues: { priority: 'NORMAL' },
@@ -27,7 +40,9 @@ export function NewChangeRequest() {
       <Link to={`/projects/${projectId}/change-requests`}>← Change requests</Link>
       <header className="pageHeader">
         <div>
-          <p className="eyebrow">Northstar client portal</p>
+          <p className="eyebrow">
+            {organizationName} · {projectName}
+          </p>
           <h1>New change request</h1>
           <p>Describe the outcome you need. You can add estimates and discussion later.</p>
         </div>

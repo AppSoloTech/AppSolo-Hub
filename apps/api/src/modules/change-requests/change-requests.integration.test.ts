@@ -14,6 +14,7 @@ const config = {
   LOG_LEVEL: 'info' as const,
   CORS_ORIGIN: ['http://localhost:5173'],
   DEV_AUTH_ENABLED: true,
+  APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
 const app = createApp({ db, config });

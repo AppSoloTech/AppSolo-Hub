@@ -12,8 +12,13 @@ describe('new change request form', () => {
   it('shows field validation then submits through the public UI', async () => {
     create.mockResolvedValue({ data: { id: '30000000-0000-4000-8000-000000000001' } });
     const user = userEvent.setup();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['change-requests', '10000000-0000-4000-8000-000000000003'], {
+      data: [],
+      meta: { organizationName: 'Acme Demo Co.', projectName: 'Acme client portal' },
+    });
     render(
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/projects/10000000-0000-4000-8000-000000000003/change-requests/new']}>
           <Routes>
             <Route path="/projects/:projectId/change-requests/new" element={<NewChangeRequest />} />
@@ -22,6 +27,7 @@ describe('new change request form', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
+    expect(screen.getByText('Acme Demo Co. · Acme client portal')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Submit request' }));
     expect(await screen.findByText('Title must be at least 3 characters.')).toBeVisible();
     await user.type(screen.getByLabelText('Title'), 'Export contacts');

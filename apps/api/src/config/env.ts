@@ -28,6 +28,10 @@ const envSchema = z.object({
     .pipe(z.array(z.string().url()).min(1)),
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true'),
   DEV_AUTH_USER_ID: z.string().uuid().optional(),
+  APPSOLO_USE_TEST_DATABASE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   REQUEST_BODY_LIMIT: z.string().default('1mb'),
 });
 export type ApiConfig = z.infer<typeof envSchema>;

@@ -23,4 +23,12 @@ describe('API environment', () => {
     expect(() => parseApiConfig({ ...base, PORT: 'nope' })).toThrow('PORT'));
   it('rejects development auth in production', () =>
     expect(() => parseApiConfig({ ...base, NODE_ENV: 'production' })).toThrow('prohibited'));
+  it('parses the test-database switch as a validated boolean', () => {
+    expect(parseApiConfig({ ...base, APPSOLO_USE_TEST_DATABASE: 'true' }).APPSOLO_USE_TEST_DATABASE).toBe(
+      true,
+    );
+    expect(() => parseApiConfig({ ...base, APPSOLO_USE_TEST_DATABASE: 'yes' })).toThrow(
+      'APPSOLO_USE_TEST_DATABASE',
+    );
+  });
 });

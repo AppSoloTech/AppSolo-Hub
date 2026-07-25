@@ -32,11 +32,19 @@ export function createApp({ db, config, checkDatabase }: AppDependencies): Expre
   const service = new ChangeRequestService(repository);
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
-  app.use(pinoHttp({ logger, customProps: (request) => ({ userId: request.authenticatedUser?.userId }) }));
+  app.use(
+    pinoHttp({
+      logger,
+      customProps: (request) =>
+        request.authenticatedUser
+          ? { userId: request.authenticatedUser.userId }
+          : { requestId: request.requestId },
+    }),
+  );
   app.use(helmet());
   app.use(cors({ origin: config.CORS_ORIGIN, credentials: false }));
   app.use(express.json({ limit: config.REQUEST_BODY_LIMIT }));
-  app.use('/api/v1', healthRouter(db, logger, checkDatabase));
+  app.use('/api/v1', healthRouter(db, checkDatabase));
   app.use('/api/v1', developmentAuthentication(config, repository), changeRequestRouter(service));
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),
@@ -52,7 +60,7 @@ export function createApp({ db, config, checkDatabase }: AppDependencies): Expre
           : type === 'entity.parse.failed'
             ? validationError([{ path: 'body', message: 'Malformed JSON body.' }])
             : type === 'entity.too.large'
-              ? new AppError('VALIDATION_ERROR', 413, 'The request body is too large.')
+              ? new AppError('PAYLOAD_TOO_LARGE', 413, 'The request body is too large.')
               : new AppError('INTERNAL_ERROR', 500, 'An unexpected error occurred.');
     if (!(error instanceof AppError) && !(error instanceof ZodError) && !type)
       request.log.error({ err: error }, 'unhandled request error');

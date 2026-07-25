@@ -8,6 +8,7 @@ const config = {
   LOG_LEVEL: 'info' as const,
   CORS_ORIGIN: ['http://localhost:5173'],
   DEV_AUTH_ENABLED: true,
+  APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
 describe('health endpoint', () => {
@@ -42,5 +43,6 @@ describe('health endpoint', () => {
       .send({ description: 'x'.repeat(1_100_000) });
     expect(malformed.status).toBe(400);
     expect(large.status).toBe(413);
+    expect((large.body as { error: { code: string } }).error.code).toBe('PAYLOAD_TOO_LARGE');
   });
 });

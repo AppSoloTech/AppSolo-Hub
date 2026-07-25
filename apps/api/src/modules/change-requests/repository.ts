@@ -83,11 +83,6 @@ export class ChangeRequestRepository {
       .limit(limit)
       .offset(offset);
   }
-  async findById(scope: ProjectScope, id: string) {
-    return this.db.query.changeRequests.findFirst({
-      where: and(eq(changeRequests.id, id), eq(changeRequests.projectId, scope.projectId)),
-    });
-  }
   async create(scope: ProjectScope, submittedByUserId: string, input: CreateChangeRequestInput) {
     return this.db.transaction(async (tx) => {
       const [request] = await tx

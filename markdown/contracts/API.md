@@ -55,6 +55,7 @@ Error responses may also include a non-sensitive `requestId` either in `error` o
 | Code                   | HTTP | Meaning                                                 |
 | ---------------------- | ---: | ------------------------------------------------------- |
 | `VALIDATION_ERROR`     |  400 | External input failed validation                        |
+| `PAYLOAD_TOO_LARGE`    |  413 | Request body exceeds the configured size limit          |
 | `UNAUTHENTICATED`      |  401 | No valid authenticated user context                     |
 | `FORBIDDEN`            |  403 | Authenticated user lacks required tenant/project access |
 | `NOT_FOUND`            |  404 | Route or authorized resource not found                  |
@@ -147,6 +148,8 @@ Unauthorized access returns `403` and no project or request data.
 ### GET `/api/v1/change-requests/:changeRequestId`
 
 Authorization: resolve the request's project and enforce active organization/project access before returning the DTO.
+
+For this detail route, both a missing request and an inaccessible request return `404` so the API does not disclose cross-tenant resource existence.
 
 Success `200`: standard envelope containing one change request.
 

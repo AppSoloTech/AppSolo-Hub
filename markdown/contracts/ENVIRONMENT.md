@@ -30,23 +30,25 @@ Codex may consolidate local loading if the behavior remains clear and documented
 
 ## API Variables
 
-| Name                 | Required            | Example                                       | Rules                                                                              |
-| -------------------- | ------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `NODE_ENV`           | yes                 | `development`                                 | `development`, `test`, `production`                                                |
-| `PORT`               | yes                 | `4000`                                        | integer 1-65535                                                                    |
-| `DATABASE_URL`       | yes                 | local dev URL                                 | secret outside local development                                                   |
-| `TEST_DATABASE_URL`  | tests               | local test URL                                | must be distinct from dev URL                                                      |
-| `APPSOLO_DB_NAME`    | local component env | `appsolo_client_hub_dev`                      | optional local database-name override when `DB_*` connection components are reused |
-| `LOG_LEVEL`          | yes                 | `debug`                                       | validated Pino level                                                               |
-| `CORS_ORIGIN`        | yes                 | `http://localhost:5173,http://127.0.0.1:5173` | explicit comma-separated local origins, each validated                             |
-| `DEV_AUTH_ENABLED`   | yes                 | `true`                                        | allowed only in development/test                                                   |
-| `DEV_AUTH_USER_ID`   | dev                 | seeded UUID                                   | fallback simulated user                                                            |
-| `REQUEST_BODY_LIMIT` | no                  | `1mb`                                         | safe explicit limit                                                                |
+| Name                        | Required            | Example                                       | Rules                                                                              |
+| --------------------------- | ------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `NODE_ENV`                  | yes                 | `development`                                 | `development`, `test`, `production`                                                |
+| `PORT`                      | yes                 | `4000`                                        | integer 1-65535                                                                    |
+| `DATABASE_URL`              | yes                 | local dev URL                                 | secret outside local development                                                   |
+| `TEST_DATABASE_URL`         | tests               | local test URL                                | must be distinct from dev URL                                                      |
+| `APPSOLO_DB_NAME`           | local component env | `appsolo_client_hub_dev`                      | optional local database-name override when `DB_*` connection components are reused |
+| `LOG_LEVEL`                 | yes                 | `debug`                                       | validated Pino level                                                               |
+| `CORS_ORIGIN`               | yes                 | `http://localhost:5173,http://127.0.0.1:5173` | explicit comma-separated local origins, each validated                             |
+| `DEV_AUTH_ENABLED`          | yes                 | `true`                                        | allowed only in development/test                                                   |
+| `DEV_AUTH_USER_ID`          | dev                 | seeded UUID                                   | fallback simulated user                                                            |
+| `APPSOLO_USE_TEST_DATABASE` | Playwright only     | `false`                                       | validated test-only switch; uses `TEST_DATABASE_URL` or fixed local test target    |
+| `REQUEST_BODY_LIMIT`        | no                  | `1mb`                                         | safe explicit limit                                                                |
 
 Rules:
 
 - API startup validates configuration with Zod before opening a listener.
 - Production startup fails when `DEV_AUTH_ENABLED=true`.
+- `APPSOLO_USE_TEST_DATABASE` defaults to `false`; Playwright sets it to `true` only after preparing the isolated test database. It is not an operator-facing development setting.
 - URLs and secrets are redacted from logs.
 - Tests use `TEST_DATABASE_URL` when configured. For local component configuration they derive only the fixed `appsolo_client_hub_test` target from `DB_*`; they never fall back to `DATABASE_URL`, and do not mutate the developer's process environment without cleanup.
 
