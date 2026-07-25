@@ -9,7 +9,7 @@ The repository currently contains the product, architecture, contracts, AI workf
 ## Active Phase
 
 - Phase: `P001 — Local Foundation And Change-Request Vertical Slice`
-- Status: `approved`
+- Status: `review_pending`
 - Implementer: Codex
 - Reviewer: Claude
 - Human QA: required
@@ -28,7 +28,7 @@ The repository currently contains the product, architecture, contracts, AI workf
 
 - No pnpm workspace or application packages exist.
 - No database, migration, seed, API, UI, or tests exist.
-- No immutable Git base or candidate SHA has been recorded for P001.
-- No implementation handoff, independent review, or human QA has occurred.
+- P001 candidate `e656d900a0462511e3e8293bcfc2dababb599ba5` is available for independent Claude review.
+- No independent review or human QA has occurred.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

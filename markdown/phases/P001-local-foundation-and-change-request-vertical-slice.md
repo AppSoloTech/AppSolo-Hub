@@ -1,14 +1,14 @@
 ---
 id: P001
 title: Local Foundation And Change-Request Vertical Slice
-status: implementing
+status: review_pending
 owner: codex
 reviewer: claude
 prompt: prompts/active/P001-local-foundation-and-change-request-vertical-slice.md
 depends_on: []
 base_branch: main
 base_sha: 2769ccd4a429425e778b070ea98f6fd241188a0f
-candidate_sha: null
+candidate_sha: e656d900a0462511e3e8293bcfc2dababb599ba5
 risk: high
 human_qa_required: true
 ---
@@ -86,8 +86,8 @@ None approved.
 | V12 | `pnpm exec playwright install chromium` | Passed | Chromium and headless shell installed. |
 | V13 | `pnpm test:e2e` | Passed | Isolated test reset plus seeded list/create/refresh Playwright smoke passed. |
 | V14 | direct `curl` health and authenticated list requests | Passed | Assembled API returned documented `200` readiness and seeded list responses. |
-| V15 | `node scripts/generate-phase-index.mjs --check` | Pending | Phase index must be regenerated after this implementation evidence update. |
-| V16 | `git diff --check <base>..<candidate>` | Pending | Candidate SHA does not yet exist. |
+| V15 | `node scripts/generate-phase-index.mjs --check` | Passed | Canonical phase index is current. |
+| V16 | `git diff --check 2769ccd4a429425e778b070ea98f6fd241188a0f..e656d900a0462511e3e8293bcfc2dababb599ba5` | Passed | No whitespace errors in the immutable candidate range. |
 
 ## Review
 
@@ -105,8 +105,8 @@ See `notes/P001/qa.md`. No Q-case has been run.
 
 ## Commits
 
-- Base: pending.
-- Candidate: pending.
+- Base: `2769ccd4a429425e778b070ea98f6fd241188a0f` on `main`.
+- Candidate: `e656d900a0462511e3e8293bcfc2dababb599ba5` (`P001: implement local foundation vertical slice`).
 - Review fixes: none.
 - Final: pending.
 
@@ -123,10 +123,10 @@ See `notes/P001/qa.md`. No Q-case has been run.
 
 ## Completion Gate
 
-- Requirements satisfied: No.
-- Automated validation satisfied: No.
+- Requirements satisfied: Implemented; awaiting independent review.
+- Automated validation satisfied: Yes, except Docker Compose could not be executed because Docker is unavailable in this environment.
 - Review clear: No.
 - Findings dispositioned: Not applicable yet.
 - Required QA complete: No.
-- Durable docs updated: Initial specification only.
-- Ready for integration: No.
+- Durable docs updated: Yes; candidate handoff pending review.
+- Ready for integration: Awaiting Claude review and required human QA.

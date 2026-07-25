@@ -5,7 +5,7 @@
 
 | Phase | Title | Status | Risk | Depends On | Prompt |
 | --- | --- | --- | --- | --- | --- |
-| [P001](phases/P001-local-foundation-and-change-request-vertical-slice.md) | Local Foundation And Change-Request Vertical Slice | `implementing` | high | [] | [active prompt](../prompts/active/P001-local-foundation-and-change-request-vertical-slice.md) |
+| [P001](phases/P001-local-foundation-and-change-request-vertical-slice.md) | Local Foundation And Change-Request Vertical Slice | `review_pending` | high | [] | [active prompt](../prompts/active/P001-local-foundation-and-change-request-vertical-slice.md) |
 | [P002](phases/P002-authentication-and-invitations.md) | Authentication And Invitations | `draft` | high | [P001] | Not drafted |
 | [P003](phases/P003-estimates-and-approval-workflow.md) | Estimates And Approval Workflow | `draft` | high | [P002] | Not drafted |
 | [P004](phases/P004-comments-and-clarification.md) | Comments And Clarification | `draft` | high | [P003] | Not drafted |
@@ -19,4 +19,4 @@
 
 ## Active Work
 
-- **P001 — Local Foundation And Change-Request Vertical Slice**: `implementing`.
+- **P001 — Local Foundation And Change-Request Vertical Slice**: `review_pending`.
