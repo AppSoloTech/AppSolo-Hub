@@ -1,0 +1,9 @@
+{
+  "name": "@appsolo/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "tsc -b && vite build", "typecheck": "tsc -b --pretty false", "test": "vitest run" },
+  "dependencies": { "@appsolo/shared": "workspace:*", "@hookform/resolvers": "^5.1.1", "@tanstack/react-query": "^5.83.0", "react": "^19.1.1", "react-dom": "^19.1.1", "react-hook-form": "^7.61.1", "react-router-dom": "^7.7.1", "zod": "^3.25.76" },
+  "devDependencies": { "@testing-library/jest-dom": "^6.6.3", "@testing-library/react": "^16.3.0", "@testing-library/user-event": "^14.6.1", "@types/react": "^19.1.8", "@types/react-dom": "^19.1.6", "@vitejs/plugin-react": "^4.7.0", "jsdom": "^26.1.0", "vite": "^7.0.6" }
+}

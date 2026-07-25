@@ -1,0 +1,36 @@
+{
+  "name": "appsolo-client-hub",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "dev": "pnpm --filter @appsolo/shared build && concurrently -n api,web -c blue,green \"pnpm --filter @appsolo/api dev\" \"pnpm --filter @appsolo/web dev\"",
+    "build": "pnpm -r --if-present build",
+    "lint": "eslint .",
+    "typecheck": "pnpm --filter @appsolo/shared build && pnpm --filter @appsolo/database build && pnpm --filter @appsolo/api typecheck && pnpm --filter @appsolo/web typecheck",
+    "test": "pnpm --filter @appsolo/shared test && pnpm --filter @appsolo/database test",
+    "test:api": "pnpm --filter @appsolo/database test:prepare && pnpm --filter @appsolo/api test",
+    "test:web": "pnpm --filter @appsolo/web test",
+    "test:e2e": "pnpm --filter @appsolo/database test:prepare && pnpm --filter @appsolo/shared build && playwright test -c e2e/playwright.config.ts",
+    "db:generate": "pnpm --filter @appsolo/database generate",
+    "db:migrate": "pnpm --filter @appsolo/database migrate",
+    "db:seed": "pnpm --filter @appsolo/database seed",
+    "db:reset": "pnpm --filter @appsolo/database reset",
+    "docker:up": "docker compose up -d --wait",
+    "docker:down": "docker compose down",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^24.1.0",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0",
+    "vitest": "^3.2.4"
+  }
+}

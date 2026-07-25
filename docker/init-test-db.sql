@@ -1,0 +1,1 @@
+CREATE DATABASE appsolo_client_hub_test;
