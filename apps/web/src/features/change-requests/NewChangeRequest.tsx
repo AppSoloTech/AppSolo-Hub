@@ -20,7 +20,8 @@ export function NewChangeRequest() {
     'change-requests',
     projectId,
   ]);
-  const { organizationName = 'Authorized organization', projectName = 'Project' } = requestList?.meta as {
+  const { organizationName = 'Authorized organization', projectName = 'Project' } = (requestList?.meta ??
+    {}) as {
     organizationName?: string;
     projectName?: string;
   };

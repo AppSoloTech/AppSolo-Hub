@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import express, { Router, type Express, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import pino from 'pino';
 import { pinoHttp } from 'pino-http';
@@ -14,7 +14,21 @@ import { ChangeRequestRepository } from './modules/change-requests/repository.js
 import { ChangeRequestService } from './modules/change-requests/service.js';
 import { healthRouter } from './modules/health/health.routes.js';
 
-type AppDependencies = { db: Database; config: ApiConfig; checkDatabase?: () => Promise<void> };
+export type HealthDatabase = { execute(query: Parameters<Database['execute']>[0]): unknown };
+type AppDependencies =
+  | {
+      db: Database;
+      config: ApiConfig;
+      checkDatabase?: () => Promise<void>;
+      testOnly: false;
+    }
+  | {
+      db: HealthDatabase;
+      config: ApiConfig;
+      checkDatabase?: () => Promise<void>;
+      testOnly: true;
+      changeRequestTestRouter: Router;
+    };
 const toDetails = (error: ZodError) =>
   error.issues.map((issue) => ({ path: issue.path.join('.') || 'request', message: issue.message }));
 const bodyErrorType = (error: unknown): string | undefined =>
@@ -22,30 +36,39 @@ const bodyErrorType = (error: unknown): string | undefined =>
     ? error.type
     : undefined;
 
-export function createApp({ db, config, checkDatabase }: AppDependencies): Express {
+export function createApp(dependencies: AppDependencies): Express {
+  const { db, config, checkDatabase } = dependencies;
   const app = express();
   const logger = pino({
     level: config.LOG_LEVEL,
     redact: ['req.headers.authorization', 'req.headers.cookie', 'req.headers.x-dev-user-id', 'DATABASE_URL'],
   });
-  const repository = new ChangeRequestRepository(db);
-  const service = new ChangeRequestService(repository);
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
   app.use(
     pinoHttp({
       logger,
+      genReqId: (request) => request.requestId,
+      quietReqLogger: true,
+      customAttributeKeys: { reqId: 'requestId' },
       customProps: (request) =>
-        request.authenticatedUser
-          ? { userId: request.authenticatedUser.userId }
-          : { requestId: request.requestId },
+        request.authenticatedUser ? { userId: request.authenticatedUser.userId } : {},
     }),
   );
   app.use(helmet());
   app.use(cors({ origin: config.CORS_ORIGIN, credentials: false }));
   app.use(express.json({ limit: config.REQUEST_BODY_LIMIT }));
   app.use('/api/v1', healthRouter(db, checkDatabase));
-  app.use('/api/v1', developmentAuthentication(config, repository), changeRequestRouter(service));
+  if (dependencies.testOnly) {
+    app.use('/api/v1', dependencies.changeRequestTestRouter);
+  } else {
+    const repository = new ChangeRequestRepository(dependencies.db);
+    app.use(
+      '/api/v1',
+      developmentAuthentication(config, repository),
+      changeRequestRouter(new ChangeRequestService(repository)),
+    );
+  }
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),
   );

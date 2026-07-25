@@ -1,14 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NewChangeRequest } from './NewChangeRequest.js';
 const { create } = vi.hoisted(() => ({
   create: vi.fn<(projectId: string, input: unknown) => Promise<{ data: { id: string } }>>(),
 }));
 vi.mock('../../api.js', () => ({ requestsApi: { create } }));
+afterEach(cleanup);
 describe('new change request form', () => {
+  it('renders safely when opened directly without a cached list query', () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={['/projects/10000000-0000-4000-8000-000000000003/change-requests/new']}>
+          <Routes>
+            <Route path="/projects/:projectId/change-requests/new" element={<NewChangeRequest />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'New change request' })).toBeVisible();
+    expect(screen.getByText('Authorized organization · Project')).toBeVisible();
+  });
+
   it('shows field validation then submits through the public UI', async () => {
     create.mockResolvedValue({ data: { id: '30000000-0000-4000-8000-000000000001' } });
     const user = userEvent.setup();

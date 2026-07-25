@@ -17,7 +17,7 @@ const config = {
   APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
-const app = createApp({ db, config });
+const app = createApp({ db, config, testOnly: false });
 const projectPath = `/api/v1/projects/${seedIds.project}/change-requests`;
 beforeEach(async () => {
   await pool.query(

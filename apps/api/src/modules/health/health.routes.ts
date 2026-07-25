@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import type { Database } from '@appsolo/database';
+import type { HealthDatabase } from '../../app.js';
 import { AppError } from '../../errors.js';
 
-export function healthRouter(db: Database, checkDatabase?: () => Promise<void>): Router {
+export function healthRouter(db: HealthDatabase, checkDatabase?: () => Promise<void>): Router {
   const router = Router();
   router.get('/health', async (request, response, next) => {
     try {

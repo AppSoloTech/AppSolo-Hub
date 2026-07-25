@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { Router } from 'express';
 import request from 'supertest';
-import { createApp } from './app.js';
+import { createApp, type HealthDatabase } from './app.js';
 const config = {
   NODE_ENV: 'test' as const,
   PORT: 4000,
@@ -11,13 +12,22 @@ const config = {
   APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
+const healthOnlyDatabase = {
+  execute: () => undefined,
+} satisfies HealthDatabase;
+
+const createHealthApp = (checkDatabase: () => Promise<void>) =>
+  createApp({
+    db: healthOnlyDatabase,
+    config,
+    checkDatabase,
+    testOnly: true,
+    changeRequestTestRouter: Router(),
+  });
+
 describe('health endpoint', () => {
   it('reports safe readiness failures', async () => {
-    const app = createApp({
-      db: {} as never,
-      config,
-      checkDatabase: () => Promise.reject(new Error('connection failure')),
-    });
+    const app = createHealthApp(() => Promise.reject(new Error('connection failure')));
     const response = await request(app).get('/api/v1/health');
     const body = response.body as { error: { code: string } };
     expect(response.status).toBe(503);
@@ -25,14 +35,14 @@ describe('health endpoint', () => {
     expect(JSON.stringify(body)).not.toContain('connection failure');
   });
   it('reports readiness when the check succeeds', async () => {
-    const app = createApp({ db: {} as never, config, checkDatabase: () => Promise.resolve() });
+    const app = createHealthApp(() => Promise.resolve());
     const response = await request(app).get('/api/v1/health');
     const body = response.body as { data: unknown };
     expect(response.status).toBe(200);
     expect(body.data).toEqual({ status: 'ok', database: 'ok' });
   });
   it('maps malformed and oversized JSON bodies to safe client errors', async () => {
-    const app = createApp({ db: {} as never, config, checkDatabase: () => Promise.resolve() });
+    const app = createHealthApp(() => Promise.resolve());
     const malformed = await request(app)
       .post('/api/v1/projects/10000000-0000-4000-8000-000000000003/change-requests')
       .set('content-type', 'application/json')
