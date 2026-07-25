@@ -38,7 +38,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-The API loads root `.env` for local development. Use either `DATABASE_URL` or all `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` values. `APPSOLO_DB_NAME` is an optional local override when those connection components are shared with another application; it should be `appsolo_client_hub_dev` for normal development.
+The API loads root `.env` and then `apps/api/.env` for local development. Values explicitly exported by the invoking process take precedence over both files, and root `.env` takes precedence over duplicate API-file values. Use either `DATABASE_URL` or all `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` values. `APPSOLO_DB_NAME` is an optional local override when those connection components are shared with another application; it should be `appsolo_client_hub_dev` for normal development.
 
 All `.env` files are ignored. Never commit credentials. `VITE_` values are public browser configuration and must not contain secrets.
 
@@ -110,6 +110,8 @@ pnpm db:reset       # guarded local configured DB reset
 pnpm docker:up      # start local PostgreSQL Compose service
 pnpm docker:down    # stop local PostgreSQL Compose service
 ```
+
+The Playwright command always starts its own API and web processes. If either development port is already occupied, stop that process before running the smoke test; Playwright will not reuse an API that may be connected to the development database.
 
 ## Troubleshooting
 

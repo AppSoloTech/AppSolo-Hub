@@ -47,8 +47,10 @@ Codex may consolidate local loading if the behavior remains clear and documented
 Rules:
 
 - API startup validates configuration with Zod before opening a listener.
+- Explicitly exported process values take precedence over root `.env`, which takes precedence over duplicate `apps/api/.env` values.
 - Production startup fails when `DEV_AUTH_ENABLED=true`.
 - `APPSOLO_USE_TEST_DATABASE` defaults to `false`; Playwright sets it to `true` only after preparing the isolated test database. It is not an operator-facing development setting.
+- Playwright starts fresh API and web processes and never reuses an already-running development API.
 - URLs and secrets are redacted from logs.
 - Tests use `TEST_DATABASE_URL` when configured. For local component configuration they derive only the fixed `appsolo_client_hub_test` target from `DB_*`; they never fall back to `DATABASE_URL`, and do not mutate the developer's process environment without cleanup.
 

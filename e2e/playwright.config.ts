@@ -7,12 +7,12 @@ export default defineConfig({
     {
       command: 'APPSOLO_USE_TEST_DATABASE=true pnpm --filter @appsolo/api dev',
       url: 'http://127.0.0.1:4000/api/v1/health',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
     {
       command: 'pnpm --filter @appsolo/web dev -- --host 127.0.0.1',
       url: 'http://127.0.0.1:5173',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
   ],
 });

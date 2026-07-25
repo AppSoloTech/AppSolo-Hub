@@ -2,12 +2,32 @@ import { config as loadEnv } from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { z } from 'zod';
-loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../../.env'), quiet: true });
-loadEnv({
-  path: resolve(dirname(fileURLToPath(import.meta.url)), '../../.env'),
-  quiet: true,
-  override: true,
-});
+
+type ApiEnvironmentPaths = {
+  root: string;
+  api: string;
+};
+const sourceDirectory = dirname(fileURLToPath(import.meta.url));
+const defaultEnvironmentPaths: ApiEnvironmentPaths = {
+  root: resolve(sourceDirectory, '../../../../.env'),
+  api: resolve(sourceDirectory, '../../.env'),
+};
+
+export function loadApiEnvironment(
+  environment: NodeJS.ProcessEnv = process.env,
+  paths: ApiEnvironmentPaths = defaultEnvironmentPaths,
+): NodeJS.ProcessEnv {
+  for (const path of [paths.root, paths.api]) {
+    const fileValues: Record<string, string> = {};
+    loadEnv({ path, processEnv: fileValues, quiet: true });
+    for (const [key, value] of Object.entries(fileValues)) {
+      if (environment[key] === undefined) environment[key] = value;
+    }
+  }
+  return environment;
+}
+
+loadApiEnvironment();
 
 const localDatabaseUrl = (env: NodeJS.ProcessEnv): string | undefined => {
   if (env.DATABASE_URL) return env.DATABASE_URL;

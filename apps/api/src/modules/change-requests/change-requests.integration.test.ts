@@ -17,7 +17,7 @@ const config = {
   APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
-const app = createApp({ db, config, testOnly: false });
+const app = createApp({ db, config });
 const projectPath = `/api/v1/projects/${seedIds.project}/change-requests`;
 beforeEach(async () => {
   await pool.query(
@@ -94,5 +94,18 @@ describe('change request API integration', () => {
     expect(response.status).toBe(400);
     expect(body.error.code).toBe('VALIDATION_ERROR');
     expect(body.error.details.length).toBeGreaterThan(0);
+  });
+  it('maps malformed and oversized JSON bodies to safe client errors', async () => {
+    const malformed = await request(app)
+      .post(projectPath)
+      .set('content-type', 'application/json')
+      .send('{"title":');
+    const large = await request(app)
+      .post(projectPath)
+      .set('content-type', 'application/json')
+      .send({ description: 'x'.repeat(1_100_000) });
+    expect(malformed.status).toBe(400);
+    expect(large.status).toBe(413);
+    expect((large.body as { error: { code: string } }).error.code).toBe('PAYLOAD_TOO_LARGE');
   });
 });

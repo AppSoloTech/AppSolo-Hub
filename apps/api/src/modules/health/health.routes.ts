@@ -1,12 +1,16 @@
 import { Router } from 'express';
-import type { HealthDatabase } from '../../app.js';
+import type { Database } from '@appsolo/database';
 import { AppError } from '../../errors.js';
 
-export function healthRouter(db: HealthDatabase, checkDatabase?: () => Promise<void>): Router {
+export type HealthDatabase = {
+  execute(query: Parameters<Database['execute']>[0]): unknown;
+};
+
+export function healthRouter(db: HealthDatabase): Router {
   const router = Router();
   router.get('/health', async (request, response, next) => {
     try {
-      await (checkDatabase?.() ?? db.execute('select 1'));
+      await db.execute('select 1');
       response.json({
         data: { status: 'ok', database: 'ok' },
         meta: { timestamp: new Date().toISOString() },
