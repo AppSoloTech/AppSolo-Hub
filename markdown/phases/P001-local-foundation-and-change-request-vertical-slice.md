@@ -81,7 +81,7 @@ None approved.
 | V7  | `pnpm typecheck`                                                     | Passed  | Strict shared, database, API, and web TypeScript checks completed.                                                  |
 | V8  | `pnpm test`                                                          | Passed  | 5 shared/database unit tests passed.                                                                                |
 | V9  | `pnpm test:api`                                                      | Passed  | Isolated test reset plus 12 API/environment/health/integration tests passed.                                        |
-| V10 | `pnpm test:web`                                                      | Passed  | 5 React Testing Library environment and UI tests passed.                                                            |
+| V10 | `pnpm test:web`                                                      | Passed  | 6 React Testing Library environment and UI tests passed.                                                            |
 | V11 | `pnpm build`                                                         | Passed  | Shared, database, API, and Vite web production builds completed.                                                    |
 | V12 | `pnpm exec playwright install chromium`                              | Passed  | Chromium and headless shell installed.                                                                              |
 | V13 | `pnpm test:e2e`                                                      | Passed  | Isolated test reset plus seeded list/create/refresh Playwright smoke passed.                                        |
@@ -94,11 +94,11 @@ None approved.
 
 - Handoff: `notes/P001/implementation-handoff.md`
 - Review: `notes/P001/claude-review.md`
-- Verdict: focused re-review was `ready with non-blocking observations`; R1-R7 were accepted by the human for in-scope correction and await verification.
+- Verdict: second focused re-review was `changes requested`; R8-R10 were accepted by the human for in-scope correction and await verification.
 
 ## Finding Disposition
 
-See `notes/P001/review-disposition.md`. C1-C15 were verified fixed by focused review; R1-R7 were accepted by the human and corrected in the re-review-fix commit, pending verification.
+See `notes/P001/review-disposition.md`. C1-C15 and R1-R7 were verified fixed by focused review; R8-R10 were accepted by the human and corrected in the second re-review-fix commit, pending verification.
 
 ## Human QA
 
@@ -110,6 +110,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Candidate: `e656d900a0462511e3e8293bcfc2dababb599ba5` (`P001: implement local foundation vertical slice`).
 - Review fixes: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a` (`P001: address accepted review findings`).
 - Re-review fixes: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d` (`P001: address accepted re-review observations`).
+- Second re-review fixes: `9693281248e7f8a45eb4ae5fc0a62e336cf166dc` (`P001: address accepted second re-review findings`).
 - Final: pending.
 
 ## Deferred Work
@@ -128,7 +129,7 @@ See `notes/P001/qa.md`. No Q-case has been run.
 - Requirements satisfied: Implemented; awaiting independent review.
 - Automated validation satisfied: Yes, except Docker Compose could not be executed because Docker is unavailable in this environment.
 - Review clear: No.
-- Findings dispositioned: Yes; C1-C15 verified fixed, R1-R7 accepted and corrected pending Claude verification.
+- Findings dispositioned: Yes; C1-C15 and R1-R7 verified fixed, R8-R10 accepted and corrected pending Claude verification.
 - Required QA complete: No.
-- Durable docs updated: Yes; re-review-fix handoff pending focused re-review.
+- Durable docs updated: Yes; second re-review-fix handoff pending focused re-review.
 - Ready for integration: Awaiting focused Claude review and required human QA.

@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Ready for focused Claude re-review of accepted re-review corrections. Codex did not mark the phase complete.
+> Status: Ready for focused Claude re-review of accepted second re-review corrections. Codex did not mark the phase complete.
 
 ## Review Target
 
@@ -9,9 +9,11 @@
 - Candidate SHA: `e656d900a0462511e3e8293bcfc2dababb599ba5`
 - Review-fix SHA: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
 - Re-review-fix SHA: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
+- Second-re-review-fix SHA: `9693281248e7f8a45eb4ae5fc0a62e336cf166dc`
 - Original implementation diff: `git diff 2769ccd4a429425e778b070ea98f6fd241188a0f..e656d900a0462511e3e8293bcfc2dababb599ba5`
 - Accepted-fix diff: `git diff e656d900a0462511e3e8293bcfc2dababb599ba5..82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
 - Re-review-fix diff: `git diff 82e16fce38c69ea7e8961a654ccdeaeb4f06c07a..bc45e4f7030f5521ddfc3a9e50c270da1a81c99d`
+- Second-re-review-fix diff: `git diff bc45e4f7030f5521ddfc3a9e50c270da1a81c99d..9693281248e7f8a45eb4ae5fc0a62e336cf166dc`
 
 ## Revalidation Result
 
@@ -30,6 +32,7 @@
 - Unit, database-backed API integration, component, and Playwright tests; README and environment contract updates.
 - All human-accepted C1-C15 corrections: isolated test URL resolution, clean-checkout database build, expanded route/environment/UI coverage, safe body-parser errors, scoped detail reads, realistic denial seed data, metadata-driven UI context, feedback states, enforced formatting, lightweight API modules, normalized email constraints, and narrowed logging/types.
 - All human-accepted R1-R7 corrections: generated Drizzle snapshot chain, cache-driven create-form context, validated/documented E2E database switch, exact API behavior documentation, dead-query removal, complete seeded-identity guidance, and one request UUID per structured log line.
+- All human-accepted R8-R10 corrections: safe uncached create-form rendering with regression coverage, stable pino request-ID binding, and a typed health-only test database boundary.
 
 ## Acceptance-Criteria Evidence
 
@@ -70,7 +73,7 @@
 | V7    | `pnpm typecheck`                                | Passed  | All four workspace packages.                                     |
 | V8    | `pnpm test`                                     | Passed  | 5 shared/database unit tests.                                    |
 | V9    | `pnpm test:api`                                 | Passed  | 12 API/environment/health/PostgreSQL tests.                      |
-| V10   | `pnpm test:web`                                 | Passed  | 5 environment and user-observable UI tests.                      |
+| V10   | `pnpm test:web`                                 | Passed  | 6 environment and user-observable UI tests.                      |
 | V11   | `pnpm build`                                    | Passed  | Shared, database, API, and web builds.                           |
 | V12   | `pnpm exec playwright install chromium`         | Passed  | Browser installed.                                               |
 | V13   | `pnpm test:e2e`                                 | Passed  | 1 real browser/API/test-PostgreSQL list/create/refresh test.     |
@@ -103,6 +106,13 @@ Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P0
 - R7: request logs and health-error logs contain the response `x-request-id` exactly once; API integration output verifies the correlation line.
 - Final rerun passed `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:api`, `pnpm test:web`, `pnpm build`, `pnpm test:e2e`, scaffolding validation, phase-index check, Drizzle generation check, and diff check. Docker remains not run because it is unavailable.
 
+## Second-Re-Review-Fix Verification
+
+- R8: direct create-route rendering now falls back to neutral project context when no list query is cached; a component test renders the route with a new `QueryClient` and verifies the page remains usable.
+- R9: `pino-http` now derives its request ID from the already-validated API UUID through `genReqId` and emits it under the stable `requestId` key; health-error logs use the same bound logger.
+- R10: health tests use an explicit `HealthDatabase` interface plus a test-only empty router, with no `any`, `never`, or database cast.
+- Final rerun passed lint, typecheck, unit/API/web/E2E tests, build, scaffolding, phase-index, and diff checks. Docker remains not run because it is unavailable.
+
 ## Requested Review Focus
 
-Verify the R1 snapshot prevents duplicate Drizzle output, R3 configuration remains test-only and validated, R4 contract fidelity, and R7 emits exactly one request UUID on normal and error logs. Confirm no AWS or out-of-scope work was added.
+Verify R8 direct navigation with an empty cache, R9's `genReqId` request correlation on normal and error logs, R10's test-only typed boundary, and the absence of AWS or out-of-scope work.

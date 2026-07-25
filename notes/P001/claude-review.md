@@ -436,12 +436,138 @@ All five gaps are closed in [change-requests.integration.test.ts](apps/api/src/m
 - AC9, AC11, AC14, AC15, AC16 move from partial to met, except the documentation residuals in R3, R4, and R6.
 - **AC2 is still unproven.** Docker was unavailable to Codex and to both of my passes. This is missing evidence, not a pass, and only human QA Q1/Q8 can close it.
 
-## Verdict
+## Verdict (first focused re-review — superseded by the second focused re-review below)
 
 `ready with non-blocking observations`
 
 The Blocker and both High findings are verified fixed by direct reproduction, not by reading the fix: the test paths can no longer resolve to the development database under any configuration I could construct, `pnpm dev` works from a fully unbuilt checkout, and the missing authorization, detail, ordering, and readiness tests now exist and fail for the right reasons. Every accepted Medium and Low is also fixed, with two partial applications noted (R2, and the `as never` remnant of C15).
 
 Seven items remain for human disposition, none of them blocking: R1 and R7 are Medium and should be fixed before P002 begins, since one will surface as a spurious P002 migration conflict and the other quietly removes the operational thread that ties a user-visible error to a log line. R2-R6 are Low documentation and cleanup items.
+
+AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.
+
+---
+
+# Second Focused Re-Review — Accepted Re-Review Corrections
+
+## Re-Review Target
+
+- Review-fix SHA: `82e16fce38c69ea7e8961a654ccdeaeb4f06c07a`
+- Re-review-fix SHA: `bc45e4f7030f5521ddfc3a9e50c270da1a81c99d` (exists, `P001: address accepted re-review observations`)
+- Reviewed range: `git diff 82e16fce38c69ea7e8961a654ccdeaeb4f06c07a..bc45e4f7030f5521ddfc3a9e50c270da1a81c99d` (23 files, +1701 / -158; of which `notes/P001/claude-review.md` is my own first re-review text)
+- Working tree at re-review time: clean at `116e72d` (`P001: record re-review fix handoff`). `bc45e4f..116e72d` touches only the P001 phase record and `notes/P001/*`. No application source differs between the fix commit and the tree I executed.
+- Disposition source: `notes/P001/review-disposition.md` — R1-R7 all `Accepted`.
+
+## Validation Rerun
+
+| Command                                                                                                       | Result      | Notes                                                                                       |
+| ------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| `git cat-file -t bc45e4f`                                                                                     | Passed      | Fix SHA exists.                                                                             |
+| `pnpm lint`                                                                                                   | Passed      | ESLint + `prettier --check .`, both clean.                                                  |
+| `pnpm typecheck`                                                                                              | Passed      | Four packages, strict.                                                                      |
+| `pnpm test`                                                                                                   | Passed      | 5 tests (shared 2, database 3).                                                             |
+| `pnpm test:api`                                                                                               | Passed      | 12 tests — `env.test.ts` (5), `app.test.ts` (3), `change-requests.integration.test.ts` (4). |
+| `pnpm test:web`                                                                                               | Passed      | 5 tests.                                                                                    |
+| `pnpm build`                                                                                                  | Passed      | All packages.                                                                               |
+| `pnpm test:e2e`                                                                                               | Passed      | 1 Playwright test against the real stack.                                                   |
+| `pnpm --filter @appsolo/database generate`                                                                    | Passed      | `No schema changes, nothing to migrate` — R1 confirmed.                                     |
+| `node scripts/check-scaffolding.mjs`, `generate-phase-index.mjs --check`, `git diff --check 82e16fc..bc45e4f` | Passed      | Clean.                                                                                      |
+| `pnpm docker:up`                                                                                              | **Not run** | Docker still unavailable. AC2 remains without execution evidence.                           |
+| Probe: live request/error logging with an authenticated user, an unknown user, and a failing database         | Passed      | R7 confirmed — see below.                                                                   |
+| Probe: real-browser deep link to `/projects/:projectId/change-requests/new`                                   | **Failed**  | Blank page, uncaught `TypeError`. See R8.                                                   |
+
+Codex's recorded counts (5 / 12 / 5) match exactly what I observed.
+
+## Accepted-Fix Verification
+
+| Finding | Severity | Status                       | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------- | -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1      | Medium   | **Verified fixed**           | `packages/database/drizzle/meta/0001_snapshot.json` is now checked in (1262 lines) and `_journal.json` matches. `pnpm --filter @appsolo/database generate` now reports `No schema changes, nothing to migrate 😴` where it previously emitted a duplicate `0002`. The applied SQL is unchanged.                                                                                                                                                                                                                                                      |
+| R2      | Low      | **Fixed, but introduced R8** | [NewChangeRequest.tsx:20-27](apps/web/src/features/change-requests/NewChangeRequest.tsx#L20-L27) reads the cached list envelope instead of the literal, and the component test now seeds `Acme Demo Co. · Acme client portal` and asserts it renders. The seed literal is gone. The new cache read is unguarded — see R8.                                                                                                                                                                                                                            |
+| R3      | Low      | Verified fixed               | `APPSOLO_USE_TEST_DATABASE` is now part of the Zod schema with a `false` default ([config/env.ts:31-34](apps/api/src/config/env.ts#L31-L34)), consumed as `config.APPSOLO_USE_TEST_DATABASE` in [server.ts](apps/api/src/server.ts), documented in the `ENVIRONMENT.md` API table plus an explicit "not an operator-facing development setting" note, and present in both `.env.example` files with a clarifying comment. A test asserts `'true'` parses and `'yes'` is rejected by name ([env.test.ts:26-33](apps/api/src/config/env.test.ts#L26)). |
+| R4      | Low      | Verified fixed               | The 413 response now uses a dedicated `PAYLOAD_TOO_LARGE` code ([app.ts:60](apps/api/src/app.ts#L60)) and `markdown/contracts/API.md` gained the matching table row; the detail route section now states that a missing and an inaccessible request both return `404` so existence is not disclosed. `app.test.ts` asserts the new code. Live: `413` with `{"code":"PAYLOAD_TOO_LARGE"}`.                                                                                                                                                            |
+| R5      | Low      | Verified fixed               | `findById` is deleted from the repository; no reference remains.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| R6      | Low      | Verified fixed               | README identity table now lists four identities, describes `…000005` as an Acme Demo Co. client member denied from Northstar, and adds `…000006` as the internal-only developer denied from all client projects.                                                                                                                                                                                                                                                                                                                                     |
+| R7      | Medium   | **Verified fixed**           | See detail below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+### R7 — verified fixed, including the error path
+
+`customProps` now returns `{ requestId }` before authentication and `{ userId }` after it ([app.ts:38-41](apps/api/src/app.ts#L38-L41)), and the health route logs through `request.log` rather than the bare base logger ([health.routes.ts:13](apps/api/src/modules/health/health.routes.ts#L13)).
+
+I confirmed the resulting behavior against a live API rather than inferring it. Authenticated `200` and unauthenticated `401` requests:
+
+```
+status=200  requestId='b59f280b-…'  userId='20000000-…-000000000003'  header='b59f280b-…'
+status=401  requestId='4db5141b-…'  userId=None                       header='4db5141b-…'
+```
+
+Every line carries exactly one `requestId` (`awk` count = 1 per line, versus the duplicated key in the candidate), it matches the `x-request-id` response header, and the authenticated line also carries `userId` — so both contract requirements hold simultaneously.
+
+The error path is now better than the candidate's. With the API pointed at an unreachable database:
+
+```
+response: 503, x-request-id: 685089c4-…, body error.requestId: 685089c4-…
+log msg='database readiness check failed'  requestId='685089c4-…'   leaks connection string: False
+log msg='request errored'                  requestId='685089c4-…'   leaks connection string: False
+```
+
+A user-visible error ID now ties directly to the internal log line, which is what the correlation requirement exists for. See R9 for a durability caveat about how this works.
+
+## New Findings
+
+### R8 — The create-request route crashes to a blank page when the list query is not cached
+
+- Severity: **High**
+- Requirement or invariant: R8 change-request creation form; AC13; AC14 ("loading, empty, validation, success, forbidden/not-found, and generic error states are implemented"); QA cases Q3 and Q4.
+- Evidence: [NewChangeRequest.tsx:24-27](apps/web/src/features/change-requests/NewChangeRequest.tsx#L24-L27) destructures the cached envelope's `meta` directly:
+  ```ts
+  const requestList = queryClient.getQueryData<SuccessEnvelope<ChangeRequestDto[]>>([...]);
+  const { organizationName = 'Authorized organization', projectName = 'Project' } = requestList?.meta as {...};
+  ```
+  When the list query has never run, `getQueryData` returns `undefined`, so `requestList?.meta` is `undefined`, and destructuring `undefined` throws a `TypeError`. The optional chain guards the property access but not the destructuring; the default values only apply once the right-hand side is an object. The `as` cast hides this from TypeScript, so `pnpm typecheck` cannot catch it.
+- Impact: The route renders nothing. There is no error boundary in [main.tsx](apps/web/src/main.tsx), so React unmounts the whole tree — the sidebar and shell disappear too, not just the form. This happens on any direct navigation to the create URL, on a browser refresh while on the form, and in a new tab. A user who fills in the form, refreshes, or bookmarks the page loses the entire application view.
+- Reproduction: with the app running, open `http://127.0.0.1:5173/projects/10000000-0000-4000-8000-000000000003/change-requests/new` directly in Chromium:
+  ```
+  h1 count:   0
+  root text:  ""
+  pageerror:  "Cannot read properties of undefined (reading 'organizationName')"
+  ```
+  No automated test catches it: the Playwright smoke reaches the form by clicking "New request" from the list (warm cache), and [NewChangeRequest.test.tsx:12-16](apps/web/src/features/change-requests/NewChangeRequest.test.tsx#L12) explicitly calls `queryClient.setQueryData(...)` before rendering, so both paths pre-populate the exact cache entry whose absence causes the crash.
+- Recommended correction: Guard the read — `const { organizationName = '…', projectName = '…' } = (requestList?.meta ?? {}) as {…};` — and add a component test that renders the form with an empty `QueryClient`. Consider also fetching the project context on this route rather than depending on cache warmth, and adding a top-level error boundary so a future render error degrades to a message instead of a blank document.
+
+### R9 — The request-ID logging fix depends on `pino-http` evaluating `customProps` twice
+
+- Severity: Low
+- Requirement or invariant: `markdown/contracts/SECURITY.md` and `markdown/ARCHITECTURE.md` structured-logging requirements; maintainability.
+- Evidence: The ternary at [app.ts:38-41](apps/api/src/app.ts#L38-L41) can only ever return one of the two keys per call. Both appear on authenticated log lines because `pino-http@10.5.0` invokes `customProps` at two distinct points — once in `loggingMiddleware` when the request logger is built (before the auth middleware runs, yielding `{ requestId }`) and once in `onResFinished` (after auth, yielding `{ userId }`), where a string-comparison guard prevents re-binding an identical value. I verified both call sites in `node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js:105,146`.
+- Impact: The behavior is correct today and I verified it end to end, but it rests on an undocumented ordering detail of a third-party library. If a future `pino-http` evaluates `customProps` only at response time, authenticated request lines silently lose `requestId` — the exact regression R7 raised — and no test would fail, because no test asserts log contents.
+- Recommended correction: Return both keys unconditionally (`{ requestId: request.requestId, userId: request.authenticatedUser?.userId }`) and remove the duplicate at its source, or bind `requestId` once via `pinoHttp`'s `genReqId`/`customAttributeKeys` instead of through `customProps`. A single assertion on a captured log line would also pin the behavior.
+
+### R10 — `db: {} as never` remains in the API health tests (residual C15)
+
+- Severity: Low
+- Requirement or invariant: `markdown/REVIEW_CHECKLIST.md` ("`any`, unsafe assertions, and duplicated DTO types are absent or justified").
+- Evidence: [app.test.ts:16,27,34](apps/api/src/app.test.ts#L16) still constructs the app with `db: {} as never`. C15 named this and it was not changed in either fix commit; the other three C15 items were addressed.
+- Impact: Cosmetic today — the injected `checkDatabase` means the fake `db` is never touched. It becomes a trap if a future test in this file exercises a code path that does reach `db`, because the cast suppresses the compiler error that would otherwise point at it.
+- Recommended correction: Replace with a minimal typed stub, or note in the disposition that the cast is accepted for these tests.
+
+## Regression And Scope Checks
+
+- No new dependency was added. The only non-P001-scope file touched is `scripts/generate-phase-index.mjs`, and that change (in the handoff commit) is a Prettier reformat.
+- `grep -riE "aws|@aws-sdk|cognito|s3"` across `apps/`, `packages/`, and `e2e/` still returns nothing; NG1-NG10 continue to hold. The branch is still unpushed and `origin/main` is still the base SHA.
+- `0000_spicy_leader.sql`, `0001_normalized_email.sql`, and `0000_snapshot.json` are unchanged by this commit — R1 was fixed by adding the missing snapshot, not by rewriting applied migrations.
+- Contract edits are additive and accurate: the `PAYLOAD_TOO_LARGE` row, the detail-route 404 sentence, and the `APPSOLO_USE_TEST_DATABASE` row all describe behavior I observed. No acceptance criterion was weakened.
+- I re-verified that the C1 isolation boundary still holds after these changes: `test:prepare` and the integration suite still resolve only through `resolvedTestDatabaseUrl`, and `pnpm test:api`/`pnpm test:e2e` still touch only `appsolo_client_hub_test`.
+- Live re-probe confirmed no request body content, credential, or connection string appears in API log output, including the database-failure path.
+
+## Verdict
+
+`changes requested`
+
+R1 and R7 — the two Medium items that mattered — are verified fixed by direct reproduction, and R3-R6 are cleanly closed. The R7 fix in particular is now stronger than the original candidate, because the health-failure log line carries the same UUID the client was shown.
+
+The blocking issue is R8, a High regression introduced by the R2 fix in this very commit: the change-request creation route now throws during render whenever the list query is not already cached, and with no error boundary the whole application unmounts to a blank page. Direct navigation, a refresh on the form, and opening the form in a new tab all hit it. Neither the Playwright smoke nor the component test can catch it, because both pre-populate the exact cache entry whose absence causes the crash — so this would most likely have surfaced first during human QA on Q3 or Q4. The fix is a one-line guard plus a test that renders the form with an empty cache.
+
+R9 and R10 are Low and need only a disposition.
 
 AC2 remains unverified in this environment. P001 must not reach `complete` until human QA covers Q1 and Q8 against real Docker Compose, along with the remaining Q-cases.
