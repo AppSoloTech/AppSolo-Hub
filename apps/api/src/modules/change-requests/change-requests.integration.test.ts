@@ -38,6 +38,31 @@ describe('change request API integration', () => {
         .status,
     ).toBe(401);
   });
+  it('reports database unavailability safely through the assembled application', async () => {
+    const unavailableDatabaseUrl =
+      'postgresql://appsolo:appsolo_local_only@127.0.0.1:1/appsolo_client_hub_test';
+    const unavailableDatabase = createDatabase(unavailableDatabaseUrl);
+    const unavailableApp = createApp({
+      db: unavailableDatabase.db,
+      config: { ...config, DATABASE_URL: unavailableDatabaseUrl },
+    });
+    try {
+      const response = await request(unavailableApp).get('/api/v1/health');
+      const body = response.body as {
+        error: { code: string; message: string; requestId: string };
+      };
+      expect(response.status).toBe(503);
+      expect(body.error).toMatchObject({
+        code: 'DATABASE_UNAVAILABLE',
+        message: 'The service is temporarily unavailable.',
+      });
+      expect(body.error.requestId).toBe(response.headers['x-request-id']);
+      expect(JSON.stringify(body)).not.toContain('ECONNREFUSED');
+      expect(JSON.stringify(body)).not.toContain('127.0.0.1');
+    } finally {
+      await unavailableDatabase.pool.end();
+    }
+  });
   it('creates a request and its initial submitted history in one transaction', async () => {
     const response = await request(app).post(projectPath).set('x-dev-user-id', seedIds.clientAdmin).send({
       title: 'Persist a request',
