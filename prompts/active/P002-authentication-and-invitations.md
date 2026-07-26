@@ -1,16 +1,16 @@
 ---
 phase: P002
 spec_version: 1
-status: draft
-approved_by: null
-approved_date: null
+status: approved
+approved_by: human
+approved_date: 2026-07-26
 drafted_date: 2026-07-26
 last_verified_sha: ccf344a406085a92669d867cc068e67c55519af3
 ---
 
 # P002 — Authentication And Invitations
 
-> This is a non-authorizing draft. Implementation must not begin until the human approves a consolidated revision, the prompt is moved to `prompts/active/`, and the canonical P002 phase record becomes `approved`.
+> Approved by the human on 2026-07-26. This is the canonical P002 implementation work order.
 
 ## Problem
 
@@ -240,7 +240,7 @@ Contract rules:
 
 ## Proposed Binding Decisions
 
-These become binding only if the human approves this prompt revision.
+The human approved these binding decisions on 2026-07-26.
 
 1. **Invitation lifetime:** seven days from create or resend.
 2. **Resend behavior:** rotate the existing invitation's token and expiry; do not create multiple pending invitation rows.
@@ -378,9 +378,9 @@ Every result must be recorded as `Passed`, `Failed`, or `Not run` with exact com
 - Immutable P002 candidate commit.
 - `notes/P002/implementation-handoff.md` with exact base/candidate SHAs and validation evidence.
 
-## Open Human Decisions
+## Approved Human Decisions
 
-Before approval, explicitly approve or revise:
+The human approved:
 
 1. seven-day invitation expiry;
 2. the R6 role-management ceiling, especially whether `CLIENT_ADMIN` may manage only `CLIENT_MEMBER`;

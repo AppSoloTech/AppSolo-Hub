@@ -1,10 +1,10 @@
 ---
 id: P002
 title: Authentication And Invitations
-status: draft
+status: approved
 owner: codex
 reviewer: claude
-prompt: null
+prompt: prompts/active/P002-authentication-and-invitations.md
 depends_on: [P001]
 base_branch: main
 base_sha: null
@@ -34,19 +34,20 @@ Establish provider-neutral user access lifecycle, invitations, membership admini
 
 ## Approval State
 
-This phase remains a roadmap record only.
+The human approved P002 specification version 1 on 2026-07-26.
 
-- Draft prompt: `prompts/drafts/P002-authentication-and-invitations.md`, specification version 1.
+- Active prompt: `prompts/active/P002-authentication-and-invitations.md`, specification version 1.
 - Draft basis: local `main` at `ccf344a406085a92669d867cc068e67c55519af3`.
-- Human approval: not granted.
-- Implementation: must not begin.
+- Human approval: granted on 2026-07-26.
+- Implementation: authorized, subject to mandatory repository revalidation and Git-boundary establishment.
 - Dependencies: P001 is complete.
 
-The draft contains stable R, AC, V, Q, and NG identifiers. Before approval, the human must approve or revise its invitation lifetime/state, role ceiling, local delivery, development-session, invitee-profile, token-transport, and audit-retention decisions.
+The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitation lifetime/state, role ceiling, local delivery, development-session, invitee-profile, token-transport, and audit-retention decisions are binding for P002.
 
 ## Evidence
 
 - Drafted: 2026-07-26.
+- Approved: 2026-07-26.
 - Draft basis SHA: `ccf344a406085a92669d867cc068e67c55519af3`.
 - Base SHA: pending implementation approval and revalidation.
 - Candidate SHA: pending.
