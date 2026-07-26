@@ -69,7 +69,13 @@ response-note requirements, and concurrency behavior are binding for P003.
   `phase/P003-estimates-and-approval-workflow`.
 - Candidate SHA: `9c9ab03899a5295cbcd54a3f22279c1280b5911f`.
 - Candidate commit: `P003: implement estimates and approval workflow`.
-- Review: pending independent Claude review.
+- Claude review: complete; verdict `ready with non-blocking observations`.
+- Human disposition: P003-F1 through P003-F7 accepted on 2026-07-26.
+- Review-fix SHA: `5de9490cf80c3cdda286f0565608f415ee75241f`.
+- Review-fix commit: `P003: address accepted review findings`.
+- Accepted-fix range:
+  `e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`.
+- Focused Claude verification: pending.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -98,22 +104,61 @@ response-note requirements, and concurrency behavior are binding for P003.
 | V19 | prohibited implementation/dependency searches   | Passed | No added P003 non-goal, AWS SDK, Cognito, SES, billing, comment, or time-tracking behavior.      |
 | V20 | `node scripts/validate-phase.mjs P003`          | Passed | Required phase and pending review/QA note structure valid.                                       |
 
+## Accepted Review-Fix Validation
+
+| Command                                             | Result | Evidence                                                                                                          |
+| --------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| `pnpm docker:up`                                    | Passed | Local PostgreSQL service was healthy.                                                                             |
+| `pnpm db:migrate`                                   | Passed | Strictly additive `0005_early_namor.sql` applied to existing development data.                                    |
+| `pnpm db:seed` twice                                | Passed | Both idempotence runs reported seed data present.                                                                 |
+| `pnpm --filter @appsolo/database test:prepare`      | Passed | The isolated test database reset, migrated through `0005`, and seeded.                                            |
+| `pnpm --filter @appsolo/database generate`          | Passed | Drizzle reported `No schema changes, nothing to migrate`.                                                         |
+| `pnpm lint`                                         | Passed | Final ESLint and Prettier run passed.                                                                             |
+| `pnpm typecheck`                                    | Passed | Strict shared, database, API, and web checks passed.                                                              |
+| `pnpm test`                                         | Passed | 15 shared and 5 database tests passed; the new NULL-reason invariant is covered.                                  |
+| `pnpm test:api`                                     | Passed | 34 tests in 5 files passed, including both non-approval decisions, client-member denials, and DTO/overflow cases. |
+| `pnpm test:web`                                     | Passed | 20 tests in 7 files passed, including stale reseeding, error semantics, and accessible error association.         |
+| `pnpm build`                                        | Passed | All four workspace builds completed.                                                                              |
+| `pnpm test:e2e`                                     | Passed | All 3 real browser/API/PostgreSQL flows passed.                                                                   |
+| direct isolated SQL NULL-reason probe               | Passed | PostgreSQL returned `23514` for `estimate_responses_reason_present`.                                              |
+| scaffolding, phase-index, and P003 phase validation | Passed | 27 files/11 phases; index current; P003 structure valid.                                                          |
+| review-fix `git diff --check` and scope searches    | Passed | No whitespace error or added prohibited-scope implementation in the accepted-fix range.                           |
+
+Interim validation results are preserved honestly:
+
+- The first `pnpm test:web` rerun failed one new assertion because it queried an
+  alert by accessible name; the rendered alert and refreshed terms were present.
+  The assertion was corrected to verify visible text plus `role="alert"`, and
+  the authoritative rerun passed 20 tests.
+- The first `pnpm lint` rerun failed only on formatting of Claude's completed
+  review Markdown. Formatting-only normalization was applied; the final lint
+  rerun passed.
+- The first ad hoc SQL-probe command failed before connecting because the root
+  eval context could not resolve a workspace alias. The explicit source-path
+  rerun connected only to the isolated test database and returned the expected
+  constraint violation.
+
 ## Review
 
 - Review target:
   `274a9897c9fc8c681b4d1eac13ca8b16c0107a62..9c9ab03899a5295cbcd54a3f22279c1280b5911f`.
+- Accepted-fix target:
+  `e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`.
 - Implementation handoff: `notes/P003/implementation-handoff.md`.
-- Independent review: pending.
-- Finding disposition: pending.
+- Independent candidate review: complete; verdict
+  `ready with non-blocking observations`.
+- Finding disposition: P003-F1 through P003-F7 accepted and fixed.
+- Focused verification of the accepted-fix commit: pending.
 - Human QA Q1-Q10: not run.
 - No push, remote creation, pull, origin reset, history rewrite, or merge occurred.
 
 ## Completion Gate
 
-- Requirements implemented: candidate evidence says yes; independent review pending.
+- Requirements implemented: Yes, including accepted P003-F1 through P003-F7.
 - Automated validation: passed as recorded above.
-- Independent review clear: No; pending.
-- Findings dispositioned: No findings exist yet; human disposition pending review.
+- Independent review clear: Candidate review is complete; focused verification
+  of accepted fixes remains pending.
+- Findings dispositioned: Yes; P003-F1 through P003-F7 were accepted and fixed.
 - Required human QA complete: No; Q1-Q10 are not run.
 - Human integration and completion approval: No.
 - Ready for integration: No.

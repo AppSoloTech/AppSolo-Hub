@@ -1,6 +1,6 @@
 # P003 Implementation Handoff For Claude
 
-> Status: Review pending. P003 is not complete.
+> Status: Accepted-fix verification pending. P003 is not complete.
 
 ## Review Target
 
@@ -9,10 +9,18 @@
 - Implementation branch: `phase/P003-estimates-and-approval-workflow`
 - Candidate SHA: `9c9ab03899a5295cbcd54a3f22279c1280b5911f`
 - Candidate commit: `P003: implement estimates and approval workflow`
+- Review-fix SHA: `5de9490cf80c3cdda286f0565608f415ee75241f`
+- Review-fix commit: `P003: address accepted review findings`
 - Exact review diff:
   `git diff 274a9897c9fc8c681b4d1eac13ca8b16c0107a62..9c9ab03899a5295cbcd54a3f22279c1280b5911f`
+- Incremental accepted-fix diff:
+  `git diff e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`
+- Candidate-through-fix diff:
+  `git diff 9c9ab03899a5295cbcd54a3f22279c1280b5911f..5de9490cf80c3cdda286f0565608f415ee75241f`
 - Candidate diff check:
   `git diff --check 274a9897c9fc8c681b4d1eac13ca8b16c0107a62..9c9ab03899a5295cbcd54a3f22279c1280b5911f`
+- Accepted-fix diff check:
+  `git diff --check e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`
 
 Local `main` was authoritative and 29 commits ahead of `origin/main`. No pull,
 push, reset, merge, history rewrite, or remote creation occurred.
@@ -53,6 +61,26 @@ push, reset, merge, history rewrite, or remote creation occurred.
 - API, data, security, testing, architecture, README, and ADR-0004
   documentation updates.
 
+## Accepted Review Fixes
+
+- P003-F1: strictly additive migration `0005_early_namor.sql` adds the
+  NULL-safe `estimate_responses_reason_present` database constraint without
+  changing or dropping the reviewed migration/constraint.
+- P003-F2: draft forms now reseed whenever the server `updatedAt` changes, and
+  conflict copy requires review of the refreshed terms before retry.
+- P003-F3: mutation success and failure use distinct state; failures render as
+  `.error`, `role="alert"`, and receive focus.
+- P003-F4: PostgreSQL integration coverage now performs real rejection and
+  clarification decisions, proves one response/status transition for each, and
+  asserts client-member create/edit/submit denials.
+- P003-F5: response DTO presence is gated by joined-column nullness rather than
+  truthy name text; an empty first-name regression returns the decision and the
+  remaining display-name component.
+- P003-F6: each term error has an ID, assertive role, and conditional
+  `aria-describedby` association without polluting the input's accessible name.
+- P003-F7: calculated-cost overflow details use the form-level
+  `estimatedCost` path instead of blaming `hourlyRate`.
+
 ## Requirement And Acceptance Mapping
 
 | Requirement | Acceptance criteria | Primary evidence                                                                                    |
@@ -64,8 +92,8 @@ push, reset, merge, history rewrite, or remote creation occurred.
 | R5          | AC11-AC15           | Strict decision union, locked one-response transaction, unique response, concurrent 200/409 proof.  |
 | R6-R7       | AC16-AC18           | Explicit version-descending DTO query, scoped joins, strict route path/query/body tests.            |
 | R8          | AC19-AC21           | Four P003 component tests and real internal-to-client Playwright approval flow.                     |
-| R9          | AC22-AC23           | Additive migration/snapshot, no-drift result, twice-idempotent deterministic seed.                  |
-| R10         | AC24-AC25           | 72 automated tests across layers, builds, direct probes, documentation, candidate evidence.         |
+| R9          | AC22-AC23           | Additive migrations/snapshots, NULL-safe reason and cost checks, no drift, deterministic seed.      |
+| R10         | AC24-AC25           | 77 automated tests across layers, builds, direct probes, documentation, and immutable Git evidence. |
 
 ## Migration And Seed Evidence
 
@@ -79,6 +107,10 @@ push, reset, merge, history rewrite, or remote creation occurred.
   `No schema changes, nothing to migrate`.
 - A direct invalid-cost update failed PostgreSQL check enforcement with
   constraint code `23514`.
+- `0005_early_namor.sql` applied to existing development data and adds only the
+  NULL-safe response-reason constraint.
+- A direct isolated SQL insert with a NULL rejection reason failed with
+  `23514:estimate_responses_reason_present`.
 
 ## Validation Evidence
 
@@ -110,6 +142,38 @@ whose result exceeded `numeric(12,2)` and correctly raised overflow. The fixture
 was corrected to the actual in-range boundary; the final V10 result above is
 the passing authoritative run.
 
+## Accepted Review-Fix Validation
+
+| Command                                        | Result | Evidence                                                                          |
+| ---------------------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| `pnpm docker:up`                               | Passed | Local PostgreSQL container healthy.                                               |
+| `pnpm db:migrate`                              | Passed | Additive `0005_early_namor.sql` applied to existing development data.             |
+| `pnpm db:seed` twice                           | Passed | Both idempotence runs completed without duplication.                              |
+| `pnpm --filter @appsolo/database test:prepare` | Passed | Only the isolated test database reset; migrations and seed completed.             |
+| `pnpm --filter @appsolo/database generate`     | Passed | `No schema changes, nothing to migrate`.                                          |
+| `pnpm lint`                                    | Passed | Final ESLint and Prettier run passed.                                             |
+| `pnpm typecheck`                               | Passed | Strict shared/database/API/web checks passed.                                     |
+| `pnpm test`                                    | Passed | 15 shared + 5 database tests.                                                     |
+| `pnpm test:api`                                | Passed | 34 tests in 5 files, including all accepted API/database regressions.             |
+| `pnpm test:web`                                | Passed | 20 tests in 7 files, including accepted conflict/error/accessibility regressions. |
+| `pnpm build`                                   | Passed | All four workspace builds completed.                                              |
+| `pnpm test:e2e`                                | Passed | 3 real browser/API/PostgreSQL workflows.                                          |
+| direct isolated SQL NULL-reason probe          | Passed | PostgreSQL returned `23514:estimate_responses_reason_present`.                    |
+| scaffolding, phase-index, and P003 validation  | Passed | 27 required files, 11 phases, current index, valid P003 structure.                |
+| accepted-fix diff/scope checks                 | Passed | No whitespace errors or prohibited-scope additions in `e41fbca..5de9490`.         |
+
+Interim failures were resolved and are not represented as passes:
+
+- The first component rerun failed one new alert query even though the rendered
+  alert and refreshed values were present. The assertion now verifies visible
+  text plus `role="alert"`; the final 20-test run passed.
+- The first lint rerun found only unformatted Claude-review Markdown. A
+  formatting-only normalization preserved the review content; final lint
+  passed.
+- The first ad hoc SQL probe failed before connecting because a root eval could
+  not resolve the workspace alias. The explicit repository-source-path rerun
+  connected only to the isolated test database and passed.
+
 ## Direct Probe Details
 
 - Manager draft list: `200`; exact strings `4.50`, `125.00`, `562.50`.
@@ -123,7 +187,9 @@ the passing authoritative run.
 
 ## Known Limitations
 
-- Independent Claude review has not run.
+- Claude's candidate review completed with verdict
+  `ready with non-blocking observations`; focused verification of the accepted
+  F1-F7 fix commit has not run.
 - Human Q1-Q10 QA has not run.
 - P003 remains local-only and uses development authentication.
 - All approved non-goals remain excluded: no billing/currency variants/line
@@ -142,3 +208,9 @@ the passing authoritative run.
   and only the immediately prior rejected/clarification version is superseded.
 - Inspect client UI states for draft artifacts, response-role hiding, keyboard
   labels/focus, stale refresh, and narrow viewport behavior.
+- Verify the additive response-reason constraint rejects NULL for both
+  non-approval decisions while still allowing an optional approval note.
+- Reproduce a two-manager stale save and confirm the latest server terms replace
+  every input before another submission.
+- Confirm failure announcements, term-error descriptions, real decision tests,
+  blank-name response DTO behavior, and `estimatedCost` overflow detail.
