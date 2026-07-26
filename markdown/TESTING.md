@@ -83,6 +83,23 @@ Required P001 smoke:
 
 A second tenant-denial case may use direct API setup if switching development users through the UI is not part of P001.
 
+### P002 Coverage
+
+Shared tests cover normalized strict sign-in/invitation inputs, high-entropy-sized acceptance tokens, and optimistic membership updates.
+
+API integration tests must cover:
+
+- normalized active sign-in and safe invited/suspended/unknown denial;
+- explicit sessions/capabilities and active-membership filtering;
+- owner/admin/client-admin role ceilings, internal-role restrictions, and cross-tenant denial;
+- token hashing, seven-day expiry, duplicate pending concurrency, resend rotation, revoke, and generic invalid behavior;
+- atomic single-use acceptance under concurrency;
+- membership suspend/reactivate, stale state, self-suspension, and last-owner protection;
+- tenant-scoped newest-first audit output and token/hash/body redaction;
+- all P001 authorization and change-request regressions.
+
+Component tests cover sign-in, fragment scrubbing, acceptance states, role-aware control hiding, invitation link feedback, and membership actions. Playwright covers the real copy-link/accept/session/capability flow plus the P001 list/create/refresh regression.
+
 ## Database Test Isolation
 
 Docker Compose should initialize:
@@ -119,6 +136,8 @@ git diff --check <base_sha>..<candidate_sha>
 Codex should also perform a direct health request and a basic frontend-to-API request. Playwright may satisfy the latter when it clearly uses the running API.
 
 Claude should independently rerun the most important commands, especially typecheck, API integration tests, authorization tests, production build, and the browser smoke when the environment supports it.
+
+P002 uses the active prompt's V1-V20 sequence. `pnpm --filter @appsolo/database generate` must report no new migration after the checked-in P002 migration/snapshot, and `node scripts/validate-phase.mjs P002` must pass before handoff.
 
 ## Validation Evidence
 

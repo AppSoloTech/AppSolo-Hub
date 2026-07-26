@@ -1,6 +1,6 @@
 # AppSolo Client Hub
 
-AppSolo Client Hub is a local multi-tenant portal for tracking client change requests. P001 delivers one complete, local workflow: an authorized user lists requests for a project, opens a request, submits a new one, and sees the PostgreSQL-backed result after refresh.
+AppSolo Client Hub is a local multi-tenant portal for tracking client change requests and access. P001 delivers the request vertical slice. P002 adds provider-neutral local sessions, copy-only invitation acceptance, membership lifecycle/role ceilings, and immutable access history.
 
 Tenant authorization happens in the Express API. The React UI is a convenience layer, never the authorization boundary.
 
@@ -12,13 +12,13 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
                        shared Zod contracts (packages/shared)
 ```
 
-| Area                | Responsibility                                                           |
-| ------------------- | ------------------------------------------------------------------------ |
-| `apps/web`          | React Router, TanStack Query, React Hook Form, CSS Modules dashboard     |
-| `apps/api`          | Express routes, development auth adapter, authorization, errors, logging |
-| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces                    |
-| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset       |
-| `e2e`               | Playwright seeded list/create/refresh smoke test                         |
+| Area                | Responsibility                                                         |
+| ------------------- | ---------------------------------------------------------------------- |
+| `apps/web`          | React Router, session/access UI, TanStack Query, CSS Modules dashboard |
+| `apps/api`          | Express routes, local auth adapter, access policy, services, logging   |
+| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces                  |
+| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset     |
+| `e2e`               | Playwright request regression and invitation/session browser flow      |
 
 `markdown/` is the canonical product and delivery control plane.
 
@@ -83,7 +83,9 @@ pnpm dev
 - API: <http://localhost:4000>
 - Health: <http://localhost:4000/api/v1/health>
 
-The default development identity is the seeded client administrator:
+On the first local visit, `VITE_DEV_AUTH_USER_ID` may initialize the browser identity. Use **Sign out** to reach the clearly labeled email-only development sign-in screen. This is intentionally insecure local behavior, not production authentication.
+
+Seeded development identities include:
 
 | Identity             | ID                                     | Access                                                      |
 | -------------------- | -------------------------------------- | ----------------------------------------------------------- |
@@ -92,7 +94,9 @@ The default development identity is the seeded client administrator:
 | Other tenant user    | `20000000-0000-4000-8000-000000000005` | Acme Demo Co. client member; denied from Northstar project  |
 | Internal-only user   | `20000000-0000-4000-8000-000000000006` | AppSolo internal developer; denied from all client projects |
 
-Change `VITE_DEV_AUTH_USER_ID` and the API `DEV_AUTH_USER_ID`, or send `x-dev-user-id` directly to the API, to test a seeded identity. Development authentication is prohibited when `NODE_ENV=production`.
+Sign in with the seeded email address shown by the UI or send `x-dev-user-id` directly when testing the API. The browser stores only the selected development user ID. It never stores invitation tokens, which arrive in a URL fragment and are removed before acceptance. Development authentication is prohibited when `NODE_ENV=production`.
+
+Owners, administrators, and client administrators see an **Access** navigation item for authorized organizations. From there they can view members/invitations/history, create a copy-only local acceptance link, resend/revoke pending invitations, and apply role/status changes within their exact role ceiling.
 
 ## Commands
 
@@ -107,7 +111,7 @@ pnpm test:e2e       # resets test DB, then Playwright browser smoke
 pnpm build          # production builds
 pnpm db:generate    # generate Drizzle migration from schema changes
 pnpm db:migrate     # apply checked-in migration to configured DB
-pnpm db:seed        # idempotently add fake P001 data
+pnpm db:seed        # idempotently add fake P001/P002 data
 pnpm db:reset       # guarded local configured DB reset
 pnpm docker:up      # start local PostgreSQL Compose service
 pnpm docker:down    # stop local PostgreSQL Compose service
@@ -120,11 +124,13 @@ The Playwright command always starts its own API and web processes. If either de
 - **Migration says a relation already exists:** confirm `.env` points at `appsolo_client_hub_dev`, not another application's database. P001 migrations are initial-schema migrations and must not be applied to an unrelated database.
 - **`db:reset` refuses to run:** it intentionally requires a local `appsolo_client_hub_dev` target; `test:prepare` accepts only the separate `appsolo_client_hub_test` target.
 - **Browser shows a retryable error:** verify the API health endpoint and that `CORS_ORIGIN` includes the web origin (`localhost` and `127.0.0.1` are included in the examples).
-- **Development auth returns 401:** use an active seeded UUID and rerun `pnpm db:seed` if needed.
+- **Development sign-in returns 401:** use an active seeded email. Invited and globally suspended users are denied until their lifecycle permits sign-in.
+- **Invitation link is invalid:** only the newest link survives resend; revoked, accepted, rotated, and unknown tokens share a safe invalid response. Expired invitations can be resent.
+- **Membership update conflicts:** refresh the access page. Updates use `expectedUpdatedAt`, and self-suspension/last-owner lockout are deliberately rejected.
 - **Compose does not initialize the test database:** use a fresh Compose volume or create the named test database once; initialization SQL runs only for new volumes.
 
 ## Current limitations and future direction
 
-P001 deliberately excludes real login, estimates/approval mutation, comments, time tracking, attachments, email, billing, AWS resources, and production deployment. Authentication remains a provider-neutral adapter; a later phase can replace the development adapter with Cognito. Planned production direction is React hosting, an Express container, PostgreSQL, Cognito, S3, SES, CloudWatch, and AWS infrastructure only in their approved future phases.
+P002 deliberately excludes Cognito, passwords, secure production sessions, email/outbox delivery, AWS SDKs/resources, and deployment. Estimates/approval mutation, comments, time tracking, attachments, notifications, and billing remain sequenced future work. A later phase can replace the development adapter with Cognito without changing business modules.
 
-See [the current state](markdown/CURRENT_STATE.md), [architecture](markdown/ARCHITECTURE.md), and [P001 record](markdown/phases/P001-local-foundation-and-change-request-vertical-slice.md).
+See [the current state](markdown/CURRENT_STATE.md), [architecture](markdown/ARCHITECTURE.md), and [P002 record](markdown/phases/P002-authentication-and-invitations.md).

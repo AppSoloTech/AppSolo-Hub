@@ -15,9 +15,10 @@ interface AuthenticatedUser {
 }
 ```
 
-- P001 implementation: development-only database-backed adapter.
+- P001/P002 implementation: development-only database-backed adapter. P002 adds normalized-email identity selection, browser-local user-ID state, and a provider-neutral session DTO.
 - Future implementation: Cognito JWT adapter in P008.
 - Business services depend only on authenticated application identity and authorization services.
+- Invitation acceptance returns local session data but does not create a provider credential. P008 will bind accepted application users to Cognito identity without changing the business-facing `AuthenticatedUser`.
 
 ## Attachment Storage
 
@@ -43,7 +44,7 @@ Authorization occurs before the storage adapter is called. A future S3 implement
 
 ## Email Delivery
 
-No email interface is required in P001 unless it creates immediate clarity without unused production code. P007 will define event, preference, template, and SES behavior.
+P002 uses copy-only local invitation links and introduces no email adapter, outbox, or simulated delivery. P007 will define event, preference, template, and SES behavior.
 
 When introduced, domain/use-case code should call a provider-neutral notification boundary rather than the SES client directly.
 

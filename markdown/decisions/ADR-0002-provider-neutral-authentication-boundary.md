@@ -23,7 +23,9 @@ interface AuthenticatedUser {
 }
 ```
 
-P001 uses a development-only adapter. Cognito later supplies another adapter without changing business services.
+P001/P002 use a development-only adapter. P002's normalized-email sign-in selects an active local database user and stores only that user ID in browser storage. Invitation acceptance may return the same application-owned session DTO, but neither path creates a provider credential.
+
+Cognito later supplies another adapter without changing business services, capability policy, session DTO ownership, or invitation/membership use cases.
 
 ## Alternatives Considered
 
@@ -37,3 +39,5 @@ P001 uses a development-only adapter. Cognito later supplies another adapter wit
 - Production auth cannot be accidentally assumed complete in P001.
 - Middleware must include a strict production guard.
 - Authorization still loads application user and membership data from PostgreSQL.
+- The local sign-in UI must remain clearly labeled as insecure development behavior.
+- Provider-neutral session DTOs contain application users, active memberships, roles, and capabilities—not provider claims.

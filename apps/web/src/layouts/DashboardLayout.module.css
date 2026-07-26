@@ -29,11 +29,28 @@ nav a {
   border-radius: 6px;
   text-decoration: none;
 }
+nav a + a {
+  margin-top: 8px;
+}
 .user {
   margin-top: auto;
   padding-top: 48px;
   color: #b9c7dd;
   font-size: 0.83rem;
+  display: grid;
+  gap: 5px;
+}
+.user span {
+  overflow-wrap: anywhere;
+}
+.user button {
+  justify-self: start;
+  margin-top: 8px;
+  border: 1px solid #587092;
+  border-radius: 6px;
+  color: white;
+  background: transparent;
+  padding: 6px 9px;
 }
 .main {
   padding: 40px clamp(20px, 5vw, 72px);

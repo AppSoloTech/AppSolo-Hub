@@ -20,7 +20,7 @@ interface AuthenticatedUser {
 }
 ```
 
-P001 development requests use `x-dev-user-id` or the configured development default. Middleware must load the real user record and create the interface. Routes and services must not read the header directly.
+Development/test requests use `x-dev-user-id` after the browser establishes a local development identity. Middleware loads an active database user and creates the interface. Routes and services do not read the header directly.
 
 The development mechanism is disabled outside development/test and must cause production startup failure when misconfigured.
 
@@ -52,16 +52,18 @@ Error responses may also include a non-sensitive `requestId` either in `error` o
 
 ### Stable Error Codes
 
-| Code                   | HTTP | Meaning                                                 |
-| ---------------------- | ---: | ------------------------------------------------------- |
-| `VALIDATION_ERROR`     |  400 | External input failed validation                        |
-| `PAYLOAD_TOO_LARGE`    |  413 | Request body exceeds the configured size limit          |
-| `UNAUTHENTICATED`      |  401 | No valid authenticated user context                     |
-| `FORBIDDEN`            |  403 | Authenticated user lacks required tenant/project access |
-| `NOT_FOUND`            |  404 | Route or authorized resource not found                  |
-| `CONFLICT`             |  409 | Request conflicts with current resource state           |
-| `DATABASE_UNAVAILABLE` |  503 | Health/readiness database check failed                  |
-| `INTERNAL_ERROR`       |  500 | Unexpected internal failure                             |
+| Code                   | HTTP | Meaning                                                  |
+| ---------------------- | ---: | -------------------------------------------------------- |
+| `VALIDATION_ERROR`     |  400 | External input failed validation                         |
+| `PAYLOAD_TOO_LARGE`    |  413 | Request body exceeds the configured size limit           |
+| `UNAUTHENTICATED`      |  401 | No valid authenticated user context                      |
+| `FORBIDDEN`            |  403 | Authenticated user lacks required tenant/project access  |
+| `NOT_FOUND`            |  404 | Route or authorized resource not found                   |
+| `CONFLICT`             |  409 | Request conflicts with current resource state            |
+| `INVITATION_INVALID`   |  400 | Invitation is invalid, revoked, rotated, or already used |
+| `INVITATION_EXPIRED`   |  410 | Pending invitation has passed its expiry                 |
+| `DATABASE_UNAVAILABLE` |  503 | Health/readiness database check failed                   |
+| `INTERNAL_ERROR`       |  500 | Unexpected internal failure                              |
 
 Messages are safe for users. Raw exceptions, SQL, stack traces, environment values, and secrets are never returned.
 
@@ -200,6 +202,54 @@ All active listed roles may view and submit requests when they hold an active me
 - `CLIENT_MEMBER`
 
 This simple capability set is deliberate for P001. Later phases may distinguish approval, administration, internal-note, and time-entry permissions.
+
+## P002 Session And Access Routes
+
+### POST `/api/v1/development/session`
+
+Development/test only and unauthenticated. A strict body contains one normalized email. Only an active local user succeeds. Unknown, invited, and globally suspended users receive the same safe `401` denial. Success returns the session DTO; it does not issue a production credential, cookie, or password.
+
+### GET `/api/v1/session`
+
+Requires an authenticated active user. Returns:
+
+- explicit application user identity;
+- active memberships in active organizations, ordered by organization name and ID;
+- organization role, membership version timestamp, and typed capabilities for each membership.
+
+Suspended memberships are omitted. Provider claims and raw rows are never returned.
+
+### Organization access administration
+
+The following authenticated routes are tenant-scoped:
+
+- `GET /organizations/:organizationId/members`;
+- `PATCH /organizations/:organizationId/memberships/:membershipId`;
+- `GET|POST /organizations/:organizationId/invitations`;
+- `POST /organizations/:organizationId/invitations/:invitationId/resend`;
+- `POST /organizations/:organizationId/invitations/:invitationId/revoke`;
+- `GET /organizations/:organizationId/access-events`.
+
+List routes accept the standard `limit`/`offset` pagination contract and have deterministic ordering. Membership updates accept exactly one of `role` or `status` plus `expectedUpdatedAt`; stale versions, self-suspension, and last-owner lockout return `409`. Inaccessible nested identifiers return `404`.
+
+Invitation create accepts strict `firstName`, `lastName`, normalized `email`, and `role`. Create/resend returns an `acceptanceUrl` only in that authorized mutation response. The URL carries a 256-bit random token in its fragment. List and other responses never contain the URL, plaintext token, or token hash.
+
+### POST `/api/v1/invitations/accept`
+
+Unauthenticated. Accepts only `{ "token": "..." }` in the JSON body. A valid token atomically activates an invited user, creates or reactivates membership, accepts the invitation, and records audit history. Success returns the provider-neutral session DTO for local browser continuation.
+
+Pending invitations expire seven days after create/resend. Expired tokens return `410 INVITATION_EXPIRED`; invalid, revoked, rotated, accepted, and unknown tokens share `400 INVITATION_INVALID`.
+
+## P002 Capability Policy
+
+All active organization roles retain `VIEW_CHANGE_REQUESTS` and `SUBMIT_CHANGE_REQUESTS`. `OWNER`, `ADMIN`, and `CLIENT_ADMIN` also receive `VIEW_MEMBERS`, `MANAGE_INVITATIONS`, `MANAGE_MEMBERSHIPS`, and `VIEW_ACCESS_EVENTS`, but assignment is constrained:
+
+- `OWNER`: every role;
+- `ADMIN`: `DEVELOPER`, `CLIENT_ADMIN`, `CLIENT_MEMBER`;
+- `CLIENT_ADMIN`: `CLIENT_MEMBER`;
+- `DEVELOPER` and `CLIENT_MEMBER`: none.
+
+Internal organizations allow only `OWNER`, `ADMIN`, and `DEVELOPER`. Every route enforces policy server-side.
 
 ## Validation Ownership
 

@@ -1,13 +1,13 @@
 ---
 id: P002
 title: Authentication And Invitations
-status: approved
+status: implementing
 owner: codex
 reviewer: claude
 prompt: prompts/active/P002-authentication-and-invitations.md
 depends_on: [P001]
 base_branch: main
-base_sha: null
+base_sha: d3af5e9b4b3780ac41060fc51888ed8c413a1fe7
 candidate_sha: null
 risk: high
 human_qa_required: true
@@ -49,7 +49,10 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Drafted: 2026-07-26.
 - Approved: 2026-07-26.
 - Draft basis SHA: `ccf344a406085a92669d867cc068e67c55519af3`.
-- Base SHA: pending implementation approval and revalidation.
+- Base branch: local `main`.
+- Base SHA: `d3af5e9b4b3780ac41060fc51888ed8c413a1fe7`.
+- Implementation branch: `phase/P002-authentication-and-invitations`.
+- Prompt revalidation: specification version 1 remains valid against the approved local-main boundary; implementation began on 2026-07-26.
 - Candidate SHA: pending.
 - Review: not started.
 - Human QA: not started.

@@ -2,7 +2,7 @@
 
 ## Security Goal
 
-P001 must establish defaults that prevent accidental cross-tenant disclosure, development-auth leakage into production, secret exposure, and unsafe error handling.
+P001/P002 establish defaults that prevent accidental cross-tenant disclosure, development-auth leakage into production, invitation-token exposure, secret exposure, and unsafe error handling.
 
 It is not a claim of production security readiness. Production hardening remains P011.
 
@@ -23,6 +23,9 @@ It is not a claim of production security readiness. Production hardening remains
 - The middleware loads the user and verifies active status.
 - Missing or unknown simulated users produce `401` without disclosing sensitive detail.
 - Cognito JWT verification is deferred to P008.
+- P002's email-only sign-in is an explicitly insecure local identity selector. It stores only the selected development user ID in browser storage and creates no password, cookie, refresh token, or production credential.
+- Invitation acceptance uses possession of at least 256 bits of random token material. Only its SHA-256 hash is persisted.
+- Acceptance tokens travel from the local link fragment to one strict JSON body. The browser removes the fragment from history immediately and never stores the token.
 
 ## Authorization
 
@@ -31,11 +34,13 @@ For every project or request operation:
 1. establish an authenticated active user;
 2. resolve the project's client organization;
 3. verify organization and project are active;
-4. verify an active membership and allowed capability;
+4. verify an `ACTIVE` membership and allowed capability;
 5. execute a query scoped to the authorized organization/project;
 6. return no row data when authorization fails.
 
 P001 must test an authenticated user from another client tenant. Hiding UI navigation is not evidence.
+
+P002 access administration repeats tenant and capability checks in services/repositories for every collection and mutation. Role ceilings are centralized, membership state changes are optimistic/serialized, and self-suspension/last-owner lockout are conflicts. Suspended memberships lose tenant capabilities immediately; globally suspended users cannot authenticate.
 
 ## Input And Output
 
@@ -52,12 +57,13 @@ P001 must test an authenticated user from another client tenant. Hiding UI navig
 - `.env.example` files contain only local-safe examples.
 - `VITE_` variables are treated as public.
 - Database URLs, passwords, auth headers, cookies, and future tokens are redacted.
+- Invitation tokens, token hashes, acceptance URLs, development sign-in bodies, and access-change bodies are not logged.
 - No AWS keys are created or stored.
 
 ## Logging
 
 - Structured logs include request ID and useful operational context.
-- Do not log full request bodies by default.
+- Do not log full request bodies by default. P002 explicitly redacts `req.body`.
 - Do not log comment bodies, attachment content, authorization headers, cookies, or database URLs.
 - Internal errors may include stack traces in local logs, but never in client responses.
 - Authentication failures should avoid exposing whether another tenant resource exists beyond the agreed status behavior.
@@ -81,6 +87,7 @@ Rate limiting, CSRF strategy, Content Security Policy tuning, secure cookies, an
 - Do not automatically run destructive migrations at application startup.
 - Test and development databases are separate.
 - No hard-delete endpoints exist in P001.
+- Invitations, memberships, and access-audit events have no hard-delete API. Access audit rows have no update API.
 
 ## Attachments
 
@@ -96,7 +103,6 @@ It must not:
 ## Deferred Security Work
 
 - Cognito token validation and session strategy;
-- invitation token lifecycle;
 - S3 signed URL and malware/content controls;
 - SES abuse and delivery controls;
 - rate limiting and bot protection;

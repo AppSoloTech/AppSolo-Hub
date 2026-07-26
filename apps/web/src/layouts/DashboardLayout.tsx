@@ -1,18 +1,34 @@
 import { Link } from 'react-router-dom';
 import { seededProjectId } from '../app/App.js';
+import { useSession } from '../session/SessionProvider.js';
 import styles from './DashboardLayout.module.css';
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { session, signOut } = useSession();
+  const accessMemberships =
+    session?.memberships.filter((membership) => membership.capabilities.includes('VIEW_MEMBERS')) ?? [];
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           AppSolo <span>Client Hub</span>
         </div>
-        <p className={styles.org}>Authorized workspace</p>
+        <p className={styles.org}>{session?.memberships[0]?.organizationName ?? 'Authorized workspace'}</p>
         <nav>
           <Link to={`/projects/${seededProjectId}/change-requests`}>Change requests</Link>
+          {accessMemberships.map((membership) => (
+            <Link key={membership.id} to={`/organizations/${membership.organizationId}/access`}>
+              Access · {membership.organizationName}
+            </Link>
+          ))}
         </nav>
-        <p className={styles.user}>Development identity</p>
+        <div className={styles.user}>
+          <strong>
+            {session?.user.firstName} {session?.user.lastName}
+          </strong>
+          <span>{session?.user.email}</span>
+          <span>Development identity</span>
+          <button onClick={signOut}>Sign out</button>
+        </div>
       </aside>
       <main className={styles.main}>{children}</main>
     </div>

@@ -15,6 +15,13 @@
       "when": 1784996316000,
       "tag": "0001_normalized_email",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785086771823,
+      "tag": "0002_regular_magneto",
+      "breakpoints": true
     }
   ]
 }

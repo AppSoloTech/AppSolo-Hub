@@ -1,5 +1,44 @@
-import type { ChangeRequestDto, CreateChangeRequestInput, SuccessEnvelope } from '@appsolo/shared';
+import type {
+  AccessEventDto,
+  ChangeRequestDto,
+  CreateChangeRequestInput,
+  CreateInvitationInput,
+  InvitationDto,
+  InvitationMutationDto,
+  MemberDto,
+  SessionDto,
+  SuccessEnvelope,
+  UpdateMembershipInput,
+} from '@appsolo/shared';
 import { env } from './env.js';
+
+export const developmentIdentityStorageKey = 'appsolo.developmentUserId';
+export const developmentSignedOutStorageKey = 'appsolo.developmentSignedOut';
+
+export function currentDevelopmentUserId(): string | null {
+  return window.localStorage.getItem(developmentIdentityStorageKey);
+}
+
+export function storeDevelopmentUserId(userId: string): void {
+  window.localStorage.setItem(developmentIdentityStorageKey, userId);
+  window.localStorage.removeItem(developmentSignedOutStorageKey);
+}
+
+export function clearDevelopmentUserId(): void {
+  window.localStorage.removeItem(developmentIdentityStorageKey);
+  window.localStorage.setItem(developmentSignedOutStorageKey, 'true');
+}
+
+export function initializeDevelopmentUserId(): string | null {
+  const stored = currentDevelopmentUserId();
+  if (stored) return stored;
+  if (!window.localStorage.getItem(developmentSignedOutStorageKey) && env.VITE_DEV_AUTH_USER_ID) {
+    storeDevelopmentUserId(env.VITE_DEV_AUTH_USER_ID);
+    return env.VITE_DEV_AUTH_USER_ID;
+  }
+  return null;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -9,12 +48,13 @@ export class ApiError extends Error {
     super(message);
   }
 }
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
+async function api<T>(path: string, init?: RequestInit, authenticated = true): Promise<T> {
+  const developmentUserId = authenticated ? currentDevelopmentUserId() : null;
   const response = await fetch(`${env.VITE_API_BASE_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      ...(env.VITE_DEV_AUTH_USER_ID ? { 'x-dev-user-id': env.VITE_DEV_AUTH_USER_ID } : {}),
+      ...(developmentUserId ? { 'x-dev-user-id': developmentUserId } : {}),
       ...init?.headers,
     },
   });
@@ -37,4 +77,49 @@ export const requestsApi = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+};
+
+export const sessionApi = {
+  signIn: (email: string) =>
+    api<SuccessEnvelope<SessionDto>>(
+      '/development/session',
+      { method: 'POST', body: JSON.stringify({ email }) },
+      false,
+    ),
+  current: () => api<SuccessEnvelope<SessionDto>>('/session'),
+};
+
+export const accessApi = {
+  members: (organizationId: string) =>
+    api<SuccessEnvelope<MemberDto[]>>(`/organizations/${organizationId}/members`),
+  invitations: (organizationId: string) =>
+    api<SuccessEnvelope<InvitationDto[]>>(`/organizations/${organizationId}/invitations`),
+  createInvitation: (organizationId: string, input: CreateInvitationInput) =>
+    api<SuccessEnvelope<InvitationMutationDto>>(`/organizations/${organizationId}/invitations`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  resendInvitation: (organizationId: string, invitationId: string) =>
+    api<SuccessEnvelope<InvitationMutationDto>>(
+      `/organizations/${organizationId}/invitations/${invitationId}/resend`,
+      { method: 'POST', body: JSON.stringify({}) },
+    ),
+  revokeInvitation: (organizationId: string, invitationId: string) =>
+    api<SuccessEnvelope<InvitationMutationDto>>(
+      `/organizations/${organizationId}/invitations/${invitationId}/revoke`,
+      { method: 'POST', body: JSON.stringify({}) },
+    ),
+  updateMembership: (organizationId: string, membershipId: string, input: UpdateMembershipInput) =>
+    api<SuccessEnvelope<MemberDto>>(`/organizations/${organizationId}/memberships/${membershipId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  events: (organizationId: string) =>
+    api<SuccessEnvelope<AccessEventDto[]>>(`/organizations/${organizationId}/access-events`),
+  acceptInvitation: (token: string) =>
+    api<SuccessEnvelope<SessionDto>>(
+      '/invitations/accept',
+      { method: 'POST', body: JSON.stringify({ token }) },
+      false,
+    ),
 };

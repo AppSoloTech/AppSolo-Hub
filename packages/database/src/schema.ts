@@ -30,6 +30,17 @@ export const organizationRole = pgEnum('organization_role', [
   'CLIENT_ADMIN',
   'CLIENT_MEMBER',
 ]);
+export const membershipStatus = pgEnum('membership_status', ['ACTIVE', 'SUSPENDED']);
+export const invitationStatus = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'REVOKED']);
+export const accessEventType = pgEnum('access_event_type', [
+  'INVITATION_CREATED',
+  'INVITATION_RESENT',
+  'INVITATION_REVOKED',
+  'INVITATION_ACCEPTED',
+  'MEMBERSHIP_ROLE_CHANGED',
+  'MEMBERSHIP_SUSPENDED',
+  'MEMBERSHIP_REACTIVATED',
+]);
 export const projectStatus = pgEnum('project_status', ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED']);
 export const changeRequestPriority = pgEnum('change_request_priority', ['LOW', 'NORMAL', 'HIGH', 'URGENT']);
 export const changeRequestStatus = pgEnum('change_request_status', [
@@ -92,12 +103,78 @@ export const organizationMemberships = pgTable(
       .notNull()
       .references(() => organizations.id, { onDelete: 'restrict' }),
     role: organizationRole('role').notNull(),
+    status: membershipStatus('status').notNull().default('ACTIVE'),
     ...timestamps,
   },
   (t) => [
     unique('memberships_user_org_unique').on(t.userId, t.organizationId),
     index('memberships_organization_role_idx').on(t.organizationId, t.role),
+    index('memberships_organization_status_role_idx').on(t.organizationId, t.status, t.role),
     index('memberships_user_idx').on(t.userId),
+  ],
+);
+export const organizationInvitations = pgTable(
+  'organization_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'restrict' }),
+    invitedUserId: uuid('invited_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    email: varchar('email', { length: 320 }).notNull(),
+    proposedRole: organizationRole('proposed_role').notNull(),
+    invitedByUserId: uuid('invited_by_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    status: invitationStatus('status').notNull().default('PENDING'),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    resentAt: timestamp('resent_at', { withTimezone: true }),
+    resendCount: integer('resend_count').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    check('organization_invitations_email_lowercase', sql`${t.email} = lower(${t.email})`),
+    check('organization_invitations_resend_count_nonnegative', sql`${t.resendCount} >= 0`),
+    unique('organization_invitations_token_hash_unique').on(t.tokenHash),
+    uniqueIndex('organization_invitations_pending_email_unique')
+      .on(t.organizationId, t.email)
+      .where(sql`${t.status} = 'PENDING'`),
+    index('organization_invitations_org_created_idx').on(t.organizationId, t.createdAt.desc(), t.id),
+    index('organization_invitations_user_idx').on(t.invitedUserId),
+  ],
+);
+export const accessAuditEvents = pgTable(
+  'access_audit_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'restrict' }),
+    eventType: accessEventType('event_type').notNull(),
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'restrict' }),
+    subjectUserId: uuid('subject_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    invitationId: uuid('invitation_id').references(() => organizationInvitations.id, {
+      onDelete: 'restrict',
+    }),
+    membershipId: uuid('membership_id').references(() => organizationMemberships.id, {
+      onDelete: 'restrict',
+    }),
+    previousRole: organizationRole('previous_role'),
+    newRole: organizationRole('new_role'),
+    previousStatus: membershipStatus('previous_status'),
+    newStatus: membershipStatus('new_status'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('access_audit_events_org_created_idx').on(t.organizationId, t.createdAt.desc(), t.id.desc()),
+    index('access_audit_events_subject_created_idx').on(t.subjectUserId, t.createdAt.desc()),
   ],
 );
 export const projects = pgTable(

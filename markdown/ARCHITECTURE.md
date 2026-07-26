@@ -74,6 +74,8 @@ apps/api/src/
 ├── middleware/
 ├── modules/
 │   ├── health/
+│   ├── session/
+│   ├── access/
 │   └── change-requests/
 │       ├── change-request.routes.ts
 │       ├── change-request.controller.ts
@@ -97,6 +99,14 @@ Repositories isolate Drizzle queries. Methods accept the scope needed to prevent
 ### Middleware
 
 Middleware constructs request IDs, logging context, parsed authentication context, validation failures, and centralized errors.
+
+### P002 Access Composition
+
+- `session` owns active-user lookup and provider-neutral session DTO composition.
+- `access` owns centralized capabilities/role ceilings, invitation and membership use cases, tenant-scoped persistence, token hashing, and audit DTOs.
+- Public development-sign-in and invitation-acceptance routers are composed before the authenticated router.
+- The development adapter remains the only layer that reads `x-dev-user-id`; business modules receive `AuthenticatedUser`.
+- Invitation tokens use Node crypto, are stored only as SHA-256 hashes, and never cross repository output DTO boundaries.
 
 ## Frontend Composition
 
@@ -137,6 +147,22 @@ Feature code may contain route components, queries, forms, and presentation comp
 6. TanStack Query updates or invalidates list/detail data.
 7. The user sees a clear success result and the persisted request.
 
+### Accept Invitation
+
+1. The browser captures the fragment token and immediately replaces the visible history entry without the fragment.
+2. The public route validates a strict JSON token body and hashes the token.
+3. A transaction locks the pending invitation, checks expiry/organization/user/role state, activates the user, creates or reactivates membership, accepts the invitation, and inserts one audit event.
+4. Concurrent/repeated callers cannot produce a second success.
+5. The API returns a provider-neutral local session DTO; the browser stores only the development user ID.
+
+### Administer Membership
+
+1. The authenticated service resolves an active actor membership in the active organization.
+2. The typed policy checks capability, organization-type role validity, and the actor's exact role ceiling.
+3. A tenant-scoped transaction lock and `expectedUpdatedAt` reject stale changes.
+4. Self-suspension and the last active owner's demotion/suspension are rejected.
+5. The membership change and typed audit event commit together.
+
 ## Multi-Tenant Ownership Model
 
 - A `CLIENT` organization is the tenant that owns a project.
@@ -144,7 +170,7 @@ Feature code may contain route components, queries, forms, and presentation comp
 - Users gain scoped access through active `OrganizationMembership` rows.
 - AppSolo internal users belong to the `INTERNAL` AppSolo organization and may also receive a role-bearing membership in a client organization when they need access to that tenant.
 - P001 does not add a second speculative project-assignment model.
-- Service authorization checks active user, organization, membership, and project status.
+- Service authorization checks active user, organization, membership status, and project status.
 - Repository calls include the authorized organization/project scope as defense in depth.
 - PostgreSQL row-level security is deferred; application-layer enforcement is mandatory and tested.
 
@@ -159,7 +185,7 @@ interface AuthenticatedUser {
 }
 ```
 
-P001 uses development-only middleware to create this context from a configured user ID or development header. Cognito claim parsing will later be isolated in an authentication adapter. Business modules must not read Cognito-specific claims.
+P002 uses development-only middleware to create this context from a browser-selected local user ID. A normalized-email development route selects an active application user, but creates no secure credential. Cognito claim parsing will later be isolated in an authentication adapter. Business modules must not read Cognito-specific claims.
 
 The API must refuse to start in production if development authentication is enabled.
 
@@ -212,7 +238,7 @@ P001 uses global design tokens and CSS Modules. This avoids a large component fr
 
 No AWS-specific package belongs in P001.
 
-## Architectural Non-Goals For P001
+## Architectural Non-Goals Through P002
 
 - microservices;
 - event buses;
@@ -225,3 +251,6 @@ No AWS-specific package belongs in P001.
 - background workers;
 - production containers or cloud infrastructure;
 - billing or payment architecture.
+- passwords, production cookies/tokens, or account recovery;
+- email delivery or an invitation outbox;
+- AWS SDKs, Cognito, SES, or AWS resources.

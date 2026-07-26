@@ -9,10 +9,16 @@ import type { ApiConfig } from './config/env.js';
 import { AppError, validationError } from './errors.js';
 import { developmentAuthentication } from './middleware/development-auth.js';
 import { requestIdMiddleware } from './middleware/request-id.js';
+import { authenticatedAccessRouter, publicInvitationRouter } from './modules/access/access.routes.js';
+import { AccessRepository } from './modules/access/repository.js';
+import { AccessService } from './modules/access/service.js';
 import { changeRequestRouter } from './modules/change-requests/change-request.routes.js';
 import { ChangeRequestRepository } from './modules/change-requests/repository.js';
 import { ChangeRequestService } from './modules/change-requests/service.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { SessionRepository } from './modules/session/repository.js';
+import { authenticatedSessionRouter, developmentSessionRouter } from './modules/session/session.routes.js';
+import { SessionService } from './modules/session/service.js';
 
 type AppDependencies = {
   db: Database;
@@ -30,7 +36,13 @@ export function createApp(dependencies: AppDependencies): Express {
   const app = express();
   const logger = pino({
     level: config.LOG_LEVEL,
-    redact: ['req.headers.authorization', 'req.headers.cookie', 'req.headers.x-dev-user-id', 'DATABASE_URL'],
+    redact: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.headers.x-dev-user-id',
+      'req.body',
+      'DATABASE_URL',
+    ],
   });
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
@@ -48,11 +60,22 @@ export function createApp(dependencies: AppDependencies): Express {
   app.use(cors({ origin: config.CORS_ORIGIN, credentials: false }));
   app.use(express.json({ limit: config.REQUEST_BODY_LIMIT }));
   app.use('/api/v1', healthRouter(db));
-  const repository = new ChangeRequestRepository(db);
+  const sessionRepository = new SessionRepository(db);
+  const sessionService = new SessionService(sessionRepository);
+  const accessService = new AccessService(
+    new AccessRepository(db),
+    sessionService,
+    config.CORS_ORIGIN[0] ?? 'http://localhost:5173',
+  );
+  app.use('/api/v1', developmentSessionRouter(config, sessionService));
+  app.use('/api/v1', publicInvitationRouter(accessService));
+  const changeRequestRepository = new ChangeRequestRepository(db);
   app.use(
     '/api/v1',
-    developmentAuthentication(config, repository),
-    changeRequestRouter(new ChangeRequestService(repository)),
+    developmentAuthentication(config, sessionRepository),
+    authenticatedSessionRouter(sessionService),
+    authenticatedAccessRouter(accessService),
+    changeRequestRouter(new ChangeRequestService(changeRequestRepository)),
   );
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),

@@ -1,0 +1,23 @@
+.centered {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.signIn {
+  width: min(100%, 460px);
+}
+
+.signIn form {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.signIn input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+}

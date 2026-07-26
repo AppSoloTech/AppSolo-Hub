@@ -66,6 +66,29 @@ Role usage is constrained by service policy:
 - internal organization: `OWNER`, `ADMIN`, `DEVELOPER`;
 - client organization: client roles plus specifically assigned internal service roles.
 
+### MembershipStatus
+
+- `ACTIVE`
+- `SUSPENDED`
+
+### InvitationStatus
+
+- `PENDING`
+- `ACCEPTED`
+- `REVOKED`
+
+`EXPIRED` is derived for presentation when a pending invitation's `expires_at` is in the past.
+
+### AccessEventType
+
+- `INVITATION_CREATED`
+- `INVITATION_RESENT`
+- `INVITATION_REVOKED`
+- `INVITATION_ACCEPTED`
+- `MEMBERSHIP_ROLE_CHANGED`
+- `MEMBERSHIP_SUSPENDED`
+- `MEMBERSHIP_REACTIVATED`
+
 ### ProjectStatus
 
 - `ACTIVE`
@@ -147,6 +170,7 @@ Indexes:
 | user_id         | uuid              | required, FK users, restrict delete         |
 | organization_id | uuid              | required, FK organizations, restrict delete |
 | role            | organization_role | required                                    |
+| status          | membership_status | required, default `ACTIVE`                  |
 | created_at      | timestamptz       | required                                    |
 | updated_at      | timestamptz       | required                                    |
 
@@ -154,9 +178,59 @@ Constraints and indexes:
 
 - unique `(user_id, organization_id)`;
 - index `(organization_id, role)`;
+- index `(organization_id, status, role)`;
 - index `(user_id)`.
 
 A user needing access to a client tenant must have a membership in that client organization. Membership in the internal AppSolo organization alone does not grant global client access.
+
+Membership rows are suspended/reactivated and never hard-deleted through the API. P002's additive migration gives every existing P001 row `ACTIVE`.
+
+### organization_invitations
+
+| Column             | Type              | Rules                                       |
+| ------------------ | ----------------- | ------------------------------------------- |
+| id                 | uuid              | primary key                                 |
+| organization_id    | uuid              | required, FK organizations, restrict delete |
+| invited_user_id    | uuid              | required, FK users, restrict delete         |
+| email              | varchar(320)      | required, lowercase                         |
+| proposed_role      | organization_role | required                                    |
+| invited_by_user_id | uuid              | required, FK users, restrict delete         |
+| status             | invitation_status | required, default `PENDING`                 |
+| token_hash         | varchar(64)       | required, unique SHA-256 digest             |
+| expires_at         | timestamptz       | required                                    |
+| accepted_at        | timestamptz       | nullable                                    |
+| revoked_at         | timestamptz       | nullable                                    |
+| resent_at          | timestamptz       | nullable                                    |
+| resend_count       | integer           | required, default 0, non-negative           |
+| created_at         | timestamptz       | required                                    |
+| updated_at         | timestamptz       | required                                    |
+
+Constraints and indexes:
+
+- one pending row per `(organization_id, email)` through a partial unique index;
+- unique token hash;
+- organization/newest-first and invited-user indexes;
+- expiry is seven days from create or resend;
+- plaintext token material is never persisted.
+
+### access_audit_events
+
+| Column          | Type              | Rules                                                  |
+| --------------- | ----------------- | ------------------------------------------------------ |
+| id              | uuid              | primary key                                            |
+| organization_id | uuid              | required, FK organizations, restrict delete            |
+| event_type      | access_event_type | required                                               |
+| actor_user_id   | uuid              | nullable, FK users, restrict delete                    |
+| subject_user_id | uuid              | required, FK users, restrict delete                    |
+| invitation_id   | uuid              | nullable, FK organization invitations, restrict delete |
+| membership_id   | uuid              | nullable, FK memberships, restrict delete              |
+| previous_role   | organization_role | nullable                                               |
+| new_role        | organization_role | nullable                                               |
+| previous_status | membership_status | nullable                                               |
+| new_status      | membership_status | nullable                                               |
+| created_at      | timestamptz       | required                                               |
+
+Rows are immutable and tenant-scoped. They contain only typed access-transition fields: no token, token hash, credential, request body, or arbitrary metadata.
 
 ### projects
 
@@ -315,6 +389,14 @@ commit together or roll back together
 
 Future estimate approval and status transitions will require similar transactions.
 
+P002 additionally requires one transaction for every access mutation:
+
+- invitation create/resend/revoke plus its audit event;
+- invitation acceptance, user activation, membership create/reactivation, invitation acceptance, and audit event;
+- membership role/status update plus its audit event.
+
+Invitation acceptance locks the token row so concurrent attempts produce at most one success. Membership changes use a tenant-scoped transaction lock and `expectedUpdatedAt` optimistic state check.
+
 ## Seed Contract
 
 Seed data must include:
@@ -337,3 +419,5 @@ Seed data must include:
 Use clearly fake addresses under a reserved or obviously local domain, for example `owner@appsolo.test` and `admin@client.test`.
 
 Seed execution must be idempotent or must fail with a clear reset instruction. It must not silently duplicate records on every run.
+
+P002 adds a suspended membership, an invited user, a pending invitation with no usable committed bearer token, and a matching audit event. These fixtures remain clearly fake and deterministic.

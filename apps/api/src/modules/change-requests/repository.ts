@@ -37,6 +37,7 @@ export class ChangeRequestRepository {
         and(
           eq(organizationMemberships.organizationId, organizations.id),
           eq(organizationMemberships.userId, userId),
+          eq(organizationMemberships.status, 'ACTIVE'),
         ),
       )
       .where(
@@ -61,6 +62,7 @@ export class ChangeRequestRepository {
         and(
           eq(organizationMemberships.organizationId, organizations.id),
           eq(organizationMemberships.userId, userId),
+          eq(organizationMemberships.status, 'ACTIVE'),
         ),
       )
       .where(

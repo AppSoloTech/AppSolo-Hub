@@ -56,13 +56,15 @@ Rules:
 
 ## Web Variables
 
-| Name                    | Required | Example                        | Rules                                             |
-| ----------------------- | -------- | ------------------------------ | ------------------------------------------------- |
-| `VITE_API_BASE_URL`     | yes      | `http://localhost:4000/api/v1` | public browser value                              |
-| `VITE_DEV_AUTH_USER_ID` | dev      | seeded UUID                    | public development-only identity selector/default |
-| `VITE_APP_NAME`         | no       | `AppSolo Client Hub`           | display only                                      |
+| Name                    | Required | Example                        | Rules                                                    |
+| ----------------------- | -------- | ------------------------------ | -------------------------------------------------------- |
+| `VITE_API_BASE_URL`     | yes      | `http://localhost:4000/api/v1` | public browser value                                     |
+| `VITE_DEV_AUTH_USER_ID` | dev      | seeded UUID                    | optional initial local identity before explicit sign-out |
+| `VITE_APP_NAME`         | no       | `AppSolo Client Hub`           | display only                                             |
 
 All `VITE_` variables are public in the built browser bundle. They must never contain secrets.
+
+P002 initializes the browser development session from `VITE_DEV_AUTH_USER_ID` only when no prior explicit sign-out or selected identity exists. Thereafter, the browser stores only the selected development user ID. Invitation tokens and acceptance URLs are never configuration values or browser-storage values.
 
 ## Docker Variables
 
@@ -96,3 +98,4 @@ P001 tests must prove:
 - production plus development auth fails;
 - web environment rejects a missing or invalid API base URL;
 - parsing errors do not echo secret values.
+- production configuration continues to reject development authentication after P002.

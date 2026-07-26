@@ -1,10 +1,12 @@
 import { createDatabase } from './index.js';
 import {
+  accessAuditEvents,
   attachments,
   changeRequests,
   comments,
   estimates,
   organizationMemberships,
+  organizationInvitations,
   organizations,
   projects,
   statusHistory,
@@ -23,6 +25,9 @@ export const seedIds = {
   clientMember: '20000000-0000-4000-8000-000000000004',
   otherTenantUser: '20000000-0000-4000-8000-000000000005',
   internalOnlyUser: '20000000-0000-4000-8000-000000000006',
+  suspendedMember: '20000000-0000-4000-8000-000000000007',
+  pendingInvitee: '20000000-0000-4000-8000-000000000008',
+  pendingInvitation: '90000000-0000-4000-8000-000000000001',
   requestOne: '30000000-0000-4000-8000-000000000001',
   requestTwo: '30000000-0000-4000-8000-000000000002',
 } as const;
@@ -54,6 +59,19 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             email: 'internal-only@appsolo.test',
             firstName: 'Riley',
             lastName: 'Internal',
+          },
+          {
+            id: seedIds.suspendedMember,
+            email: 'suspended-member@client.test',
+            firstName: 'Sam',
+            lastName: 'Suspended',
+          },
+          {
+            id: seedIds.pendingInvitee,
+            email: 'pending-invitee@client.test',
+            firstName: 'Parker',
+            lastName: 'Pending',
+            status: 'INVITED',
           },
         ])
         .onConflictDoNothing();
@@ -121,7 +139,39 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             organizationId: seedIds.internalOrganization,
             role: 'DEVELOPER',
           },
+          {
+            id: '40000000-0000-4000-8000-000000000009',
+            userId: seedIds.suspendedMember,
+            organizationId: seedIds.clientOrganization,
+            role: 'CLIENT_MEMBER',
+            status: 'SUSPENDED',
+          },
         ])
+        .onConflictDoNothing();
+      await tx
+        .insert(organizationInvitations)
+        .values({
+          id: seedIds.pendingInvitation,
+          organizationId: seedIds.clientOrganization,
+          invitedUserId: seedIds.pendingInvitee,
+          email: 'pending-invitee@client.test',
+          proposedRole: 'CLIENT_MEMBER',
+          invitedByUserId: seedIds.owner,
+          tokenHash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+          expiresAt: new Date('2036-07-26T12:00:00.000Z'),
+        })
+        .onConflictDoNothing();
+      await tx
+        .insert(accessAuditEvents)
+        .values({
+          id: 'a0000000-0000-4000-8000-000000000001',
+          organizationId: seedIds.clientOrganization,
+          eventType: 'INVITATION_CREATED',
+          actorUserId: seedIds.owner,
+          subjectUserId: seedIds.pendingInvitee,
+          invitationId: seedIds.pendingInvitation,
+          newRole: 'CLIENT_MEMBER',
+        })
         .onConflictDoNothing();
       await tx
         .insert(projects)
