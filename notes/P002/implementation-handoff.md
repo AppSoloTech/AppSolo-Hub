@@ -139,6 +139,9 @@ The separate `pnpm exec playwright install chromium` check was terminated after 
   rounds. Round 3 reported no finding, and the final verdict is `ready with
 non-blocking observations`.
 - Every P002 finding is human-dispositioned and independently verified fixed.
-- Human Q1-Q10 QA has not run.
-- Human integration/completion approval remains pending.
+- Human Q1-Q10 QA passed by human attestation on 2026-07-26 at
+  `a4f848e6e98ac70463c431403bf316a787012dfc`; browser/version details and
+  screenshots were not supplied.
+- The human accepted the implementation state on 2026-07-26.
+- Final Git integration and explicit phase completion have not been performed.
 - P002 must remain `review_pending` and must not be marked complete.

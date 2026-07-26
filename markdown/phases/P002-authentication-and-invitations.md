@@ -67,9 +67,12 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Round 3 focused review: P002-F7 verified fixed; no new finding.
 - Final review verdict: `ready with non-blocking observations`; no finding remains open.
 - Review handoff: `notes/P002/implementation-handoff.md`.
-- Review: clear; human QA and integration approval remain.
-- Human QA: not started.
-- Completion: not eligible.
+- Review: clear; human QA passed and the human accepted the implementation state.
+- Human QA: Q1-Q10 passed by human attestation on 2026-07-26 at
+  `a4f848e6e98ac70463c431403bf316a787012dfc`.
+- Human implementation-state acceptance: granted on 2026-07-26.
+- Completion: final Git integration and explicit phase completion have not been
+  performed.
 
 ## Revalidation
 
@@ -141,7 +144,9 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - The human accepted P002-F7, and `0ccb535cd5e0c73184fc626ebd9233b3d2518482` applies it.
 - Claude's Round 3 verification found F7 fixed, raised no new finding, and retained
   the final verdict `ready with non-blocking observations`.
-- Human QA remains pending.
+- Human QA Q1-Q10 passed by human attestation on 2026-07-26; browser/version
+  details and screenshots were not supplied.
+- The human accepted the implementation state on 2026-07-26.
 - No push, remote creation, origin reset, or production/external service action occurred.
 
 ## Completion Gate
@@ -150,6 +155,7 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Automated validation: passed as recorded above.
 - Independent review clear: Yes; all seven findings independently verified fixed.
 - Findings dispositioned: Yes; P002-F1 through P002-F7 accepted, fixed, and verified.
-- Required human QA complete: No.
-- Human integration/completion approval: No.
+- Required human QA complete: Yes; Q1-Q10 passed.
+- Human implementation-state acceptance: Yes.
+- Final Git integration/explicit phase completion: Not performed.
 - P002 status must remain `review_pending`; Codex has not marked it complete.
