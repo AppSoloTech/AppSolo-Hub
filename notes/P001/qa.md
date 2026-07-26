@@ -5,7 +5,7 @@
 ## Environment
 
 - Operating system: Windows host with WSL Debian
-- Browser/version: Human-run browser; name/version not supplied
+- Browser/version: VS Code integrated browser `1.130.0`; Chromium `148`; Electron `42.6.0`
 - Node/pnpm/Docker versions: Node `v24.15.0`; pnpm `11.10.0`; Docker Engine/CLI `29.6.2`; Compose `5.3.1`
 - Application commit/build: `f57ce0f60ad906e38db9384d108f69d2fc18eba0`; local `pnpm dev` build
 - Database state: Docker PostgreSQL 16 on host port 5433; migrated and seeded `appsolo_client_hub_dev`; isolated `appsolo_client_hub_test`; named volume retained
@@ -30,7 +30,6 @@
 
 ## Untested Conditions
 
-- Browser name and exact version were not supplied with the human result.
 - No required Q-case remains untested.
 
 ## QA Decision

@@ -103,7 +103,7 @@ See `notes/P001/review-disposition.md`. C1-C15 and R1-R13 were accepted by the h
 
 ## Human QA
 
-See `notes/P001/qa.md`. The human reported Q1-Q8 passed on 2026-07-26; browser name/version was not supplied.
+See `notes/P001/qa.md`. The human reported Q1-Q8 passed on 2026-07-26 using the VS Code integrated browser; runtime request evidence records its Chromium/Electron versions.
 
 ## Commits
 

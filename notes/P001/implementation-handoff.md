@@ -94,12 +94,11 @@
 
 ## Human QA
 
-The human reported Q1-Q8 passed on 2026-07-26. Exact results are recorded in `notes/P001/qa.md`; the browser name/version was not supplied.
+The human reported Q1-Q8 passed on 2026-07-26. Exact results and the browser/runtime versions observed in request evidence are recorded in `notes/P001/qa.md`.
 
 ## Known Gaps
 
 - Human Git integration approval and human-owned phase completion remain.
-- Browser name/version was not supplied with the otherwise complete human QA report.
 
 ## Review-Fix Verification
 
