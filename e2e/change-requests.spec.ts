@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 const projectId = '10000000-0000-4000-8000-000000000003';
+const draftRequestId = '30000000-0000-4000-8000-000000000002';
 test('seeded list, create, and refreshed detail persist through the real API', async ({ page }) => {
   const title = `Browser request ${Date.now()}`;
   await page.goto(`/projects/${projectId}/change-requests`);
@@ -56,4 +57,43 @@ test('development sign-in, invite copy, acceptance, and capability hiding use th
   } finally {
     await inviteeContext.close();
   }
+});
+
+test('internal exact draft submission and client approval persist through the real workflow', async ({
+  page,
+}) => {
+  await page.goto(`/projects/${projectId}/change-requests`);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('developer@appsolo.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Change requests' })).toBeVisible();
+  await page.goto(`/change-requests/${draftRequestId}`);
+  await expect(page.getByRole('heading', { name: 'Edit draft estimate' })).toBeVisible();
+  await page.getByLabel('Estimated hours').fill('1.5');
+  await page.getByLabel('Hourly rate (USD)').fill('0.01');
+  await page
+    .getByLabel('Scope notes')
+    .fill('Implement the exact browser-tested estimate scope and verification.');
+  await expect(page.getByLabel('Estimated cost (server-derived)')).toHaveText('$0.02');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText('Draft estimate updated.')).toBeVisible();
+  await page.getByRole('button', { name: 'Submit for approval' }).click();
+  await expect(page.getByText('Estimate submitted for client approval.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('admin@client.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Improve account search' })).toBeVisible();
+  await page.goto(`/change-requests/${draftRequestId}`);
+  await expect(page.getByRole('heading', { name: 'Respond to version 1' })).toBeVisible();
+  await page.getByLabel('Decision note').fill('Approved through the browser workflow.');
+  await page.getByRole('button', { name: 'Approve estimate' }).click();
+  await expect(page.getByText('Estimate approved.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Approved' })).toBeVisible();
+  await expect(page.getByText('Approved through the browser workflow.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Approved' })).toBeVisible();
+  await expect(page.getByText('Approved through the browser workflow.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve estimate' })).not.toBeVisible();
 });

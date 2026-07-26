@@ -18,6 +18,11 @@ Store money as PostgreSQL `numeric(12,2)`. Represent money in TypeScript and JSO
 
 Estimated hours use `numeric(8,2)` and decimal strings.
 
+P003 implements the decision with strict fixed-scale decimal-string schemas and
+`BigInt` hundredths multiplication. Cost rounds half up to two digits without
+passing through JavaScript `number`. PostgreSQL independently enforces
+`estimated_cost = round(estimated_hours * hourly_rate, 2)`.
+
 ## Alternatives Considered
 
 - JavaScript numbers and PostgreSQL floating point.
@@ -29,3 +34,5 @@ Estimated hours use `numeric(8,2)` and decimal strings.
 - DTOs visibly distinguish exact decimals from ordinary numbers.
 - Formatting and arithmetic need explicit helpers or a reviewed decimal library later.
 - Database rows must not be blindly coerced to numbers.
+- Numeric limits and calculated-cost overflow must be rejected before
+  persistence.

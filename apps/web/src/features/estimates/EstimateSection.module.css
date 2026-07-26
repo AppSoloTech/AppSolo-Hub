@@ -1,0 +1,149 @@
+.section {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.heading,
+.versionHeader,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.heading h2,
+.versionHeader h3 {
+  margin: 2px 0 0;
+}
+
+.heading > span {
+  color: var(--muted);
+}
+
+.form,
+.responseForm {
+  display: grid;
+  gap: 16px;
+  border-color: #93b4e8;
+}
+
+.form label,
+.responseForm label,
+.responseForm > div {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.form input,
+.form textarea,
+.responseForm textarea {
+  border: 1px solid #b7c2d3;
+  border-radius: 6px;
+  padding: 10px;
+  background: white;
+  color: inherit;
+  font: inherit;
+}
+
+.form label span,
+.responseForm span {
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.termGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cost {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  background: #f7f9fc;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  justify-content: flex-start;
+}
+
+.actions button {
+  min-height: 42px;
+}
+
+.history {
+  display: grid;
+  gap: 14px;
+}
+
+.versionHeader strong {
+  font-size: 1.35rem;
+  color: #163f75;
+  font-variant-numeric: tabular-nums;
+}
+
+.terms {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.terms div {
+  display: grid;
+  gap: 4px;
+}
+
+.terms dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.terms dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.scope {
+  white-space: pre-wrap;
+}
+
+.response {
+  border-left: 3px solid #4d78b5;
+  background: #f5f8fd;
+  padding: 12px 14px;
+  margin-top: 16px;
+}
+
+.response p {
+  margin: 8px 0;
+}
+
+.response span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .termGrid,
+  .terms {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

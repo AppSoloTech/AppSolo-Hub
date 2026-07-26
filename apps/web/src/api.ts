@@ -2,13 +2,18 @@ import type {
   AccessEventDto,
   ChangeRequestDto,
   CreateChangeRequestInput,
+  CreateEstimateInput,
   CreateInvitationInput,
   InvitationDto,
   InvitationMutationDto,
+  EstimateDto,
+  EstimateListMeta,
   MemberDto,
   SessionDto,
   SuccessEnvelope,
   UpdateMembershipInput,
+  UpdateEstimateInput,
+  RespondToEstimateInput,
 } from '@appsolo/shared';
 import { env } from './env.js';
 
@@ -74,6 +79,31 @@ export const requestsApi = {
   detail: (id: string) => api<SuccessEnvelope<ChangeRequestDto>>(`/change-requests/${id}`),
   create: (projectId: string, input: CreateChangeRequestInput) =>
     api<SuccessEnvelope<ChangeRequestDto>>(`/projects/${projectId}/change-requests`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+};
+
+export const estimatesApi = {
+  list: (changeRequestId: string) =>
+    api<{ data: EstimateDto[]; meta: EstimateListMeta }>(`/change-requests/${changeRequestId}/estimates`),
+  create: (changeRequestId: string, input: CreateEstimateInput) =>
+    api<SuccessEnvelope<EstimateDto>>(`/change-requests/${changeRequestId}/estimates`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  update: (estimateId: string, input: UpdateEstimateInput) =>
+    api<SuccessEnvelope<EstimateDto>>(`/estimates/${estimateId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  submit: (estimateId: string, expectedUpdatedAt: string) =>
+    api<SuccessEnvelope<EstimateDto>>(`/estimates/${estimateId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ expectedUpdatedAt }),
+    }),
+  respond: (estimateId: string, input: RespondToEstimateInput) =>
+    api<SuccessEnvelope<EstimateDto>>(`/estimates/${estimateId}/respond`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),

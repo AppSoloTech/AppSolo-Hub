@@ -61,7 +61,13 @@ export const estimateStatus = pgEnum('estimate_status', [
   'SUBMITTED',
   'APPROVED',
   'REJECTED',
+  'NEEDS_CLARIFICATION',
   'SUPERSEDED',
+]);
+export const estimateResponseDecision = pgEnum('estimate_response_decision', [
+  'APPROVED',
+  'REJECTED',
+  'CLARIFICATION_REQUESTED',
 ]);
 export const commentVisibility = pgEnum('comment_visibility', ['CLIENT_VISIBLE', 'INTERNAL_ONLY']);
 export const users = pgTable(
@@ -236,14 +242,53 @@ export const estimates = pgTable(
     estimatedCost: numeric('estimated_cost', { precision: 12, scale: 2 }).notNull(),
     scopeNotes: text('scope_notes').notNull(),
     status: estimateStatus('status').notNull(),
+    version: integer('version').notNull().default(1),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
     check('estimates_hours_positive', sql`${t.estimatedHours} > 0`),
     check('estimates_rate_nonnegative', sql`${t.hourlyRate} >= 0`),
     check('estimates_cost_nonnegative', sql`${t.estimatedCost} >= 0`),
+    check('estimates_version_positive', sql`${t.version} > 0`),
+    check('estimates_scope_notes_length', sql`char_length(btrim(${t.scopeNotes})) between 10 and 10000`),
+    check(
+      'estimates_cost_matches_terms',
+      sql`${t.estimatedCost} = round(${t.estimatedHours} * ${t.hourlyRate}, 2)`,
+    ),
+    unique('estimates_request_version_unique').on(t.changeRequestId, t.version),
+    uniqueIndex('estimates_one_draft_per_request_unique')
+      .on(t.changeRequestId)
+      .where(sql`${t.status} = 'DRAFT'`),
+    uniqueIndex('estimates_one_submitted_per_request_unique')
+      .on(t.changeRequestId)
+      .where(sql`${t.status} = 'SUBMITTED'`),
     index('estimates_request_created_idx').on(t.changeRequestId, t.createdAt.desc()),
     index('estimates_request_status_idx').on(t.changeRequestId, t.status),
+  ],
+);
+export const estimateResponses = pgTable(
+  'estimate_responses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    estimateId: uuid('estimate_id')
+      .notNull()
+      .references(() => estimates.id, { onDelete: 'restrict' }),
+    decision: estimateResponseDecision('decision').notNull(),
+    respondingUserId: uuid('responding_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('estimate_responses_estimate_unique').on(t.estimateId),
+    check('estimate_responses_note_length', sql`${t.note} is null or char_length(${t.note}) <= 2000`),
+    check(
+      'estimate_responses_reason_required',
+      sql`${t.decision} = 'APPROVED' or char_length(btrim(${t.note})) between 3 and 2000`,
+    ),
+    index('estimate_responses_user_created_idx').on(t.respondingUserId, t.createdAt.desc()),
   ],
 );
 export const comments = pgTable(

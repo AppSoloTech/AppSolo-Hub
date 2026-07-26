@@ -16,6 +16,9 @@ import { changeRequestRouter } from './modules/change-requests/change-request.ro
 import { ChangeRequestRepository } from './modules/change-requests/repository.js';
 import { ChangeRequestService } from './modules/change-requests/service.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { estimateRouter } from './modules/estimates/estimate.routes.js';
+import { EstimateRepository } from './modules/estimates/repository.js';
+import { EstimateService } from './modules/estimates/service.js';
 import { SessionRepository } from './modules/session/repository.js';
 import { authenticatedSessionRouter, developmentSessionRouter } from './modules/session/session.routes.js';
 import { SessionService } from './modules/session/service.js';
@@ -78,12 +81,14 @@ export function createApp(dependencies: AppDependencies): Express {
   app.use('/api/v1', developmentSessionRouter(config, sessionService));
   app.use('/api/v1', publicInvitationRouter(accessService));
   const changeRequestRepository = new ChangeRequestRepository(db);
+  const estimateService = new EstimateService(new EstimateRepository(db));
   app.use(
     '/api/v1',
     developmentAuthentication(config, sessionRepository),
     authenticatedSessionRouter(sessionService),
     authenticatedAccessRouter(accessService),
     changeRequestRouter(new ChangeRequestService(changeRequestRepository)),
+    estimateRouter(estimateService),
   );
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),

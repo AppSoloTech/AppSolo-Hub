@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   acceptInvitationSchema,
+  calculateEstimatedCost,
   createChangeRequestSchema,
+  createEstimateSchema,
   createInvitationSchema,
   developmentSignInSchema,
+  respondToEstimateSchema,
   updateMembershipSchema,
 } from './index.js';
 
@@ -29,6 +32,67 @@ describe('createChangeRequestSchema', () => {
         extra: true,
       }),
     ).toThrow();
+  });
+});
+
+describe('P003 exact estimate contracts', () => {
+  it('normalizes exact decimal inputs and calculates cost with round-half-up arithmetic', () => {
+    const input = createEstimateSchema.parse({
+      estimatedHours: '0001.5',
+      hourlyRate: '0.01',
+      scopeNotes: '  Exact scoped implementation work.  ',
+    });
+    expect(input).toEqual({
+      estimatedHours: '1.50',
+      hourlyRate: '0.01',
+      scopeNotes: 'Exact scoped implementation work.',
+    });
+    expect(calculateEstimatedCost('1.50', '0.01')).toBe('0.02');
+    expect(calculateEstimatedCost('4.50', '125.00')).toBe('562.50');
+    expect(calculateEstimatedCost('999999.99', '10000.00')).toBe('9999999900.00');
+  });
+
+  it.each(['1e2', '-1', '+1', '1,000', ' 1.00 ', 'NaN', 'Infinity', '1.001'])(
+    'rejects non-contract decimal input %s',
+    (value) => {
+      expect(() =>
+        createEstimateSchema.parse({
+          estimatedHours: value,
+          hourlyRate: '125.00',
+          scopeNotes: 'Enough exact scope detail.',
+        }),
+      ).toThrow();
+    },
+  );
+
+  it('rejects zero hours and calculated cost overflow', () => {
+    expect(() =>
+      createEstimateSchema.parse({
+        estimatedHours: '0',
+        hourlyRate: '1.00',
+        scopeNotes: 'Enough exact scope detail.',
+      }),
+    ).toThrow();
+    expect(() => calculateEstimatedCost('999999.99', '9999999999.99')).toThrow(
+      'The calculated cost is too large.',
+    );
+  });
+
+  it('requires reasons for rejection and clarification while allowing an optional approval note', () => {
+    const expectedUpdatedAt = '2026-07-26T12:00:00.000Z';
+    expect(respondToEstimateSchema.parse({ decision: 'APPROVE', expectedUpdatedAt })).toMatchObject({
+      decision: 'APPROVE',
+    });
+    expect(() =>
+      respondToEstimateSchema.parse({ decision: 'REJECT', note: '  ', expectedUpdatedAt }),
+    ).toThrow();
+    expect(
+      respondToEstimateSchema.parse({
+        decision: 'REQUEST_CLARIFICATION',
+        note: '  Clarify exclusions. ',
+        expectedUpdatedAt,
+      }),
+    ).toMatchObject({ note: 'Clarify exclusions.' });
   });
 });
 

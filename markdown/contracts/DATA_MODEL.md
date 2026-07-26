@@ -125,7 +125,14 @@ P001 creation produces `SUBMITTED`. Saving drafts is deferred.
 - `SUBMITTED`
 - `APPROVED`
 - `REJECTED`
+- `NEEDS_CLARIFICATION`
 - `SUPERSEDED`
+
+### EstimateResponseDecision
+
+- `APPROVED`
+- `REJECTED`
+- `CLARIFICATION_REQUESTED`
 
 ### CommentVisibility
 
@@ -298,6 +305,8 @@ P001 does not accept `status`, `submittedByUserId`, timestamps, or project owner
 | estimated_cost     | numeric(12,2)   | required, non-negative                        |
 | scope_notes        | text            | required                                      |
 | status             | estimate_status | required                                      |
+| version            | integer         | required, positive, request-local sequence    |
+| submitted_at       | timestamptz     | nullable until submission                     |
 | created_at         | timestamptz     | required                                      |
 | updated_at         | timestamptz     | required                                      |
 
@@ -305,8 +314,29 @@ Indexes:
 
 - `(change_request_id, created_at desc)`;
 - `(change_request_id, status)`.
+- unique `(change_request_id, version)`;
+- one partial-unique `DRAFT` per request;
+- one partial-unique `SUBMITTED` per request.
 
-Application services must calculate and persist monetary values using decimal-safe behavior. P001 seeds at least one estimate but does not expose estimate mutation routes.
+The database checks trimmed scope length and requires `estimated_cost` to equal
+the two-decimal rounded product of hours and rate. P003 services calculate the
+same invariant without JavaScript floating point. Submitted terms are immutable
+through the API.
+
+### estimate_responses
+
+| Column             | Type                       | Rules                                         |
+| ------------------ | -------------------------- | --------------------------------------------- |
+| id                 | uuid                       | primary key                                   |
+| estimate_id        | uuid                       | required, unique, FK estimates, restrict      |
+| decision           | estimate_response_decision | required                                      |
+| responding_user_id | uuid                       | required, FK users, restrict                  |
+| note               | text                       | optional approval note; required other reason |
+| created_at         | timestamptz                | required                                      |
+
+Rows are immutable and have no update/delete API. Database checks limit notes
+to 2,000 characters and require a 3-character reason for rejection or
+clarification.
 
 ### comments
 
@@ -406,6 +436,12 @@ P002 additionally requires one transaction for every access mutation:
 
 Invitation acceptance locks the token row so concurrent attempts produce at most one success. Membership changes use a tenant-scoped transaction lock and `expectedUpdatedAt` optimistic state check.
 
+P003 locks the tenant-scoped request and estimate rows for draft version
+allocation, submission, supersession, and client response. Each submission or
+response changes request/estimate state and inserts request status history in
+one transaction. One response per version is enforced by both state and a
+unique constraint.
+
 ## Seed Contract
 
 Seed data must include:
@@ -430,3 +466,7 @@ Use clearly fake addresses under a reserved or obviously local domain, for examp
 Seed execution must be idempotent or must fail with a clear reset instruction. It must not silently duplicate records on every run.
 
 P002 adds a suspended membership, an invited user, a pending invitation with no usable committed bearer token, and a matching audit event. These fixtures remain clearly fake and deterministic.
+
+P003 adds deterministic draft, actionable submitted, approved, rejected,
+clarification-requested, superseded revision, and cross-tenant estimate
+fixtures plus immutable responses.

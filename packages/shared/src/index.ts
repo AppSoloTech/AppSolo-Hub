@@ -57,6 +57,9 @@ export const accessEventTypes = [
 export const capabilities = [
   'VIEW_CHANGE_REQUESTS',
   'SUBMIT_CHANGE_REQUESTS',
+  'VIEW_ESTIMATES',
+  'MANAGE_ESTIMATES',
+  'RESPOND_TO_ESTIMATES',
   'VIEW_MEMBERS',
   'MANAGE_INVITATIONS',
   'MANAGE_MEMBERSHIPS',
@@ -71,6 +74,136 @@ export type InvitationStatus = (typeof invitationStatuses)[number];
 export type EffectiveInvitationStatus = (typeof effectiveInvitationStatuses)[number];
 export type AccessEventType = (typeof accessEventTypes)[number];
 export type Capability = (typeof capabilities)[number];
+
+export const estimateStatuses = [
+  'DRAFT',
+  'SUBMITTED',
+  'APPROVED',
+  'REJECTED',
+  'NEEDS_CLARIFICATION',
+  'SUPERSEDED',
+] as const;
+export const estimateResponseDecisions = ['APPROVED', 'REJECTED', 'CLARIFICATION_REQUESTED'] as const;
+export const estimateResponseCommands = ['APPROVE', 'REJECT', 'REQUEST_CLARIFICATION'] as const;
+export type EstimateStatus = (typeof estimateStatuses)[number];
+export type EstimateResponseDecision = (typeof estimateResponseDecisions)[number];
+export type EstimateResponseCommand = (typeof estimateResponseCommands)[number];
+
+const decimalSyntax = /^\d+(?:\.\d{1,2})?$/;
+
+function normalizeFixedScaleDecimal(value: string, integerDigits: number, positive: boolean): string {
+  if (!decimalSyntax.test(value))
+    throw new Error('Use a plain decimal string with at most two decimal places.');
+  const [rawInteger = '', rawFraction = ''] = value.split('.');
+  const integer = rawInteger.replace(/^0+(?=\d)/, '');
+  if (integer.length > integerDigits) throw new Error('The value is too large.');
+  const normalized = `${integer}.${rawFraction.padEnd(2, '0')}`;
+  if (positive && BigInt(integer + rawFraction.padEnd(2, '0')) === 0n)
+    throw new Error('The value must be greater than 0.00.');
+  return normalized;
+}
+
+const decimalStringSchema = (integerDigits: number, positive: boolean) =>
+  z.string().transform((value, context) => {
+    try {
+      return normalizeFixedScaleDecimal(value, integerDigits, positive);
+    } catch (error) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error instanceof Error ? error.message : 'Invalid decimal value.',
+      });
+      return z.NEVER;
+    }
+  });
+
+export const estimatedHoursSchema = decimalStringSchema(6, true);
+export const hourlyRateSchema = decimalStringSchema(10, false);
+export const normalizedDecimalSchema = z.string().regex(/^\d+\.\d{2}$/);
+
+const MAX_COST_CENTS = 999_999_999_999n;
+
+export function calculateEstimatedCost(estimatedHours: string, hourlyRate: string): string {
+  const hours = estimatedHoursSchema.parse(estimatedHours);
+  const rate = hourlyRateSchema.parse(hourlyRate);
+  const hoursHundredths = BigInt(hours.replace('.', ''));
+  const rateCents = BigInt(rate.replace('.', ''));
+  const product = hoursHundredths * rateCents;
+  const roundedCents = product / 100n + (product % 100n >= 50n ? 1n : 0n);
+  if (roundedCents > MAX_COST_CENTS) throw new Error('The calculated cost is too large.');
+  const digits = roundedCents.toString().padStart(3, '0');
+  return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+}
+
+const estimateTermsSchema = z.object({
+  estimatedHours: estimatedHoursSchema,
+  hourlyRate: hourlyRateSchema,
+  scopeNotes: z.string().trim().min(10, 'Scope notes must be at least 10 characters.').max(10000),
+});
+export const createEstimateSchema = estimateTermsSchema.strict();
+export const updateEstimateSchema = estimateTermsSchema
+  .extend({ expectedUpdatedAt: z.string().datetime() })
+  .strict();
+export const submitEstimateSchema = z.object({ expectedUpdatedAt: z.string().datetime() }).strict();
+const approvalResponseSchema = z
+  .object({
+    decision: z.literal('APPROVE'),
+    note: z.string().trim().max(2000).optional(),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+const rejectionResponseSchema = z
+  .object({
+    decision: z.literal('REJECT'),
+    note: z.string().trim().min(3, 'A reason of at least 3 characters is required.').max(2000),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+const clarificationResponseSchema = z
+  .object({
+    decision: z.literal('REQUEST_CLARIFICATION'),
+    note: z.string().trim().min(3, 'A reason of at least 3 characters is required.').max(2000),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+export const respondToEstimateSchema = z.discriminatedUnion('decision', [
+  approvalResponseSchema,
+  rejectionResponseSchema,
+  clarificationResponseSchema,
+]);
+export type CreateEstimateInput = z.infer<typeof createEstimateSchema>;
+export type UpdateEstimateInput = z.infer<typeof updateEstimateSchema>;
+export type SubmitEstimateInput = z.infer<typeof submitEstimateSchema>;
+export type RespondToEstimateInput = z.infer<typeof respondToEstimateSchema>;
+
+export const estimateResponseDtoSchema = z.object({
+  decision: z.enum(estimateResponseDecisions),
+  note: z.string().nullable(),
+  actorDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+});
+export const estimateDtoSchema = z.object({
+  id: uuidSchema,
+  changeRequestId: uuidSchema,
+  version: z.number().int().positive(),
+  estimatedHours: normalizedDecimalSchema,
+  hourlyRate: normalizedDecimalSchema,
+  estimatedCost: normalizedDecimalSchema,
+  scopeNotes: z.string(),
+  status: z.enum(estimateStatuses),
+  creatorDisplayName: z.string(),
+  submittedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  response: estimateResponseDtoSchema.nullable(),
+});
+export type EstimateResponseDto = z.infer<typeof estimateResponseDtoSchema>;
+export type EstimateDto = z.infer<typeof estimateDtoSchema>;
+export const estimateListMetaSchema = z.object({
+  count: z.number().int().nonnegative(),
+  canManage: z.boolean(),
+  canRespond: z.boolean(),
+});
+export type EstimateListMeta = z.infer<typeof estimateListMetaSchema>;
 
 export const developmentSignInSchema = z
   .object({ email: z.string().trim().toLowerCase().email().max(320) })

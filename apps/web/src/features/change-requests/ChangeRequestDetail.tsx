@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ApiError, requestsApi } from '../../api.js';
+import { EstimateSection } from '../estimates/EstimateSection.js';
 export function ChangeRequestDetail() {
   const { changeRequestId = '' } = useParams();
   const location = useLocation();
@@ -44,6 +45,7 @@ export function ChangeRequestDetail() {
           <dd>{new Date(request.createdAt).toLocaleString()}</dd>
         </dl>
       </article>
+      <EstimateSection changeRequestId={request.id} requestStatus={request.status} />
     </>
   );
 }

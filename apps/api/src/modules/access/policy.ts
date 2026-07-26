@@ -1,6 +1,12 @@
 import type { Capability, OrganizationRole, OrganizationType } from '@appsolo/shared';
 
-const requestCapabilities: Capability[] = ['VIEW_CHANGE_REQUESTS', 'SUBMIT_CHANGE_REQUESTS'];
+const requestCapabilities: Capability[] = [
+  'VIEW_CHANGE_REQUESTS',
+  'SUBMIT_CHANGE_REQUESTS',
+  'VIEW_ESTIMATES',
+];
+const estimateManagementCapabilities: Capability[] = ['MANAGE_ESTIMATES'];
+const estimateResponseCapabilities: Capability[] = ['RESPOND_TO_ESTIMATES'];
 const administrationCapabilities: Capability[] = [
   'VIEW_MEMBERS',
   'MANAGE_INVITATIONS',
@@ -9,9 +15,11 @@ const administrationCapabilities: Capability[] = [
 ];
 
 export function capabilitiesForRole(role: OrganizationRole): Capability[] {
-  if (role === 'OWNER' || role === 'ADMIN' || role === 'CLIENT_ADMIN') {
-    return [...requestCapabilities, ...administrationCapabilities];
-  }
+  if (role === 'OWNER' || role === 'ADMIN')
+    return [...requestCapabilities, ...estimateManagementCapabilities, ...administrationCapabilities];
+  if (role === 'DEVELOPER') return [...requestCapabilities, ...estimateManagementCapabilities];
+  if (role === 'CLIENT_ADMIN')
+    return [...requestCapabilities, ...estimateResponseCapabilities, ...administrationCapabilities];
   return [...requestCapabilities];
 }
 

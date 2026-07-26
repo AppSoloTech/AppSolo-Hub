@@ -47,6 +47,13 @@ P001 must test an authenticated user from another client tenant. Hiding UI navig
 
 P002 access administration repeats tenant and capability checks in services/repositories for every collection and mutation. Role ceilings are centralized, membership state changes are optimistic/serialized, and self-suspension/last-owner lockout are conflicts. Suspended memberships lose tenant capabilities immediately; globally suspended users cannot authenticate.
 
+P003 adds centralized `VIEW_ESTIMATES`, `MANAGE_ESTIMATES`, and
+`RESPOND_TO_ESTIMATES` capabilities. Every estimate read and write resolves the
+request through its active project/client organization and active membership.
+Draft rows are omitted at the repository query for client roles, not merely
+hidden in React. Estimate identifier mutations recheck tenant membership,
+capability, lifecycle state, and optimistic timestamps under transaction locks.
+
 ## Input And Output
 
 - Zod validates all params, query values, and write bodies.
@@ -69,6 +76,8 @@ P002 access administration repeats tenant and capability checks in services/repo
 
 - Structured logs include request ID and useful operational context.
 - Do not log full request bodies by default. P002 explicitly redacts `req.body`.
+- Estimate scope, response notes, hours, rates, and monetary write bodies remain
+  covered by whole-body redaction.
 - Do not log comment bodies, attachment content, authorization headers, cookies, or database URLs.
 - Internal errors may include stack traces in local logs, but never in client responses.
 - Authentication failures should avoid exposing whether another tenant resource exists beyond the agreed status behavior.
@@ -93,6 +102,8 @@ Rate limiting, CSRF strategy, Content Security Policy tuning, secure cookies, an
 - Test and development databases are separate.
 - No hard-delete endpoints exist in P001.
 - Invitations, memberships, and access-audit events have no hard-delete API. Access audit rows have no update API.
+- Estimates and immutable estimate responses have no hard-delete API.
+- Exact stored cost is protected by a PostgreSQL rounded-product check.
 
 ## Attachments
 

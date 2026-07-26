@@ -100,6 +100,19 @@ API integration tests must cover:
 
 Component tests cover sign-in, fragment scrubbing, acceptance states, role-aware control hiding, invitation link feedback, and membership actions. Playwright covers the real copy-link/accept/session/capability flow plus the P001 list/create/refresh regression.
 
+### P003 Coverage
+
+Shared tests cover decimal syntax, normalization, limits, exact multiplication,
+round-half-up boundaries, overflow, and response-note commands. Database tests
+prove the stored-cost constraint. PostgreSQL API integration tests cover the
+capability matrix, draft invisibility, tenant denial, optimistic edits,
+single-draft and single-response concurrency, immutable submission, all
+decisions, revision/supersession, strict bodies, and P001/P002 regressions.
+Component tests cover exact draft preview/create, client read-only history,
+client-admin reason validation/actions, and stale feedback. Playwright covers a
+real manager draft/edit/submit to client-admin approval flow with persisted
+history.
+
 ## Database Test Isolation
 
 Docker Compose should initialize:

@@ -76,6 +76,7 @@ apps/api/src/
 │   ├── health/
 │   ├── session/
 │   ├── access/
+│   ├── estimates/
 │   └── change-requests/
 │       ├── change-request.routes.ts
 │       ├── change-request.controller.ts
@@ -163,6 +164,19 @@ Feature code may contain route components, queries, forms, and presentation comp
 3. A tenant-scoped transaction lock and `expectedUpdatedAt` reject stale changes.
 4. Self-suspension and the last active owner's demotion/suspension are rejected.
 5. The membership change and typed audit event commit together.
+
+### Submit And Respond To An Estimate
+
+1. Shared strict schemas normalize exact decimal-string terms.
+2. The estimate service resolves centralized capability and tenant scope.
+3. The repository locks the scoped request/estimate rows and rechecks active
+   membership inside the transaction.
+4. The server calculates cost with fixed-scale `BigInt` arithmetic; PostgreSQL
+   independently checks the rounded product.
+5. Submission or response changes request/estimate state and writes immutable
+   history atomically.
+6. Explicit DTO mapping returns only role-visible versions; client roles never
+   receive drafts.
 
 ## Multi-Tenant Ownership Model
 
@@ -255,3 +269,6 @@ No AWS-specific package belongs in P001.
 - passwords, production cookies/tokens, or account recovery;
 - email delivery or an invitation outbox;
 - AWS SDKs, Cognito, SES, or AWS resources.
+
+P003 retains these boundaries and additionally excludes billing, line items,
+comments, work execution, notifications, and estimate withdrawal/deletion.

@@ -260,6 +260,34 @@ Internal organizations allow only `OWNER`, `ADMIN`, and `DEVELOPER`. Every route
 
 Frontend validation never substitutes for API validation.
 
+## P003 Estimate And Approval Routes
+
+All estimate routes require an active user, active client organization, active
+project, and active membership in the request's owning client organization.
+Internal-organization membership does not grant client access.
+
+- `GET /api/v1/change-requests/:changeRequestId/estimates` returns version
+  history descending by version and ID. Estimate managers receive the current
+  draft; client roles receive no draft row or draft-existence indicator.
+- `POST /api/v1/change-requests/:changeRequestId/estimates` accepts strict
+  `estimatedHours`, `hourlyRate`, and `scopeNotes` fields and creates one
+  server-numbered draft.
+- `PATCH /api/v1/estimates/:estimateId` accepts complete mutable terms plus
+  `expectedUpdatedAt` for a current draft.
+- `POST /api/v1/estimates/:estimateId/submit` accepts only
+  `expectedUpdatedAt` and atomically submits immutable terms.
+- `POST /api/v1/estimates/:estimateId/respond` accepts a strict `APPROVE`,
+  `REJECT`, or `REQUEST_CLARIFICATION` command, its optimistic timestamp, and
+  the decision note required by the command.
+
+Hours, rate, and cost are normalized two-decimal JSON strings. Cost is
+server-derived with exact round-half-up arithmetic and is never accepted in a
+write body. `OWNER`, `ADMIN`, and `DEVELOPER` manage estimates;
+`CLIENT_ADMIN` alone responds; `CLIENT_MEMBER` is read-only. Identifier routes
+use the same `404 NOT_FOUND` behavior for missing and inaccessible resources.
+Duplicate drafts, stale writes, repeated decisions, and invalid lifecycle
+states return `409 CONFLICT`.
+
 ## CORS And Body Limits
 
 - CORS allows only configured local web origins in development.
