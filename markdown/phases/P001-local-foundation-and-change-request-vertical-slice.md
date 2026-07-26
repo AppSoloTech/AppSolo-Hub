@@ -103,7 +103,7 @@ See `notes/P001/review-disposition.md`. C1-C15 and R1-R13 were accepted by the h
 
 ## Human QA
 
-See `notes/P001/qa.md`. No Q-case has been run.
+See `notes/P001/qa.md`. The human reported Q1-Q8 passed on 2026-07-26; browser name/version was not supplied.
 
 ## Commits
 
@@ -129,10 +129,10 @@ See `notes/P001/qa.md`. No Q-case has been run.
 
 ## Completion Gate
 
-- Requirements satisfied: Implemented; awaiting required human QA.
+- Requirements satisfied: Yes.
 - Automated validation satisfied: Yes, including Docker Compose startup, database initialization, tests, and named-volume restart persistence.
 - Review clear: Yes; fifth focused re-review found no open finding.
 - Findings dispositioned: Yes; C1-C15 and R1-R13 accepted and independently verified fixed.
-- Required QA complete: No.
-- Durable docs updated: Yes; fifth review and Docker validation evidence recorded.
-- Ready for integration: Awaiting required human QA and human integration approval.
+- Required QA complete: Yes; Q1-Q8 passed by human report on 2026-07-26.
+- Durable docs updated: Yes; review, Docker validation, and human QA evidence recorded.
+- Ready for integration: Yes; awaiting human Git integration approval and human-owned phase completion.

@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Claude review is clear and P001 is ready for required human QA. Codex did not mark the phase complete.
+> Status: Claude review is clear and required human QA passed. P001 is ready for human Git integration; Codex did not mark the phase complete.
 
 ## Review Target
 
@@ -92,13 +92,14 @@
 | V17   | `pnpm --filter @appsolo/database generate`      | Passed | No schema changes; `0001_snapshot.json` matches migration state. |
 | V18   | `pnpm docker:down` then `pnpm docker:up`        | Passed | Named volume persisted both databases and two dev seed rows.     |
 
-## Manual Testing Already Performed
+## Human QA
 
-Automated assembled browser smoke only. Human Q1-Q8 remain required in `notes/P001/qa.md`.
+The human reported Q1-Q8 passed on 2026-07-26. Exact results are recorded in `notes/P001/qa.md`; the browser name/version was not supplied.
 
 ## Known Gaps
 
-- Required human QA Q1-Q8 remains. The Docker portion now has technical execution evidence, but Codex did not substitute it for human QA results.
+- Human Git integration approval and human-owned phase completion remain.
+- Browser name/version was not supplied with the otherwise complete human QA report.
 
 ## Review-Fix Verification
 
