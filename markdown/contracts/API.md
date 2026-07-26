@@ -232,7 +232,7 @@ The following authenticated routes are tenant-scoped:
 
 List routes accept the standard `limit`/`offset` pagination contract and have deterministic ordering. Membership updates accept exactly one of `role` or `status` plus `expectedUpdatedAt`; stale versions, self-suspension, and last-owner lockout return `409`. Inaccessible nested identifiers return `404`.
 
-Invitation create accepts strict `firstName`, `lastName`, normalized `email`, and `role`. Create/resend returns an `acceptanceUrl` only in that authorized mutation response. The URL carries a 256-bit random token in its fragment. List and other responses never contain the URL, plaintext token, or token hash.
+Invitation create accepts strict `firstName`, `lastName`, normalized `email`, and `role`. Create/resend returns an `acceptanceUrl` only in that authorized mutation response. The URL uses the validated `WEB_ACCEPTANCE_BASE_URL` (falling back to the first validated `CORS_ORIGIN` for compatible local configuration) and carries a 256-bit random token in its fragment. List and other responses never contain the URL, plaintext token, or token hash.
 
 ### POST `/api/v1/invitations/accept`
 

@@ -39,6 +39,7 @@ Codex may consolidate local loading if the behavior remains clear and documented
 | `APPSOLO_DB_NAME`           | local component env | `appsolo_client_hub_dev`                      | optional local database-name override when `DB_*` connection components are reused |
 | `LOG_LEVEL`                 | yes                 | `debug`                                       | validated Pino level                                                               |
 | `CORS_ORIGIN`               | yes                 | `http://localhost:5173,http://127.0.0.1:5173` | explicit comma-separated local origins, each validated                             |
+| `WEB_ACCEPTANCE_BASE_URL`   | no                  | `http://localhost:5173`                       | validated public web base URL used only to construct invitation acceptance links   |
 | `DEV_AUTH_ENABLED`          | yes                 | `true`                                        | allowed only in development/test                                                   |
 | `DEV_AUTH_USER_ID`          | dev                 | seeded UUID                                   | fallback simulated user                                                            |
 | `APPSOLO_USE_TEST_DATABASE` | Playwright only     | `false`                                       | validated test-only switch; uses `TEST_DATABASE_URL` or fixed local test target    |
@@ -49,6 +50,9 @@ Rules:
 - API startup validates configuration with Zod before opening a listener.
 - Explicitly exported process values take precedence over root `.env`, which takes precedence over duplicate `apps/api/.env` values.
 - Production startup fails when `DEV_AUTH_ENABLED=true`.
+- `WEB_ACCEPTANCE_BASE_URL` should be set explicitly when invitation links must use a
+  different canonical web origin. For backward-compatible local configuration, it
+  defaults to the first validated `CORS_ORIGIN`.
 - `APPSOLO_USE_TEST_DATABASE` defaults to `false`; Playwright sets it to `true` only after preparing the isolated test database. It is not an operator-facing development setting.
 - Playwright starts fresh API and web processes and never reuses an already-running development API.
 - URLs and secrets are redacted from logs.

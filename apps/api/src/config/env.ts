@@ -46,6 +46,7 @@ const envSchema = z.object({
     .string()
     .transform((value) => value.split(',').map((origin) => origin.trim()))
     .pipe(z.array(z.string().url()).min(1)),
+  WEB_ACCEPTANCE_BASE_URL: z.string().url().optional(),
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true'),
   DEV_AUTH_USER_ID: z.string().uuid().optional(),
   APPSOLO_USE_TEST_DATABASE: z

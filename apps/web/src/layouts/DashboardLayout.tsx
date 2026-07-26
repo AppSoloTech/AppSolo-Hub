@@ -1,18 +1,30 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { seededProjectId } from '../app/App.js';
 import { useSession } from '../session/SessionProvider.js';
 import styles from './DashboardLayout.module.css';
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { session, signOut } = useSession();
+  const location = useLocation();
   const accessMemberships =
     session?.memberships.filter((membership) => membership.capabilities.includes('VIEW_MEMBERS')) ?? [];
+  const organizationRouteMatch = /^\/organizations\/([^/]+)\/access(?:\/|$)/.exec(location.pathname);
+  const routeOrganization = session?.memberships.find(
+    (membership) => membership.organizationId === organizationRouteMatch?.[1],
+  );
+  const organizationLabel =
+    routeOrganization?.organizationName ??
+    (session?.memberships.length === 1
+      ? session.memberships[0]?.organizationName
+      : session && session.memberships.length > 1
+        ? 'Multiple authorized organizations'
+        : 'Authorized workspace');
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           AppSolo <span>Client Hub</span>
         </div>
-        <p className={styles.org}>{session?.memberships[0]?.organizationName ?? 'Authorized workspace'}</p>
+        <p className={styles.org}>{organizationLabel}</p>
         <nav>
           <Link to={`/projects/${seededProjectId}/change-requests`}>Change requests</Link>
           {accessMemberships.map((membership) => (

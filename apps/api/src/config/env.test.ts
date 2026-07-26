@@ -12,7 +12,17 @@ const base = {
   DEV_AUTH_ENABLED: 'true',
 };
 describe('API environment', () => {
-  it('parses valid development configuration', () => expect(parseApiConfig(base).PORT).toBe(4000));
+  it('parses and validates the optional web acceptance base URL', () => {
+    expect(
+      parseApiConfig({
+        ...base,
+        WEB_ACCEPTANCE_BASE_URL: 'http://localhost:4173',
+      }).WEB_ACCEPTANCE_BASE_URL,
+    ).toBe('http://localhost:4173');
+    expect(() => parseApiConfig({ ...base, WEB_ACCEPTANCE_BASE_URL: 'not-a-url' })).toThrow(
+      'WEB_ACCEPTANCE_BASE_URL',
+    );
+  });
   it('rejects a missing database URL without echoing values', () => {
     const secret = 'postgresql://user:secret@localhost/private';
     expect(() => parseApiConfig({ ...base, DATABASE_URL: undefined, DB_PASSWORD: secret })).toThrow(

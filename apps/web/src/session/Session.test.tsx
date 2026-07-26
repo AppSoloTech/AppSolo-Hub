@@ -1,17 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevelopmentSignIn } from './DevelopmentSignIn.js';
 import { InvitationAcceptance } from './InvitationAcceptance.js';
-import { SessionProvider } from './SessionProvider.js';
+import { SessionProvider, useSession } from './SessionProvider.js';
 
-const { signIn, current, acceptInvitation } = vi.hoisted(() => ({
-  signIn: vi.fn(),
-  current: vi.fn(),
-  acceptInvitation: vi.fn(),
-}));
+const { signIn, current, acceptInvitation, initialUserId } = vi.hoisted(() => {
+  const initialUserId = { value: null as string | null };
+  return {
+    signIn: vi.fn(),
+    current: vi.fn(),
+    acceptInvitation: vi.fn(),
+    initialUserId,
+  };
+});
 
 vi.mock('../api.js', () => ({
   ApiError: class ApiError extends Error {
@@ -25,7 +29,7 @@ vi.mock('../api.js', () => ({
   },
   developmentIdentityStorageKey: 'appsolo.developmentUserId',
   developmentSignedOutStorageKey: 'appsolo.developmentSignedOut',
-  initializeDevelopmentUserId: () => null,
+  initializeDevelopmentUserId: () => initialUserId.value,
   storeDevelopmentUserId: (userId: string) =>
     window.localStorage.setItem('appsolo.developmentUserId', userId),
   clearDevelopmentUserId: () => window.localStorage.removeItem('appsolo.developmentUserId'),
@@ -43,9 +47,12 @@ const session = {
   memberships: [],
 };
 
-function renderWithSession(node: React.ReactNode) {
+function renderWithSession(
+  node: React.ReactNode,
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <SessionProvider>{node}</SessionProvider>
       </MemoryRouter>
@@ -58,7 +65,19 @@ beforeEach(() => {
   signIn.mockReset();
   current.mockReset();
   acceptInvitation.mockReset();
+  initialUserId.value = null;
 });
+afterEach(cleanup);
+
+function SessionControls({ alternateSession }: { alternateSession: typeof session }) {
+  const { establish, signOut } = useSession();
+  return (
+    <>
+      <button onClick={signOut}>Clear session</button>
+      <button onClick={() => establish(alternateSession)}>Switch identity</button>
+    </>
+  );
+}
 
 describe('development session UI', () => {
   it('labels local sign in as insecure and establishes identity by normalized email response', async () => {
@@ -89,5 +108,39 @@ describe('development session UI', () => {
     window.history.replaceState({}, '', `/invitations/accept#token=${'x'.repeat(50)}`);
     renderWithSession(<InvitationAcceptance />);
     expect(await screen.findByRole('heading', { name: 'Invitation expired' })).toBeVisible();
+  });
+
+  it('clears all cached tenant data on sign-out', async () => {
+    initialUserId.value = session.user.id;
+    current.mockResolvedValue({ data: session, meta: {} });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(['organization', 'northstar', 'members'], { sensitive: true });
+    const user = userEvent.setup();
+    const view = renderWithSession(<SessionControls alternateSession={session} />, queryClient);
+    await waitFor(() => expect(current).toHaveBeenCalled());
+    await user.click(view.getByRole('button', { name: 'Clear session' }));
+    expect(queryClient.getQueryData(['organization', 'northstar', 'members'])).toBeUndefined();
+    expect(queryClient.getQueryCache().findAll({ queryKey: ['organization'] })).toHaveLength(0);
+  });
+
+  it('clears prior identity data before establishing a different development identity', async () => {
+    initialUserId.value = session.user.id;
+    current.mockResolvedValue({ data: session, meta: {} });
+    const alternateSession = {
+      ...session,
+      user: {
+        ...session.user,
+        id: '20000000-0000-4000-8000-000000000004',
+        email: 'member@client.test',
+      },
+    };
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(['organization', 'northstar', 'invitations'], { sensitive: true });
+    const user = userEvent.setup();
+    const view = renderWithSession(<SessionControls alternateSession={alternateSession} />, queryClient);
+    await waitFor(() => expect(current).toHaveBeenCalled());
+    await user.click(view.getByRole('button', { name: 'Switch identity' }));
+    expect(queryClient.getQueryData(['organization', 'northstar', 'invitations'])).toBeUndefined();
+    expect(window.localStorage.getItem('appsolo.developmentUserId')).toBe(alternateSession.user.id);
   });
 });

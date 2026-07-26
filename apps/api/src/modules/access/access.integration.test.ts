@@ -20,16 +20,20 @@ const config = {
   DATABASE_URL: databaseUrl,
   LOG_LEVEL: 'fatal' as const,
   CORS_ORIGIN: ['http://localhost:5173'],
+  WEB_ACCEPTANCE_BASE_URL: 'http://localhost:4173',
   DEV_AUTH_ENABLED: true,
   APPSOLO_USE_TEST_DATABASE: false,
   REQUEST_BODY_LIMIT: '1mb',
 };
-const app = createApp({ db, config });
+const initialTestTime = new Date('2026-07-26T12:00:00.000Z');
+let testTime = new Date(initialTestTime);
+const app = createApp({ db, config, clock: () => new Date(testTime) });
 const organizationPath = `/api/v1/organizations/${seedIds.clientOrganization}`;
 const ownerHeader = { 'x-dev-user-id': seedIds.owner };
 const errorBody = (body: unknown) => body as { error: { code: string; message: string } };
 
 beforeEach(async () => {
+  testTime = new Date(initialTestTime);
   await pool.query(
     'TRUNCATE TABLE access_audit_events, organization_invitations, attachments, time_entries, status_history, comments, estimates, change_requests, projects, organization_memberships, organizations, users RESTART IDENTITY CASCADE',
   );
@@ -52,7 +56,7 @@ async function createInvitation(email: string) {
     .set(ownerHeader)
     .send(invitationInput(email));
   const body = response.body as {
-    data: { invitation: { id: string }; acceptanceUrl: string };
+    data: { invitation: { id: string; expiresAt: string }; acceptanceUrl: string };
   };
   const url = new URL(body.data.acceptanceUrl);
   const token = new URLSearchParams(url.hash.slice(1)).get('token');
@@ -60,6 +64,7 @@ async function createInvitation(email: string) {
   return {
     response,
     invitationId: body.data.invitation.id,
+    expiresAt: body.data.invitation.expiresAt,
     token,
     acceptanceUrl: body.data.acceptanceUrl,
   };
@@ -97,6 +102,13 @@ describe('P002 session and access integration', () => {
       .post('/api/v1/development/session')
       .send({ email: 'pending-invitee@client.test' });
     await db.update(users).set({ status: 'SUSPENDED' }).where(eq(users.id, seedIds.suspendedMember));
+    const memberList = await request(app).get(`${organizationPath}/members`).set(ownerHeader);
+    const globallySuspendedMember = (
+      memberList.body as {
+        data: Array<{ userId: string; capabilities: string[] }>;
+      }
+    ).data.find((member) => member.userId === seedIds.suspendedMember);
+    expect(globallySuspendedMember?.capabilities).toEqual([]);
     const suspended = await request(app)
       .post('/api/v1/development/session')
       .send({ email: 'suspended-member@client.test' });
@@ -130,12 +142,46 @@ describe('P002 session and access integration', () => {
       .post(`/api/v1/organizations/${seedIds.internalOrganization}/invitations`)
       .set(ownerHeader)
       .send(invitationInput('internal-client-role@appsolo.test'));
+    await db
+      .update(organizationMemberships)
+      .set({ status: 'SUSPENDED' })
+      .where(
+        and(
+          eq(organizationMemberships.organizationId, seedIds.clientOrganization),
+          eq(organizationMemberships.userId, seedIds.developer),
+        ),
+      );
+    const suspendedHigherRole = await request(app)
+      .post(`${organizationPath}/invitations`)
+      .set('x-dev-user-id', seedIds.clientAdmin)
+      .send({
+        ...invitationInput('developer@appsolo.test'),
+        role: 'CLIENT_MEMBER',
+      });
+    const crossTenantInvitationId = await request(app)
+      .post(
+        `/api/v1/organizations/${seedIds.internalOrganization}/invitations/${seedIds.pendingInvitation}/resend`,
+      )
+      .set(ownerHeader)
+      .send({});
+    const crossTenantMembershipId = await request(app)
+      .patch(`${organizationPath}/memberships/40000000-0000-4000-8000-000000000007`)
+      .set(ownerHeader)
+      .send({
+        status: 'SUSPENDED',
+        expectedUpdatedAt: '2026-07-26T12:00:00.000Z',
+      });
     expect(clientAdminInvite.status).toBe(201);
     expect(elevatedInvite.status).toBe(403);
     expect(developerList.status).toBe(403);
     expect(crossTenant.status).toBe(403);
     expect(unknownField.status).toBe(400);
     expect(internalClientRole.status).toBe(403);
+    expect(suspendedHigherRole.status).toBe(403);
+    expect(crossTenantInvitationId.status).toBe(404);
+    expect(errorBody(crossTenantInvitationId.body).error.code).toBe('NOT_FOUND');
+    expect(crossTenantMembershipId.status).toBe(404);
+    expect(errorBody(crossTenantMembershipId.body).error.code).toBe('NOT_FOUND');
   });
 
   it('stores only a SHA-256 token hash, prevents duplicate pending invitations, and reuses active profiles', async () => {
@@ -144,6 +190,7 @@ describe('P002 session and access integration', () => {
     expect(created.token.length).toBeGreaterThanOrEqual(43);
     expect(created.acceptanceUrl).toContain('#token=');
     expect(created.acceptanceUrl).not.toContain('?token=');
+    expect(created.acceptanceUrl).toMatch(/^http:\/\/localhost:4173\/invitations\/accept#/);
 
     const row = await db.query.organizationInvitations.findFirst({
       where: (invitation, operators) => operators.eq(invitation.id, created.invitationId),
@@ -225,15 +272,21 @@ describe('P002 session and access integration', () => {
 
   it('rotates, revokes, expires, and accepts invitation tokens with stable safe errors', async () => {
     const rotated = await createInvitation('rotated@client.test');
+    expect(rotated.expiresAt).toBe('2026-08-02T12:00:00.000Z');
+    testTime = new Date('2026-07-27T12:00:00.000Z');
     const resend = await request(app)
       .post(`${organizationPath}/invitations/${rotated.invitationId}/resend`)
       .set(ownerHeader)
       .send({});
-    const resentUrl = new URL((resend.body as { data: { acceptanceUrl: string } }).data.acceptanceUrl);
+    const resentBody = resend.body as {
+      data: { invitation: { expiresAt: string }; acceptanceUrl: string };
+    };
+    const resentUrl = new URL(resentBody.data.acceptanceUrl);
     const newToken = new URLSearchParams(resentUrl.hash.slice(1)).get('token');
     expect(resend.status).toBe(200);
     expect(newToken).toBeTruthy();
     expect(newToken).not.toBe(rotated.token);
+    expect(resentBody.data.invitation.expiresAt).toBe('2026-08-03T12:00:00.000Z');
     const oldToken = await request(app).post('/api/v1/invitations/accept').send({ token: rotated.token });
     expect(oldToken.status).toBe(400);
     expect(errorBody(oldToken.body).error.code).toBe('INVITATION_INVALID');
@@ -292,6 +345,58 @@ describe('P002 session and access integration', () => {
         ),
     });
     expect(membership).toMatchObject({ status: 'ACTIVE', role: 'CLIENT_MEMBER' });
+  });
+
+  it('revalidates the inviter role ceiling before reactivating a suspended membership', async () => {
+    await db
+      .update(organizationMemberships)
+      .set({ status: 'SUSPENDED' })
+      .where(
+        and(
+          eq(organizationMemberships.organizationId, seedIds.clientOrganization),
+          eq(organizationMemberships.userId, seedIds.developer),
+        ),
+      );
+    const created = await request(app)
+      .post(`${organizationPath}/invitations`)
+      .set(ownerHeader)
+      .send({
+        ...invitationInput('developer@appsolo.test'),
+        role: 'CLIENT_MEMBER',
+      });
+    expect(created.status).toBe(201);
+    const createdBody = created.body as {
+      data: { invitation: { id: string }; acceptanceUrl: string };
+    };
+    const acceptanceUrl = createdBody.data.acceptanceUrl;
+    const token = new URLSearchParams(new URL(acceptanceUrl).hash.slice(1)).get('token');
+    if (!token) throw new Error('Test invitation did not contain a fragment token.');
+
+    await db
+      .update(organizationMemberships)
+      .set({ role: 'CLIENT_ADMIN' })
+      .where(
+        and(
+          eq(organizationMemberships.organizationId, seedIds.clientOrganization),
+          eq(organizationMemberships.userId, seedIds.owner),
+        ),
+      );
+    const resend = await request(app)
+      .post(`${organizationPath}/invitations/${createdBody.data.invitation.id}/resend`)
+      .set(ownerHeader)
+      .send({});
+    expect(resend.status).toBe(403);
+    const acceptance = await request(app).post('/api/v1/invitations/accept').send({ token });
+    expect(acceptance.status).toBe(400);
+    expect(errorBody(acceptance.body).error.code).toBe('INVITATION_INVALID');
+    const membership = await db.query.organizationMemberships.findFirst({
+      where: (row, operators) =>
+        operators.and(
+          operators.eq(row.organizationId, seedIds.clientOrganization),
+          operators.eq(row.userId, seedIds.developer),
+        ),
+    });
+    expect(membership).toMatchObject({ status: 'SUSPENDED', role: 'DEVELOPER' });
   });
 
   it('allows at most one concurrent acceptance and atomically creates membership and audit history', async () => {

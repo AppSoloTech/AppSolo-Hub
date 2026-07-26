@@ -11,7 +11,7 @@ import { developmentAuthentication } from './middleware/development-auth.js';
 import { requestIdMiddleware } from './middleware/request-id.js';
 import { authenticatedAccessRouter, publicInvitationRouter } from './modules/access/access.routes.js';
 import { AccessRepository } from './modules/access/repository.js';
-import { AccessService } from './modules/access/service.js';
+import { AccessService, type Clock, type TokenGenerator } from './modules/access/service.js';
 import { changeRequestRouter } from './modules/change-requests/change-request.routes.js';
 import { ChangeRequestRepository } from './modules/change-requests/repository.js';
 import { ChangeRequestService } from './modules/change-requests/service.js';
@@ -23,6 +23,8 @@ import { SessionService } from './modules/session/service.js';
 type AppDependencies = {
   db: Database;
   config: ApiConfig;
+  clock?: Clock;
+  tokenGenerator?: TokenGenerator;
 };
 const toDetails = (error: ZodError) =>
   error.issues.map((issue) => ({ path: issue.path.join('.') || 'request', message: issue.message }));
@@ -62,10 +64,16 @@ export function createApp(dependencies: AppDependencies): Express {
   app.use('/api/v1', healthRouter(db));
   const sessionRepository = new SessionRepository(db);
   const sessionService = new SessionService(sessionRepository);
+  const webAcceptanceBaseUrl = config.WEB_ACCEPTANCE_BASE_URL ?? config.CORS_ORIGIN[0];
+  if (!webAcceptanceBaseUrl) {
+    throw new Error('A web acceptance base URL is required.');
+  }
   const accessService = new AccessService(
     new AccessRepository(db),
     sessionService,
-    config.CORS_ORIGIN[0] ?? 'http://localhost:5173',
+    webAcceptanceBaseUrl,
+    dependencies.clock,
+    dependencies.tokenGenerator,
   );
   app.use('/api/v1', developmentSessionRouter(config, sessionService));
   app.use('/api/v1', publicInvitationRouter(accessService));

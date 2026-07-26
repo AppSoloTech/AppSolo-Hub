@@ -13,8 +13,8 @@ import type { SessionService } from '../session/service.js';
 import { canAssignRole, capabilitiesForRole, hasCapability, isRoleAllowedForOrganization } from './policy.js';
 import { AccessRepository, AccessStateError } from './repository.js';
 
-type TokenGenerator = () => string;
-type Clock = () => Date;
+export type TokenGenerator = () => string;
+export type Clock = () => Date;
 const sevenDaysInMilliseconds = 7 * 24 * 60 * 60 * 1000;
 const tokenHash = (token: string): string => createHash('sha256').update(token, 'utf8').digest('hex');
 
@@ -47,10 +47,12 @@ export class AccessService {
       actorRole: OrganizationRole;
     },
     targetRole: OrganizationRole,
+    currentMembershipRole?: OrganizationRole,
   ): void {
     if (
       !hasCapability(context.actorRole, 'MANAGE_INVITATIONS') ||
       !canAssignRole(context.actorRole, targetRole) ||
+      (currentMembershipRole !== undefined && !canAssignRole(context.actorRole, currentMembershipRole)) ||
       !isRoleAllowedForOrganization(context.organizationType, targetRole)
     ) {
       throw forbidden();
@@ -177,7 +179,8 @@ export class AccessService {
     const rows = await this.repository.listMembers(organizationId, limit, offset);
     const data: MemberDto[] = rows.map((row) => ({
       ...row,
-      capabilities: row.status === 'ACTIVE' ? capabilitiesForRole(row.role) : [],
+      capabilities:
+        row.status === 'ACTIVE' && row.userStatus === 'ACTIVE' ? capabilitiesForRole(row.role) : [],
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }));
@@ -204,7 +207,8 @@ export class AccessService {
         invitation: input,
         tokenHash: tokenHash(token),
         expiresAt: new Date(now.getTime() + sevenDaysInMilliseconds),
-        authorize: (context, role) => this.assertInvitationRole(context, role),
+        authorize: (context, role, currentMembershipRole) =>
+          this.assertInvitationRole(context, role, currentMembershipRole),
       });
       return {
         data: this.invitationResult(
@@ -229,7 +233,8 @@ export class AccessService {
         actorUserId,
         tokenHash: tokenHash(token),
         expiresAt: new Date(now.getTime() + sevenDaysInMilliseconds),
-        authorize: (context, role) => this.assertInvitationRole(context, role),
+        authorize: (context, role, currentMembershipRole) =>
+          this.assertInvitationRole(context, role, currentMembershipRole),
       });
       return {
         data: this.invitationResult(
@@ -260,7 +265,12 @@ export class AccessService {
 
   async acceptInvitation(token: string): Promise<{ data: SessionDto; meta: Record<string, never> }> {
     try {
-      const accepted = await this.repository.acceptInvitation(tokenHash(token), this.clock());
+      const accepted = await this.repository.acceptInvitation(
+        tokenHash(token),
+        this.clock(),
+        (context, role, currentMembershipRole) =>
+          this.assertInvitationRole(context, role, currentMembershipRole),
+      );
       return { data: await this.sessionService.forUser(accepted.userId), meta: {} };
     } catch (error: unknown) {
       return this.mapStateError(error);
@@ -305,7 +315,9 @@ export class AccessService {
         role: result.membership.role,
         status: result.membership.status,
         capabilities:
-          result.membership.status === 'ACTIVE' ? capabilitiesForRole(result.membership.role) : [],
+          result.membership.status === 'ACTIVE' && result.user.status === 'ACTIVE'
+            ? capabilitiesForRole(result.membership.role)
+            : [],
         createdAt: result.membership.createdAt.toISOString(),
         updatedAt: result.membership.updatedAt.toISOString(),
       };

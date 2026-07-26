@@ -24,7 +24,11 @@ type AccessContext = {
   actorMembershipId: string;
   actorRole: OrganizationRole;
 };
-type InvitationAuthorization = (context: AccessContext, targetRole: OrganizationRole) => void;
+type InvitationAuthorization = (
+  context: AccessContext,
+  targetRole: OrganizationRole,
+  currentMembershipRole?: OrganizationRole,
+) => void;
 type MembershipAuthorization = (
   context: AccessContext,
   target: {
@@ -231,10 +235,12 @@ export class AccessRepository {
           operators.and(
             operators.eq(row.organizationId, input.organizationId),
             operators.eq(row.userId, invitedUser.id),
-            operators.eq(row.status, 'ACTIVE'),
           ),
       });
-      if (membership) throw new AccessStateError('EXISTING_MEMBERSHIP');
+      if (membership?.status === 'ACTIVE') throw new AccessStateError('EXISTING_MEMBERSHIP');
+      if (membership) {
+        input.authorize(context, input.invitation.role, membership.role);
+      }
 
       try {
         const inserted = await tx
@@ -309,7 +315,17 @@ export class AccessRepository {
       if (invitation.status !== 'PENDING') {
         throw new AccessStateError('INVITATION_STALE');
       }
-      input.authorize(context, invitation.proposedRole);
+      const membership = await tx.query.organizationMemberships.findFirst({
+        where: (row, operators) =>
+          operators.and(
+            operators.eq(row.organizationId, input.organizationId),
+            operators.eq(row.userId, invitation.invitedUserId),
+          ),
+      });
+      if (membership?.status === 'ACTIVE') {
+        throw new AccessStateError('INVITATION_STALE');
+      }
+      input.authorize(context, invitation.proposedRole, membership?.role);
       const updatedRows = await tx
         .update(organizationInvitations)
         .set({
@@ -410,7 +426,11 @@ export class AccessRepository {
     });
   }
 
-  async acceptInvitation(tokenHash: string, now: Date): Promise<{ userId: string }> {
+  async acceptInvitation(
+    tokenHash: string,
+    now: Date,
+    authorize: InvitationAuthorization,
+  ): Promise<{ userId: string }> {
     return this.db.transaction(async (tx) => {
       await tx.execute(
         sql`select id from organization_invitations where token_hash = ${tokenHash} for update`,
@@ -440,6 +460,29 @@ export class AccessRepository {
       ) {
         throw new AccessStateError('INVITATION_INVALID');
       }
+      await tx.execute(
+        sql`select id from organization_memberships
+            where organization_id = ${invitation.organizationId}
+              and user_id in (${invitation.invitedByUserId}, ${invitation.invitedUserId})
+            order by id
+            for update`,
+      );
+      const inviterContextRows = await tx
+        .select(actorContextSelect)
+        .from(organizations)
+        .innerJoin(
+          organizationMemberships,
+          and(
+            eq(organizationMemberships.organizationId, organizations.id),
+            eq(organizationMemberships.userId, invitation.invitedByUserId),
+            eq(organizationMemberships.status, 'ACTIVE'),
+          ),
+        )
+        .innerJoin(users, and(eq(users.id, invitation.invitedByUserId), eq(users.status, 'ACTIVE')))
+        .where(and(eq(organizations.id, invitation.organizationId), eq(organizations.status, 'ACTIVE')))
+        .limit(1);
+      const inviterContext = inviterContextRows[0];
+      if (!inviterContext) throw new AccessStateError('INVITATION_INVALID');
 
       let membership = await tx.query.organizationMemberships.findFirst({
         where: (row, operators) =>
@@ -449,6 +492,11 @@ export class AccessRepository {
           ),
       });
       if (membership?.status === 'ACTIVE') {
+        throw new AccessStateError('INVITATION_INVALID');
+      }
+      try {
+        authorize(inviterContext, invitation.proposedRole, membership?.role);
+      } catch {
         throw new AccessStateError('INVITATION_INVALID');
       }
       if (membership) {

@@ -94,7 +94,7 @@ Seeded development identities include:
 | Other tenant user    | `20000000-0000-4000-8000-000000000005` | Acme Demo Co. client member; denied from Northstar project  |
 | Internal-only user   | `20000000-0000-4000-8000-000000000006` | AppSolo internal developer; denied from all client projects |
 
-Sign in with the seeded email address shown by the UI or send `x-dev-user-id` directly when testing the API. The browser stores only the selected development user ID. It never stores invitation tokens, which arrive in a URL fragment and are removed before acceptance. Development authentication is prohibited when `NODE_ENV=production`.
+Sign in with the seeded email address shown by the UI or send `x-dev-user-id` directly when testing the API. The browser stores only the selected development user ID and clears cached tenant data when that identity changes or signs out. It never stores invitation tokens, which arrive in a URL fragment and are removed before acceptance. Development authentication is prohibited when `NODE_ENV=production`. Set `WEB_ACCEPTANCE_BASE_URL` when copy-only invitation links should use a canonical web origin other than the first `CORS_ORIGIN`.
 
 Owners, administrators, and client administrators see an **Access** navigation item for authorized organizations. From there they can view members/invitations/history, create a copy-only local acceptance link, resend/revoke pending invitations, and apply role/status changes within their exact role ceiling.
 

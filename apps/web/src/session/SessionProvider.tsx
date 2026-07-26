@@ -31,6 +31,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   });
 
   const establish = (session: SessionDto) => {
+    if (userId !== null && userId !== session.user.id) {
+      queryClient.clear();
+    }
     storeDevelopmentUserId(session.user.id);
     setUserId(session.user.id);
     queryClient.setQueryData(['session', session.user.id], session);
@@ -53,7 +56,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       signOut: () => {
         clearDevelopmentUserId();
         setUserId(null);
-        queryClient.removeQueries({ queryKey: ['session'] });
+        queryClient.clear();
       },
       establish,
     }),
