@@ -133,7 +133,7 @@ The separate `pnpm exec playwright install chromium` check was terminated after 
 - Unknown-email `POST /development/session`: `401 UNAUTHENTICATED`.
 - Pino request logs included only method/URL/headers/content length and response metadata. The fake email and token were absent; `x-dev-user-id` was `[Redacted]`.
 
-## Known Pending Gates
+## Completion Status
 
 - Claude independently verified P002-F1 through P002-F7 across three review
   rounds. Round 3 reported no finding, and the final verdict is `ready with
@@ -143,5 +143,8 @@ non-blocking observations`.
   `a4f848e6e98ac70463c431403bf316a787012dfc`; browser/version details and
   screenshots were not supplied.
 - The human accepted the implementation state on 2026-07-26.
-- Final Git integration and explicit phase completion have not been performed.
-- P002 must remain `review_pending` and must not be marked complete.
+- The human explicitly marked P002 complete on 2026-07-26.
+- The final reviewed, validated, and human-QA boundary is
+  `1fcd501c45ebf3c2f2e10db09fbeaf2ee076a03e`.
+- P002 is approved for local fast-forward integration to `main`; no push or
+  remote action is authorized.

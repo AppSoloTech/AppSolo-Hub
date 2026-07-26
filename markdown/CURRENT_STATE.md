@@ -3,31 +3,37 @@
 ## Shipped
 
 P001 — Local Foundation And Change-Request Vertical Slice is complete and integrated locally.
+P002 — Authentication And Invitations is complete and integrated locally.
 
-The shipped local foundation includes:
+The shipped local application includes:
 
 - a pnpm strict-TypeScript workspace with React/Vite, Express, shared Zod contracts, and Drizzle/PostgreSQL;
 - Docker Compose PostgreSQL with isolated `appsolo_client_hub_dev` and `appsolo_client_hub_test` databases;
-- provider-neutral development authentication and API-enforced tenant authorization;
+- provider-neutral development sign-in/session behavior and API-enforced tenant authorization;
+- secure local invitation creation, resend, revoke, single-use acceptance, and
+  exact role ceilings;
+- active/suspended organization membership lifecycle with optimistic conflict
+  handling and lockout protection;
+- immutable tenant-scoped access audit history and role-aware access-management UI;
 - authorized change-request list, detail, and transactional creation behavior;
 - meaningful unit, API integration, component, and Playwright browser tests;
-- reviewed error handling, request correlation, environment isolation, and durable P001 evidence.
+- reviewed error handling, request correlation, environment isolation, redaction,
+  and durable P001/P002 evidence.
 
 P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2498a60235b93b0cf2e5b`. Claude reported no open finding, and the human passed Q1-Q8 and approved integration on 2026-07-26.
 
+P002's final reviewed, validated, and human-QA boundary is
+`1fcd501c45ebf3c2f2e10db09fbeaf2ee076a03e`. Claude verified P002-F1 through
+P002-F7 fixed with no open finding, the human passed Q1-Q10, accepted the
+implementation state, and marked P002 complete on 2026-07-26.
+
 ## Active Phase
 
-- Active phase: `P002 — Authentication And Invitations`
-- P002 status: `review_pending`
-- P002 prompt: specification version 1 under `prompts/active/`
-- P002 implementation approval: granted by the human on 2026-07-26
-- P002 review: initial Claude review complete; all six findings accepted and
-  addressed in immutable review-fix commit
-  `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
-- P002 focused review: F1-F6 verified; F7 accepted and addressed in immutable
-  review-fix commit `0ccb535cd5e0c73184fc626ebd9233b3d2518482`
-- P002 Round 3 review: F7 verified fixed, no new finding, final verdict `ready
-with non-blocking observations`
+- No phase is approved or active.
+- Next roadmap candidate: `P003 — Estimates And Approval Workflow`.
+- P003 status: `draft`.
+- P003 prompt: not drafted.
+- P003 implementation approval: not granted.
 
 ## Current Constraints
 
@@ -40,11 +46,12 @@ with non-blocking observations`
 
 ## Significant Gaps
 
-- No production login or shipped P002 session, invitation, or
-  membership-administration workflow exists yet.
-- Estimates/approvals, comments, time tracking, attachments, notifications, AWS infrastructure, delivery automation, and production hardening remain in their sequenced future phases.
-- P002 has immutable candidate and review-fix commits, and all findings are
-  independently verified fixed. P002 is not shipped or complete until human QA
-  and integration finish.
+- No estimate or client approval workflow exists; these are candidates for P003.
+- Comments, time tracking, attachments, notifications, AWS infrastructure,
+  delivery automation, production authentication, and production hardening
+  remain in their sequenced future phases.
+- P003 requires a consolidated non-authorizing prompt with stable requirements,
+  acceptance criteria, validation, QA, non-goal identifiers, and resolved
+  material product decisions before human approval.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

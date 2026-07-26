@@ -5,6 +5,9 @@
 The human reported on 2026-07-26 that all Q1-Q10 scenarios from the approved
 P002 prompt passed.
 
+- Required QA complete: Yes.
+- Human acceptance: Passed on 2026-07-26.
+
 ## Environment
 
 - Application commit: `a4f848e6e98ac70463c431403bf316a787012dfc`.
@@ -32,9 +35,8 @@ P002 prompt passed.
 | Q9  | Passed | Tenant-scoped audit events appeared once per change, and persisted/list/audit/session/log evidence remained redacted as required.                            |
 | Q10 | Passed | Keyboard-only and narrow-viewport sign-in, acceptance, membership, validation, success, and failure flows behaved as expected.                               |
 
-## Remaining Gate
+## Completion
 
 Human QA is complete, and the human accepted the implementation state on
-2026-07-26. Final Git integration and explicit phase completion have not been
-performed. P002 remains `review_pending`; this QA record does not mark the
-phase complete.
+2026-07-26. The human explicitly marked P002 complete on 2026-07-26 and
+authorized preparation for the next phase draft.

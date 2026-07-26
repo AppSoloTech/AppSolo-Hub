@@ -1,7 +1,7 @@
 ---
 id: P002
 title: Authentication And Invitations
-status: review_pending
+status: complete
 owner: codex
 reviewer: claude
 prompt: prompts/active/P002-authentication-and-invitations.md
@@ -71,8 +71,10 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Human QA: Q1-Q10 passed by human attestation on 2026-07-26 at
   `a4f848e6e98ac70463c431403bf316a787012dfc`.
 - Human implementation-state acceptance: granted on 2026-07-26.
-- Completion: final Git integration and explicit phase completion have not been
-  performed.
+- Final reviewed, validated, and human-QA boundary:
+  `1fcd501c45ebf3c2f2e10db09fbeaf2ee076a03e`.
+- Completion: explicitly granted by the human on 2026-07-26; approved for local
+  fast-forward integration to `main`.
 
 ## Revalidation
 
@@ -147,6 +149,8 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Human QA Q1-Q10 passed by human attestation on 2026-07-26; browser/version
   details and screenshots were not supplied.
 - The human accepted the implementation state on 2026-07-26.
+- The human explicitly marked P002 complete on 2026-07-26 and authorized
+  preparation for the next phase draft.
 - No push, remote creation, origin reset, or production/external service action occurred.
 
 ## Completion Gate
@@ -157,5 +161,5 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Findings dispositioned: Yes; P002-F1 through P002-F7 accepted, fixed, and verified.
 - Required human QA complete: Yes; Q1-Q10 passed.
 - Human implementation-state acceptance: Yes.
-- Final Git integration/explicit phase completion: Not performed.
-- P002 status must remain `review_pending`; Codex has not marked it complete.
+- Human integration and completion approval: Yes; explicitly granted on 2026-07-26.
+- Ready for integration: Yes; approved for local fast-forward integration to `main`.

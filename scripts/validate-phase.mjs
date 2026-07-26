@@ -70,7 +70,7 @@ if (completion) {
     const disposition = await readFile(path.join(noteDir, 'review-disposition.md'), 'utf8');
     const findingRows = disposition
       .split('\n')
-      .filter((line) => /^\|\s*(?:C|R)\d+\s*\|/.test(line))
+      .filter((line) => /^\|\s*(?:(?:C|R)\d+|P\d{3}-F\d+)\s*\|/.test(line))
       .map((line) => line.split('|').map((cell) => cell.trim()));
     const allowedDispositions = new Set(['Accepted', 'Rejected', 'Deferred', 'Clarification required']);
     if (findingRows.length === 0) errors.push('review-disposition.md contains no finding dispositions.');
