@@ -18,7 +18,7 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
 ## Active Phase
 
 - Active phase: `P002 — Authentication And Invitations`
-- P002 status: `implementing`
+- P002 status: `review_pending`
 - P002 prompt: specification version 1 under `prompts/active/`
 - P002 implementation approval: granted by the human on 2026-07-26
 
@@ -35,6 +35,6 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
 
 - No real login, session, invitation, or membership-administration workflow exists; these are candidates for P002.
 - Estimates/approvals, comments, time tracking, attachments, notifications, AWS infrastructure, delivery automation, and production hardening remain in their sequenced future phases.
-- P002 implementation is in progress on its scoped phase branch. It is not shipped or complete until independent review, human disposition, QA, and integration finish.
+- P002 has an immutable implementation candidate and awaits independent review. It is not shipped or complete until review, human disposition, QA, and integration finish.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.
