@@ -48,9 +48,9 @@ Local `main` is authoritative and was 18 commits ahead of `origin/main`. No pull
 ## Accepted Review Fixes
 
 - P002-F1: invitation create/resend/accept now applies the inviter ceiling to both
-  the proposed role and any current suspended membership role; acceptance also
-  locks relevant membership rows and revalidates the inviter's current active
-  authority.
+  the proposed role and any current suspended membership role; acceptance locks
+  the target membership and enforces the stored issuance-time authority
+  snapshot.
 - P002-F2: development sign-out and cross-identity establishment clear the
   complete TanStack Query cache before another identity can reuse tenant data.
 - P002-F3: a fixed injected clock proves exact seven-day create/resend expiry,
@@ -135,11 +135,10 @@ The separate `pnpm exec playwright install chromium` check was terminated after 
 
 ## Known Pending Gates
 
-- Claude independently verified P002-F1 through P002-F6 and reported F7 during
-  focused review; both review rounds returned `ready with non-blocking
-observations`.
-- The human accepted P002-F7, and immutable review-fix
-  `0ccb535cd5e0c73184fc626ebd9233b3d2518482` applies the correction.
-- Claude has not yet independently verified the F7 review-fix commit.
+- Claude independently verified P002-F1 through P002-F7 across three review
+  rounds. Round 3 reported no finding, and the final verdict is `ready with
+non-blocking observations`.
+- Every P002 finding is human-dispositioned and independently verified fixed.
 - Human Q1-Q10 QA has not run.
+- Human integration/completion approval remains pending.
 - P002 must remain `review_pending` and must not be marked complete.

@@ -26,6 +26,8 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
   `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
 - P002 focused review: F1-F6 verified; F7 accepted and addressed in immutable
   review-fix commit `0ccb535cd5e0c73184fc626ebd9233b3d2518482`
+- P002 Round 3 review: F7 verified fixed, no new finding, final verdict `ready
+with non-blocking observations`
 
 ## Current Constraints
 
@@ -41,8 +43,8 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
 - No production login or shipped P002 session, invitation, or
   membership-administration workflow exists yet.
 - Estimates/approvals, comments, time tracking, attachments, notifications, AWS infrastructure, delivery automation, and production hardening remain in their sequenced future phases.
-- P002 has immutable candidate and review-fix commits. The F7 fix awaits
-  independent verification, and P002 is not shipped or complete until review,
-  human QA, and integration finish.
+- P002 has immutable candidate and review-fix commits, and all findings are
+  independently verified fixed. P002 is not shipped or complete until human QA
+  and integration finish.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

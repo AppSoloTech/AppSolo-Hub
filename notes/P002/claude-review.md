@@ -1,6 +1,6 @@
 # Claude Review — P002
 
-> Status: Complete through fix verification. Round 1 reviewed the immutable candidate range; Round 2 verified the accepted review-fix commit. The final verdict is at the end of this file.
+> Status: Complete. Round 1 reviewed the immutable candidate range, Round 2 verified the P002-F1 through P002-F6 fixes and raised P002-F7, and Round 3 verified the P002-F7 fix. No finding remains open. The final verdict is at the end of this file.
 
 # Round 1 — Candidate Review
 
@@ -234,7 +234,7 @@ All six accepted fixes are real, minimal, and covered by tests that would fail i
 
 I found no Blocker or High finding in the fix range, and no regression in any Round 1 conclusion.
 
-## Final Verdict
+## Round 2 Verdict
 
 `ready with non-blocking observations`
 
@@ -243,3 +243,89 @@ Every accepted finding from Round 1 is independently verified as fixed, and the 
 One new Medium, P002-F7, arose from the P002-F1 fix and needs human disposition. It does not block: the security property the fix was meant to establish is correctly enforced, and the defect is an operational recovery gap on a path that fails closed rather than open.
 
 P002 must remain `review_pending`. Human Q1–Q10 QA, disposition of P002-F7, and integration approval are the remaining gates.
+
+# Round 3 — P002-F7 Fix Verification
+
+## Verification Target
+
+- F7 review-fix SHA: `0ccb535cd5e0c73184fc626ebd9233b3d2518482` (exists, `P002: preserve invitation authorization snapshots`)
+- Reviewed range: `git diff 3ee25937fba79491ec8a13814187175f8b3367d5..0ccb535cd5e0c73184fc626ebd9233b3d2518482` — 13 files. Excluding the Drizzle snapshot and my own Round 2 review text, the substantive change is one repository file, one schema file, one seed line, one new migration, one integration test file, and four contract documents.
+- Disposition: `notes/P002/review-disposition.md` records P002-F7 accepted by the human on 2026-07-26.
+- Working tree at verification time: clean at `ce314db` (`P002: record F7 review-fix handoff`). `0ccb535..ce314db` touches only `markdown/CURRENT_STATE.md`, the P002 phase record, `notes/P002/implementation-handoff.md`, and `notes/P002/review-disposition.md`, so the reruns below are attributable to the fix commit.
+- `git diff --check 3ee2593..0ccb535` passes. No dependency manifest or lockfile changed.
+- Process note, not a finding: my Round 2 review text was still uncommitted when the fix was made, so `0ccb535` swept `notes/P002/claude-review.md` into the fix commit. I diffed the committed version against what I authored — it is byte-identical apart from my own Round 1/Round 2 restructuring. No review content was altered.
+
+## Validation Rerun
+
+| Command                                         | Result | Evidence                                                                                                      |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`                                     | Passed | `eslint .` and `prettier --check .`, exit 0.                                                                  |
+| `pnpm typecheck`                                | Passed | Strict `tsc` across shared, database, api, web.                                                               |
+| `pnpm test`                                     | Passed | 4 shared + 3 database tests.                                                                                  |
+| `pnpm test:api`                                 | Passed | 23 tests / 4 files; `access.integration.test.ts` grew from 8 to 9 cases.                                      |
+| `pnpm test:web`                                 | Passed | 15 tests / 6 files, unchanged by this fix.                                                                    |
+| `pnpm build`                                    | Passed | shared, database, api `tsc`; web Vite production bundle.                                                      |
+| `pnpm test:e2e`                                 | Passed | 2 Playwright tests in real Chromium against live web + API + test PostgreSQL.                                 |
+| `pnpm --filter @appsolo/database generate`      | Passed | `No schema changes, nothing to migrate` — `0003_common_sue_storm.sql` and its snapshot leave no drift.        |
+| Dev-database migration inspection               | Passed | 4 rows in `drizzle.__drizzle_migrations`; the pre-existing development invitation backfilled to `OWNER`; zero |
+|                                                 |        | `authorized_by_role IS NULL` rows, so the `SET NOT NULL` step succeeded against real data.                    |
+| `pnpm --filter @appsolo/database test:prepare`  | Passed | Guarded reset of the isolated test database only.                                                             |
+| `node scripts/check-scaffolding.mjs`            | Passed | 27 required files, 11 phase records.                                                                          |
+| `node scripts/generate-phase-index.mjs --check` | Passed | `PHASE_INDEX.md is current.`                                                                                  |
+| `node scripts/validate-phase.mjs P002`          | Passed | `P002 phase structure is valid.`                                                                              |
+| `git diff --check 3ee2593..0ccb535`             | Passed | No whitespace errors.                                                                                         |
+| Prohibited-implementation search over the range | Passed | No AWS SDK, Cognito, SES, password, refresh-token, or production-session code.                                |
+| Direct assembled-API probes                     | Run    | Results below.                                                                                                |
+
+Every count in the updated handoff (23 API, 15 web, 7 shared/database, 2 Playwright) matches what I observed.
+
+## P002-F7 — Verified
+
+The fix takes the recommended approach rather than the minimum one. `organization_invitations` gains `authorized_by_role` (`packages/database/src/schema.ts:131`), written at create from the actor's in-transaction context (`repository.ts:255`) and rewritten on resend together with `invited_by_user_id` (`repository.ts:334-335`). Acceptance no longer resolves a live inviter context at all — the whole `inviterContextRows` lookup is deleted — and instead evaluates the ceiling against `{ organizationType: organization.type, actorRole: invitation.authorizedByRole }` plus the target's current membership role (`repository.ts:484-492`). The membership lock narrowed from the inviter-and-invitee pair to just the invitee's row, which is the only row the transaction mutates.
+
+Round 2's reproduction, replayed verbatim on a freshly prepared test database:
+
+```text
+[F7] invite by CLIENT_ADMIN                  -> 201
+[F7] owner suspends the inviter              -> 200
+[F7] invitee accepts original link           -> 200      (was 400 INVITATION_INVALID)
+[F7] owner resend then accept                -> 200 200  (resend now genuinely repairs)
+```
+
+The two failure modes I reported are both gone: the invitee's untouched link works after the issuing administrator is suspended, and a resend by an authorized owner no longer reports `200` while producing a dead link. The new integration case `survives inviter demotion and reanchors an authorized resend after suspension` asserts both, and additionally asserts the row is re-anchored to `invitedByUserId: owner, authorizedByRole: 'OWNER'`.
+
+Crucially, the fix does not reopen P002-F1. I re-ran that reproduction too:
+
+```text
+[F1] CLIENT_ADMIN invite of suspended DEVELOPER -> 403 FORBIDDEN
+```
+
+The residual case — a target who acquires a higher-role suspended membership _after_ the invitation was issued, which the create-time check cannot catch — is still blocked at acceptance by the snapshot check, and the rewritten test `revalidates the stored inviter ceiling against target membership state at acceptance` proves the target membership is left untouched at `DEVELOPER/SUSPENDED` after the `400`.
+
+The snapshot does not leak. Probes confirm neither the create response nor the invitation list contains `authorizedByRole`, consistent with `listInvitations` selecting explicit columns and `invitationResult` building the DTO field by field.
+
+## Migration Assessment
+
+`0003_common_sue_storm.sql` adds the column nullable, backfills from `organization_memberships` joined on `(organization_id, invited_by_user_id)`, then applies `SET NOT NULL`. The join is on the membership table's unique `(user_id, organization_id)` pair, so no row multiplication is possible. It is additive and non-destructive, and I verified it applied cleanly to the real development database that already carried P001 and P002 data.
+
+The theoretical failure mode — an invitation whose inviter has no membership row in that organization would backfill to `NULL` and abort the `SET NOT NULL` — is unreachable through the application: creating an invitation requires an active membership, memberships are never hard-deleted (NG7), and the foreign keys are `RESTRICT`. Drizzle wraps each migration file in a transaction, so even in that impossible case the file would roll back cleanly rather than leave a half-applied schema. No action needed.
+
+## Residual Design Property (accepted, not a finding)
+
+Acceptance now trusts the role snapshot taken when the current token was issued. That is the behavior I recommended and the human accepted, and it is documented in `markdown/contracts/SECURITY.md`, `DATA_MODEL.md`, and `API.md`. It carries one consequence the human now owns: an invitation issued by an `OWNER` who is later demoted can still be accepted at the originally proposed role, for up to the seven-day lifetime. This grants nothing the issuing actor could not already have granted directly at issue time, so the effective privilege ceiling is unchanged — but it is a deliberate "authorization is evaluated at issue time" semantic rather than "at redemption time", and Q6/Q9 QA is the right place to confirm it reads correctly to a human operator.
+
+One minor documentation nit, below finding threshold: `API.md` says an authorized resend "re-anchors its internal authorization snapshot to the resending administrator", while the code also re-anchors the externally visible `invitedByUserId`, so `InvitationDto.invitedByUserId` reports the resender rather than the original creator. `DATA_MODEL.md` states this correctly and completely, and the immutable `INVITATION_CREATED` audit event still preserves the original actor, so no history is lost.
+
+## Round 3 Findings
+
+None. No Blocker, High, Medium, or Low finding arose from the F7 fix, and no Round 1 or Round 2 conclusion regressed. I specifically re-checked that acceptance remains atomic and single-use, that the P001 authorization joins still require `status = 'ACTIVE'`, that audit writes remain in-transaction, and that no token, hash, acceptance URL, or authorization snapshot crosses a list, audit, session, or log boundary.
+
+## Final Verdict
+
+`ready with non-blocking observations`
+
+All seven findings raised across three review rounds — P002-F1 through P002-F7 — are dispositioned by the human and independently verified as fixed. The full validation sequence passes against the current review-fix commit, the new migration is additive and proven against real development data, and no finding remains open.
+
+The observations that remain are non-blocking and require no code change: the accepted issue-time authorization semantics described above, and the earlier Round 1 notes on unthrottled acceptance (deferred to P011 under NG10) and the neutral multi-membership sidebar label.
+
+Every phase-record and handoff claim I checked is accurate, including the honest statement that Claude verification was outstanding at the time each was written. P002 must remain `review_pending` until Codex records this verification; the only remaining gates are human Q1–Q10 QA and integration approval.
