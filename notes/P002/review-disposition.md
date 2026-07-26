@@ -20,5 +20,6 @@ P002-F1 through P002-F6 are applied in review-fix commit
 `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
 (`P002: address accepted review findings`).
 
-P002-F7 is authorized for a separate immutable review-fix commit; its exact
-destination SHA will be recorded after creation.
+P002-F7 is applied in review-fix commit
+`0ccb535cd5e0c73184fc626ebd9233b3d2518482`
+(`P002: preserve invitation authorization snapshots`).

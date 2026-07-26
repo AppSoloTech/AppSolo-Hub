@@ -11,10 +11,14 @@
 - Candidate commit: `P002: implement authentication and invitations`
 - Review-fix SHA: `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
 - Review-fix commit: `P002: address accepted review findings`
+- F7 review-fix SHA: `0ccb535cd5e0c73184fc626ebd9233b3d2518482`
+- F7 review-fix commit: `P002: preserve invitation authorization snapshots`
 - Exact review diff: `git diff d3af5e9b4b3780ac41060fc51888ed8c413a1fe7..13cb4de63170b9d5e51d3400e38395b8acc12189`
 - Accepted-fix diff: `git diff 13cb4de63170b9d5e51d3400e38395b8acc12189..7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
+- F7 accepted-fix diff: `git diff 3ee25937fba79491ec8a13814187175f8b3367d5..0ccb535cd5e0c73184fc626ebd9233b3d2518482`
 - Candidate diff check: `git diff --check d3af5e9b4b3780ac41060fc51888ed8c413a1fe7..13cb4de63170b9d5e51d3400e38395b8acc12189`
 - Accepted-fix diff check: `git diff --check 13cb4de63170b9d5e51d3400e38395b8acc12189..7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
+- F7 accepted-fix diff check: `git diff --check 3ee25937fba79491ec8a13814187175f8b3367d5..0ccb535cd5e0c73184fc626ebd9233b3d2518482`
 
 Local `main` is authoritative and was 18 commits ahead of `origin/main`. No pull, push, reset, history rewrite, or remote creation occurred.
 
@@ -58,6 +62,13 @@ Local `main` is authoritative and was 18 commits ahead of `origin/main`. No pull
   compatibility falls back explicitly to the first validated `CORS_ORIGIN`.
 - P002-F6: organization access routes drive the sidebar organization label,
   while ambiguous multi-membership routes use a neutral label.
+- P002-F7: invitation rows persist the role that authorized the current token;
+  acceptance uses that snapshot plus current target membership state instead of
+  the inviter's later lifecycle state. Authorized resend rotates the token and
+  re-anchors both inviter identity and role snapshot to the resending
+  administrator. Additive migration `0003_common_sue_storm.sql` backfills
+  existing invitation snapshots from their organization membership before
+  enforcing `NOT NULL`.
 
 ## Security Review Focus
 
@@ -71,45 +82,45 @@ Local `main` is authoritative and was 18 commits ahead of `origin/main`. No pull
 
 ## Acceptance-Criteria Evidence
 
-| Criteria  | Evidence                                                                                                                                                     |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| AC1-AC3   | Session repository/service/routers, production guard tests, normalized active-user integration coverage.                                                     |
-| AC4-AC6   | SHA-256 persistence assertion, explicit DTO regression, exact fixed-clock seven-day create/resend expiry, rotation/revoke cases, concurrent duplicate test.  |
-| AC7-AC8   | Role-ceiling tests include suspended higher-role memberships at create/resend/accept; cross-tenant/internal-role and new/existing/suspended-user cases pass. |
-| AC9-AC11  | Acceptance transaction and concurrent two-caller test prove one membership, one acceptance audit, one success.                                               |
-| AC12-AC14 | Active membership joins plus suspend/session/project denial, direct reactivation, invite reactivation, stale tests.                                          |
-| AC15-AC16 | Transactional event writes and tenant/newest-first explicit audit DTO/redaction test.                                                                        |
-| AC17-AC18 | Strict Zod bodies/params/query, standard envelopes/request IDs, 403 collections, and explicit cross-tenant nested invitation/membership `404` assertions.    |
-| AC19-AC21 | Component and Playwright sign-in/invite/accept/member/capability-hiding coverage, cache isolation, route-aware context, and direct API denial.               |
-| AC22      | API integration and Playwright list/create/refresh regression pass.                                                                                          |
-| AC23      | Existing dev migration, twice-idempotent seed, guarded test reset, and no-drift generation all pass.                                                         |
-| AC24      | 7 shared/database, 22 API, 15 web, and 2 Playwright tests pass.                                                                                              |
-| AC25      | Exact SHAs/evidence recorded; prohibited dependency/source searches are clean.                                                                               |
+| Criteria  | Evidence                                                                                                                                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC1-AC3   | Session repository/service/routers, production guard tests, normalized active-user integration coverage.                                                                                                                                    |
+| AC4-AC6   | SHA-256 persistence assertion, explicit DTO regression, exact fixed-clock seven-day create/resend expiry, rotation/revoke cases, concurrent duplicate test.                                                                                 |
+| AC7-AC8   | Role-ceiling tests include suspended higher-role memberships at create/resend/accept, stored acceptance-time authorization, inviter demotion/suspension, and resend re-anchoring; cross-tenant/internal-role and user-lifecycle cases pass. |
+| AC9-AC11  | Acceptance transaction and concurrent two-caller test prove one membership, one acceptance audit, one success.                                                                                                                              |
+| AC12-AC14 | Active membership joins plus suspend/session/project denial, direct reactivation, invite reactivation, stale tests.                                                                                                                         |
+| AC15-AC16 | Transactional event writes and tenant/newest-first explicit audit DTO/redaction test.                                                                                                                                                       |
+| AC17-AC18 | Strict Zod bodies/params/query, standard envelopes/request IDs, 403 collections, and explicit cross-tenant nested invitation/membership `404` assertions.                                                                                   |
+| AC19-AC21 | Component and Playwright sign-in/invite/accept/member/capability-hiding coverage, cache isolation, route-aware context, and direct API denial.                                                                                              |
+| AC22      | API integration and Playwright list/create/refresh regression pass.                                                                                                                                                                         |
+| AC23      | Existing dev migrations, including the backfilled `authorized_by_role` addition, twice-idempotent seed, guarded test reset, and no-drift generation all pass.                                                                               |
+| AC24      | 7 shared/database, 23 API, 15 web, and 2 Playwright tests pass.                                                                                                                                                                             |
+| AC25      | Exact SHAs/evidence recorded; prohibited dependency/source searches are clean.                                                                                                                                                              |
 
 ## Validation Evidence
 
-| ID  | Command                                           | Result | Evidence                                                                                              |
-| --- | ------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| V1  | `node scripts/check-scaffolding.mjs`              | Passed | 27 required files and 11 phase records.                                                               |
-| V2  | `pnpm install`                                    | Passed | Already up to date, five projects, exit 0; only the optional pnpm update check lacked DNS.            |
-| V3  | `pnpm docker:up`                                  | Passed | PostgreSQL Compose container healthy on configured host port 5433.                                    |
-| V4  | `pnpm db:migrate`                                 | Passed | `0002_regular_magneto.sql` applied to existing P001 development data.                                 |
-| V5  | `pnpm db:seed` twice                              | Passed | Both completed without duplicate seed rows.                                                           |
-| V6  | `pnpm --filter @appsolo/database test:prepare`    | Passed | Only isolated test database reset; migration/seed completed.                                          |
-| V7  | `pnpm --filter @appsolo/database generate`        | Passed | “No schema changes, nothing to migrate.”                                                              |
-| V8  | `pnpm lint`                                       | Passed | ESLint and Prettier.                                                                                  |
-| V9  | `pnpm typecheck`                                  | Passed | Strict shared/database/API/web checks.                                                                |
-| V10 | `pnpm test`                                       | Passed | 4 shared + 3 database tests.                                                                          |
-| V11 | `pnpm test:api`                                   | Passed | 22 tests in 4 files, including accepted role-ceiling, expiry, DTO, origin, and nested-ID regressions. |
-| V12 | `pnpm test:web`                                   | Passed | 15 tests in 6 files, including cache-isolation and organization-context regressions.                  |
-| V13 | `pnpm build`                                      | Passed | All four builds.                                                                                      |
-| V14 | `pnpm test:e2e`                                   | Passed | 2 tests: P001 persistence regression and P002 real invitation/session flow.                           |
-| V15 | direct assembled API probes                       | Passed | Health/session 200, invalid invitation 400, unknown email 401, cross-tenant members 403.              |
-| V16 | assembled structured-log probe                    | Passed | Fake body/token values and DB URL absent; development header redacted.                                |
-| V17 | `node scripts/generate-phase-index.mjs --check`   | Passed | Phase index current.                                                                                  |
-| V18 | exact candidate and review-fix `git diff --check` | Passed | No whitespace error in either immutable range.                                                        |
-| V19 | prohibited implementation/dependency searches     | Passed | No P002 AWS/Cognito/SES/password/refresh-token/production-session addition.                           |
-| V20 | `node scripts/validate-phase.mjs P002`            | Passed | Required phase/note structure valid.                                                                  |
+| ID  | Command                                           | Result | Evidence                                                                                                                               |
+| --- | ------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | `node scripts/check-scaffolding.mjs`              | Passed | 27 required files and 11 phase records.                                                                                                |
+| V2  | `pnpm install`                                    | Passed | Already up to date, five projects, exit 0; only the optional pnpm update check lacked DNS.                                             |
+| V3  | `pnpm docker:up`                                  | Passed | PostgreSQL Compose container healthy on configured host port 5433.                                                                     |
+| V4  | `pnpm db:migrate`                                 | Passed | Additive `0003_common_sue_storm.sql` backfilled existing invitation authorization snapshots and enforced `NOT NULL`.                   |
+| V5  | `pnpm db:seed` twice                              | Passed | Both completed without duplicate seed rows.                                                                                            |
+| V6  | `pnpm --filter @appsolo/database test:prepare`    | Passed | Only isolated test database reset; migration/seed completed.                                                                           |
+| V7  | `pnpm --filter @appsolo/database generate`        | Passed | “No schema changes, nothing to migrate.”                                                                                               |
+| V8  | `pnpm lint`                                       | Passed | ESLint and Prettier.                                                                                                                   |
+| V9  | `pnpm typecheck`                                  | Passed | Strict shared/database/API/web checks.                                                                                                 |
+| V10 | `pnpm test`                                       | Passed | 4 shared + 3 database tests.                                                                                                           |
+| V11 | `pnpm test:api`                                   | Passed | 23 tests in 4 files, including stored-ceiling, inviter lifecycle, resend re-anchoring, expiry, DTO, origin, and nested-ID regressions. |
+| V12 | `pnpm test:web`                                   | Passed | 15 tests in 6 files, including cache-isolation and organization-context regressions.                                                   |
+| V13 | `pnpm build`                                      | Passed | All four builds.                                                                                                                       |
+| V14 | `pnpm test:e2e`                                   | Passed | 2 tests: P001 persistence regression and P002 real invitation/session flow.                                                            |
+| V15 | direct assembled API probes                       | Passed | Health/session 200, invalid invitation 400, unknown email 401, cross-tenant members 403.                                               |
+| V16 | assembled structured-log probe                    | Passed | Fake body/token values and DB URL absent; development header redacted.                                                                 |
+| V17 | `node scripts/generate-phase-index.mjs --check`   | Passed | Phase index current.                                                                                                                   |
+| V18 | exact candidate and review-fix `git diff --check` | Passed | No whitespace error in the candidate, F1-F6 fix, or F7 fix immutable ranges.                                                           |
+| V19 | prohibited implementation/dependency searches     | Passed | No P002 AWS/Cognito/SES/password/refresh-token/production-session addition.                                                            |
+| V20 | `node scripts/validate-phase.mjs P002`            | Passed | Required phase/note structure valid.                                                                                                   |
 
 The separate `pnpm exec playwright install chromium` check was terminated after 90 seconds without output. This is not a browser-test gap: the installed Chromium completed both required real Playwright tests twice.
 
@@ -124,8 +135,11 @@ The separate `pnpm exec playwright install chromium` check was terminated after 
 
 ## Known Pending Gates
 
-- Claude's independent review is complete with verdict `ready with non-blocking observations`.
-- The human accepted P002-F1 through P002-F6; the immutable review-fix commit applies every accepted correction.
-- Claude has not yet independently verified the accepted review-fix commit.
+- Claude independently verified P002-F1 through P002-F6 and reported F7 during
+  focused review; both review rounds returned `ready with non-blocking
+observations`.
+- The human accepted P002-F7, and immutable review-fix
+  `0ccb535cd5e0c73184fc626ebd9233b3d2518482` applies the correction.
+- Claude has not yet independently verified the F7 review-fix commit.
 - Human Q1-Q10 QA has not run.
 - P002 must remain `review_pending` and must not be marked complete.

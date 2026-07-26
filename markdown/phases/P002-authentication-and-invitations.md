@@ -60,8 +60,12 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Human disposition: P002-F1 through P002-F6 accepted on 2026-07-26.
 - Review-fix SHA: `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`.
 - Accepted-fix range: `13cb4de63170b9d5e51d3400e38395b8acc12189..7ecacc31f0b5bac6d8bb773e260a01d1b3592818`.
+- Focused review: P002-F1 through P002-F6 verified; P002-F7 reported with verdict `ready with non-blocking observations`.
+- Human disposition: P002-F7 accepted on 2026-07-26.
+- F7 review-fix SHA: `0ccb535cd5e0c73184fc626ebd9233b3d2518482`.
+- F7 accepted-fix range: `3ee25937fba79491ec8a13814187175f8b3367d5..0ccb535cd5e0c73184fc626ebd9233b3d2518482`.
 - Review handoff: `notes/P002/implementation-handoff.md`.
-- Review: accepted fixes await independent Claude verification.
+- Review: F7 fix awaits independent Claude verification.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -90,6 +94,12 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Fixed-clock and cross-tenant nested-ID regressions now prove the exact
   seven-day create/resend expiry and inaccessible invitation/membership `404`
   behavior that the original evidence overclaimed.
+- Invitation tokens now carry a persisted authorizing-role snapshot. Acceptance
+  remains valid after inviter demotion/suspension while still rechecking current
+  target membership role against the issuance-time ceiling; authorized resend
+  rotates and re-anchors the snapshot.
+- Additive migration `0003_common_sue_storm.sql` backfills existing invitation
+  snapshots before enforcing the new non-null invariant.
 
 ## Deviations
 
@@ -98,43 +108,44 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 
 ## Automated Validation
 
-| ID  | Command                                                 | Result | Evidence                                                                                            |
-| --- | ------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
-| V1  | `node scripts/check-scaffolding.mjs`                    | Passed | 27 required files and 11 phase records validated.                                                   |
-| V2  | `pnpm install`                                          | Passed | Five workspace projects already up to date; command exited 0 despite non-blocking update-check DNS. |
-| V3  | `pnpm docker:up`                                        | Passed | Compose PostgreSQL on configured host port 5433 reached healthy.                                    |
-| V4  | `pnpm db:migrate`                                       | Passed | Additive P002 migration applied to the existing P001 development database.                          |
-| V5  | `pnpm db:seed` twice                                    | Passed | Both runs reported seed data present without duplication.                                           |
-| V6  | `pnpm --filter @appsolo/database test:prepare`          | Passed | Guarded reset targeted only `appsolo_client_hub_test`; migration and seed passed.                   |
-| V7  | `pnpm --filter @appsolo/database generate`              | Passed | Drizzle reported no schema changes after checked-in migration/snapshot.                             |
-| V8  | `pnpm lint`                                             | Passed | ESLint and Prettier passed.                                                                         |
-| V9  | `pnpm typecheck`                                        | Passed | Strict checks passed in shared, database, API, and web.                                             |
-| V10 | `pnpm test`                                             | Passed | 7 shared/database tests passed.                                                                     |
-| V11 | `pnpm test:api`                                         | Passed | 22 API/config/health/PostgreSQL tests passed across 4 files.                                        |
-| V12 | `pnpm test:web`                                         | Passed | 15 environment/component tests passed across 6 files.                                               |
-| V13 | `pnpm build`                                            | Passed | All four package/application builds completed.                                                      |
-| V14 | `pnpm test:e2e`                                         | Passed | 2 real browser/API/test-PostgreSQL tests passed.                                                    |
-| V15 | direct health/session/invalid-token/cross-tenant probes | Passed | Returned documented 200 session/health, 400 invalid invitation, and 403 tenant denial.              |
-| V16 | assembled structured-log probe                          | Passed | Fake sign-in email/token and database URL were absent; development header rendered `[Redacted]`.    |
-| V17 | `node scripts/generate-phase-index.mjs --check`         | Passed | Canonical phase index current after evidence update.                                                |
-| V18 | exact candidate and accepted-fix `git diff --check`     | Passed | Candidate and `13cb4de..7ecacc3` accepted-fix ranges have no whitespace errors.                     |
-| V19 | manifest/source search for prohibited implementation    | Passed | No added AWS SDK, Cognito, SES, password, refresh-token, or production-session implementation.      |
-| V20 | `node scripts/validate-phase.mjs P002`                  | Passed | Phase structure and required pending review/QA note files validated.                                |
+| ID  | Command                                                 | Result | Evidence                                                                                                               |
+| --- | ------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| V1  | `node scripts/check-scaffolding.mjs`                    | Passed | 27 required files and 11 phase records validated.                                                                      |
+| V2  | `pnpm install`                                          | Passed | Five workspace projects already up to date; command exited 0 despite non-blocking update-check DNS.                    |
+| V3  | `pnpm docker:up`                                        | Passed | Compose PostgreSQL on configured host port 5433 reached healthy.                                                       |
+| V4  | `pnpm db:migrate`                                       | Passed | Additive F7 migration backfilled the existing development invitation and enforced its non-null authorization snapshot. |
+| V5  | `pnpm db:seed` twice                                    | Passed | Both runs reported seed data present without duplication.                                                              |
+| V6  | `pnpm --filter @appsolo/database test:prepare`          | Passed | Guarded reset targeted only `appsolo_client_hub_test`; migration and seed passed.                                      |
+| V7  | `pnpm --filter @appsolo/database generate`              | Passed | Drizzle reported no schema changes after checked-in migration/snapshot.                                                |
+| V8  | `pnpm lint`                                             | Passed | ESLint and Prettier passed.                                                                                            |
+| V9  | `pnpm typecheck`                                        | Passed | Strict checks passed in shared, database, API, and web.                                                                |
+| V10 | `pnpm test`                                             | Passed | 7 shared/database tests passed.                                                                                        |
+| V11 | `pnpm test:api`                                         | Passed | 23 API/config/health/PostgreSQL tests passed across 4 files.                                                           |
+| V12 | `pnpm test:web`                                         | Passed | 15 environment/component tests passed across 6 files.                                                                  |
+| V13 | `pnpm build`                                            | Passed | All four package/application builds completed.                                                                         |
+| V14 | `pnpm test:e2e`                                         | Passed | 2 real browser/API/test-PostgreSQL tests passed.                                                                       |
+| V15 | direct health/session/invalid-token/cross-tenant probes | Passed | Returned documented 200 session/health, 400 invalid invitation, and 403 tenant denial.                                 |
+| V16 | assembled structured-log probe                          | Passed | Fake sign-in email/token and database URL were absent; development header rendered `[Redacted]`.                       |
+| V17 | `node scripts/generate-phase-index.mjs --check`         | Passed | Canonical phase index current after evidence update.                                                                   |
+| V18 | exact candidate and accepted-fix `git diff --check`     | Passed | Candidate, `13cb4de..7ecacc3`, and `3ee2593..0ccb535` ranges have no whitespace errors.                                |
+| V19 | manifest/source search for prohibited implementation    | Passed | No added AWS SDK, Cognito, SES, password, refresh-token, or production-session implementation.                         |
+| V20 | `node scripts/validate-phase.mjs P002`                  | Passed | Phase structure and required pending review/QA note files validated.                                                   |
 
 ## Review
 
 - Candidate and review-fix commits are immutable.
 - Claude completed the initial independent review with verdict `ready with non-blocking observations`.
-- The human accepted all six findings, and `7ecacc31f0b5bac6d8bb773e260a01d1b3592818` applies them.
-- Independent verification of the accepted fixes and human QA remain pending.
+- Claude verified P002-F1 through P002-F6, then reported P002-F7.
+- The human accepted P002-F7, and `0ccb535cd5e0c73184fc626ebd9233b3d2518482` applies it.
+- Independent verification of the F7 fix and human QA remain pending.
 - No push, remote creation, origin reset, or production/external service action occurred.
 
 ## Completion Gate
 
-- Requirements implemented: Yes, including all accepted review corrections.
+- Requirements implemented: Yes, including P002-F1 through P002-F7.
 - Automated validation: passed as recorded above.
-- Independent review clear: No; accepted fixes await focused verification.
-- Findings dispositioned: Yes; P002-F1 through P002-F6 accepted and fixed.
+- Independent review clear: No; F7 awaits focused verification.
+- Findings dispositioned: Yes; P002-F1 through P002-F7 accepted and fixed.
 - Required human QA complete: No.
 - Human integration/completion approval: No.
 - P002 status must remain `review_pending`; Codex has not marked it complete.
