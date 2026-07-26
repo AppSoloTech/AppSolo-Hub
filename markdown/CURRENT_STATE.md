@@ -29,11 +29,10 @@ implementation state, and marked P002 complete on 2026-07-26.
 
 ## Active Phase
 
-- No phase is approved or active.
-- Next roadmap candidate: `P003 — Estimates And Approval Workflow`.
-- P003 status: `draft`.
-- P003 prompt: specification version 1 drafted under `prompts/drafts/`.
-- P003 implementation approval: not granted.
+- Active phase: `P003 — Estimates And Approval Workflow`.
+- P003 status: `approved`.
+- P003 prompt: specification version 1 under `prompts/active/`.
+- P003 implementation approval: granted by the human on 2026-07-26.
 
 ## Current Constraints
 
@@ -46,13 +45,12 @@ implementation state, and marked P002 complete on 2026-07-26.
 
 ## Significant Gaps
 
-- No estimate or client approval workflow exists; these are candidates for P003.
+- No estimate or client approval workflow exists yet.
 - Comments, time tracking, attachments, notifications, AWS infrastructure,
   delivery automation, production authentication, and production hardening
   remain in their sequenced future phases.
-- P003's draft has stable identifiers, but its proposed approval role, exact
-  decimal/rounding policy, currency assumption, estimate revision lifecycle,
-  response-note rules, and submitted-estimate immutability require human review
-  before approval.
+- P003 is approved but not yet implemented. Codex must revalidate the prompt
+  against the current repository, establish the exact local-main Git boundary,
+  and advance the phase through the normal review and QA lifecycle.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

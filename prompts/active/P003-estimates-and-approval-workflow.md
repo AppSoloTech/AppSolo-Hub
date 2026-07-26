@@ -1,18 +1,17 @@
 ---
 phase: P003
 spec_version: 1
-status: draft
-approved_by: null
-approved_date: null
+status: approved
+approved_by: human
+approved_date: 2026-07-26
 drafted_date: 2026-07-26
 last_verified_sha: 745892af6c9393838e490f12ddaa3536a9524f88
 ---
 
 # P003 — Estimates And Approval Workflow
 
-> This is a non-authorizing draft. Implementation must not begin until the
-> human approves a consolidated revision, the prompt is moved to
-> `prompts/active/`, and the canonical P003 phase record becomes `approved`.
+> Approved by the human on 2026-07-26. This is the canonical P003 implementation
+> work order.
 
 ## Problem
 
@@ -357,9 +356,9 @@ Contract rules:
 - AC25 maps to R10: contracts, exact SHAs, validation evidence, candidate
   handoff, and prohibited-scope searches are complete.
 
-## Proposed Binding Decisions
+## Binding Decisions
 
-These become binding only if the human approves this prompt revision.
+The human approved these binding decisions on 2026-07-26.
 
 1. **Currency:** P003 uses one implicit business currency, USD, and does not add
    currency selection or conversion.
@@ -575,9 +574,9 @@ commands and counts or reasons.
 - Updated durable contracts, README, phase evidence, candidate commit, and
   implementation handoff.
 
-## Open Human Decisions
+## Approved Human Decisions
 
-Human review must approve or revise:
+The human approved:
 
 1. implicit USD and round-half-up exact-cost policy;
 2. `OWNER`/`ADMIN`/`DEVELOPER` estimate management and `CLIENT_ADMIN`-only
