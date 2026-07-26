@@ -56,8 +56,12 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - Candidate SHA: `13cb4de63170b9d5e51d3400e38395b8acc12189`.
 - Candidate commit: `P002: implement authentication and invitations`.
 - Review target: `d3af5e9b4b3780ac41060fc51888ed8c413a1fe7..13cb4de63170b9d5e51d3400e38395b8acc12189`.
+- Claude review: complete; verdict `ready with non-blocking observations`.
+- Human disposition: P002-F1 through P002-F6 accepted on 2026-07-26.
+- Review-fix SHA: `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`.
+- Accepted-fix range: `13cb4de63170b9d5e51d3400e38395b8acc12189..7ecacc31f0b5bac6d8bb773e260a01d1b3592818`.
 - Review handoff: `notes/P002/implementation-handoff.md`.
-- Review: pending independent Claude review.
+- Review: accepted fixes await independent Claude verification.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -79,6 +83,13 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 - The browser supports explicit local sign-in/out, provider-neutral session context, fragment-scrubbing acceptance, access administration, and role-aware control visibility.
 - Tests cover shared contracts, PostgreSQL API behavior/concurrency, component states/actions, and real browser invite acceptance plus P001 regression.
 - Durable API/data/security/environment/integration/testing/architecture contracts, README, and relevant accepted ADRs match implemented behavior.
+- Accepted review fixes enforce the ceiling against suspended membership roles
+  throughout the invitation lifecycle, clear cross-identity browser caches, remove
+  capabilities from globally suspended users, validate the invitation-link web
+  origin, and render route-correct organization context.
+- Fixed-clock and cross-tenant nested-ID regressions now prove the exact
+  seven-day create/resend expiry and inaccessible invitation/membership `404`
+  behavior that the original evidence overclaimed.
 
 ## Deviations
 
@@ -99,29 +110,31 @@ The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its invitat
 | V8  | `pnpm lint`                                             | Passed | ESLint and Prettier passed.                                                                         |
 | V9  | `pnpm typecheck`                                        | Passed | Strict checks passed in shared, database, API, and web.                                             |
 | V10 | `pnpm test`                                             | Passed | 7 shared/database tests passed.                                                                     |
-| V11 | `pnpm test:api`                                         | Passed | 21 API/config/health/PostgreSQL tests passed across 4 files.                                        |
-| V12 | `pnpm test:web`                                         | Passed | 11 environment/component tests passed across 5 files.                                               |
+| V11 | `pnpm test:api`                                         | Passed | 22 API/config/health/PostgreSQL tests passed across 4 files.                                        |
+| V12 | `pnpm test:web`                                         | Passed | 15 environment/component tests passed across 6 files.                                               |
 | V13 | `pnpm build`                                            | Passed | All four package/application builds completed.                                                      |
 | V14 | `pnpm test:e2e`                                         | Passed | 2 real browser/API/test-PostgreSQL tests passed.                                                    |
 | V15 | direct health/session/invalid-token/cross-tenant probes | Passed | Returned documented 200 session/health, 400 invalid invitation, and 403 tenant denial.              |
 | V16 | assembled structured-log probe                          | Passed | Fake sign-in email/token and database URL were absent; development header rendered `[Redacted]`.    |
 | V17 | `node scripts/generate-phase-index.mjs --check`         | Passed | Canonical phase index current after evidence update.                                                |
-| V18 | `git diff --check <base>..<candidate>`                  | Passed | Candidate range has no whitespace errors.                                                           |
+| V18 | exact candidate and accepted-fix `git diff --check`     | Passed | Candidate and `13cb4de..7ecacc3` accepted-fix ranges have no whitespace errors.                     |
 | V19 | manifest/source search for prohibited implementation    | Passed | No added AWS SDK, Cognito, SES, password, refresh-token, or production-session implementation.      |
 | V20 | `node scripts/validate-phase.mjs P002`                  | Passed | Phase structure and required pending review/QA note files validated.                                |
 
 ## Review
 
-- Candidate is immutable and ready for Claude review.
-- Claude review, human finding disposition, accepted fixes, and human QA have not started.
+- Candidate and review-fix commits are immutable.
+- Claude completed the initial independent review with verdict `ready with non-blocking observations`.
+- The human accepted all six findings, and `7ecacc31f0b5bac6d8bb773e260a01d1b3592818` applies them.
+- Independent verification of the accepted fixes and human QA remain pending.
 - No push, remote creation, origin reset, or production/external service action occurred.
 
 ## Completion Gate
 
-- Requirements implemented: candidate ready for independent review.
+- Requirements implemented: Yes, including all accepted review corrections.
 - Automated validation: passed as recorded above.
-- Independent review clear: No; pending.
-- Findings dispositioned: No; no review exists yet.
+- Independent review clear: No; accepted fixes await focused verification.
+- Findings dispositioned: Yes; P002-F1 through P002-F6 accepted and fixed.
 - Required human QA complete: No.
 - Human integration/completion approval: No.
 - P002 status must remain `review_pending`; Codex has not marked it complete.

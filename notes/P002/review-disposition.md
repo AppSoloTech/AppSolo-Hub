@@ -12,3 +12,7 @@ The human instructed Codex to “Address all issues,” accepting P002-F1 throug
 | P002-F4 | Low      | Accepted    | Return no effective capabilities for globally suspended users.                                                     |
 | P002-F5 | Low      | Accepted    | Add and document a validated `WEB_ACCEPTANCE_BASE_URL` with an explicit local fallback rule.                       |
 | P002-F6 | Low      | Accepted    | Use route organization context when available and a neutral label for ambiguous multi-membership routes.           |
+
+All accepted findings are applied in review-fix commit
+`7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
+(`P002: address accepted review findings`).

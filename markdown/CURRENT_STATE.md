@@ -21,6 +21,9 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
 - P002 status: `review_pending`
 - P002 prompt: specification version 1 under `prompts/active/`
 - P002 implementation approval: granted by the human on 2026-07-26
+- P002 review: initial Claude review complete; all six findings accepted and
+  addressed in immutable review-fix commit
+  `7ecacc31f0b5bac6d8bb773e260a01d1b3592818`
 
 ## Current Constraints
 
@@ -33,8 +36,11 @@ P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2
 
 ## Significant Gaps
 
-- No real login, session, invitation, or membership-administration workflow exists; these are candidates for P002.
+- No production login or shipped P002 session, invitation, or
+  membership-administration workflow exists yet.
 - Estimates/approvals, comments, time tracking, attachments, notifications, AWS infrastructure, delivery automation, and production hardening remain in their sequenced future phases.
-- P002 has an immutable implementation candidate and awaits independent review. It is not shipped or complete until review, human disposition, QA, and integration finish.
+- P002 has immutable candidate and review-fix commits. Accepted fixes await
+  independent verification, and P002 is not shipped or complete until review,
+  human QA, and integration finish.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.
