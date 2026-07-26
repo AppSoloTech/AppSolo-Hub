@@ -34,18 +34,27 @@ Create exact, durable estimate and client approval workflows linked to change re
 
 ## Approval State
 
-This phase is a roadmap record only.
+This phase remains a roadmap record only.
 
-- Prompt: not drafted.
+- Draft prompt: `prompts/drafts/P003-estimates-and-approval-workflow.md`,
+  specification version 1.
+- Draft basis: authoritative local `main` at
+  `745892af6c9393838e490f12ddaa3536a9524f88`.
 - Human approval: not granted.
 - Implementation: must not begin.
-- Dependencies: P002 must be complete or explicitly waived.
+- Dependencies: P002 is complete and locally integrated.
 
-Before approval, create a consolidated prompt with stable R, AC, V, Q, and NG identifiers and resolve material product decisions.
+The draft contains stable R, AC, V, Q, and NG identifiers. Before approval, the
+human must approve or revise its exact decimal and rounding policy, implicit
+currency, estimate-management and approval capabilities, draft/submission
+visibility, revision/supersession lifecycle, response-note requirements, and
+concurrency behavior.
 
 ## Evidence
 
-- Base SHA: pending.
+- Drafted: 2026-07-26.
+- Draft basis SHA: `745892af6c9393838e490f12ddaa3536a9524f88`.
+- Base SHA: pending implementation approval and repository revalidation.
 - Candidate SHA: pending.
 - Review: not started.
 - Human QA: not started.
