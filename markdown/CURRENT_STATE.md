@@ -2,18 +2,26 @@
 
 ## Shipped
 
-No application code is shipped yet.
+P001 — Local Foundation And Change-Request Vertical Slice is complete and integrated locally.
 
-The repository currently contains the product, architecture, contracts, AI workflow, phase records, and the approved P001 work order.
+The shipped local foundation includes:
+
+- a pnpm strict-TypeScript workspace with React/Vite, Express, shared Zod contracts, and Drizzle/PostgreSQL;
+- Docker Compose PostgreSQL with isolated `appsolo_client_hub_dev` and `appsolo_client_hub_test` databases;
+- provider-neutral development authentication and API-enforced tenant authorization;
+- authorized change-request list, detail, and transactional creation behavior;
+- meaningful unit, API integration, component, and Playwright browser tests;
+- reviewed error handling, request correlation, environment isolation, and durable P001 evidence.
+
+P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2498a60235b93b0cf2e5b`. Claude reported no open finding, and the human passed Q1-Q8 and approved integration on 2026-07-26.
 
 ## Active Phase
 
-- Phase: `P001 — Local Foundation And Change-Request Vertical Slice`
-- Status: `review_pending`
-- Implementer: Codex
-- Reviewer: Claude
-- Human QA: required
-- Prompt: `prompts/active/P001-local-foundation-and-change-request-vertical-slice.md`
+- No phase is approved or active.
+- Next roadmap candidate: `P002 — Authentication And Invitations`
+- P002 status: `draft`
+- P002 prompt: not drafted
+- P002 implementation approval: not granted
 
 ## Current Constraints
 
@@ -26,9 +34,8 @@ The repository currently contains the product, architecture, contracts, AI workf
 
 ## Significant Gaps
 
-- No pnpm workspace or application packages exist.
-- No database, migration, seed, API, UI, or tests exist.
-- P001 candidate `e656d900a0462511e3e8293bcfc2dababb599ba5` is available for independent Claude review.
-- No independent review or human QA has occurred.
+- No real login, session, invitation, or membership-administration workflow exists; these are candidates for P002.
+- Estimates/approvals, comments, time tracking, attachments, notifications, AWS infrastructure, delivery automation, and production hardening remain in their sequenced future phases.
+- P002 requires a consolidated prompt with stable requirements, acceptance criteria, validation, QA, and non-goal identifiers before human approval.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

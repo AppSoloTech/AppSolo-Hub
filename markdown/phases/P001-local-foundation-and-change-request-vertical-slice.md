@@ -1,7 +1,7 @@
 ---
 id: P001
 title: Local Foundation And Change-Request Vertical Slice
-status: qa_pending
+status: complete
 owner: codex
 reviewer: claude
 prompt: prompts/active/P001-local-foundation-and-change-request-vertical-slice.md
@@ -114,7 +114,7 @@ See `notes/P001/qa.md`. The human reported Q1-Q8 passed on 2026-07-26 using the 
 - Second re-review fixes: `9693281248e7f8a45eb4ae5fc0a62e336cf166dc` (`P001: address accepted second re-review findings`).
 - Third re-review fixes: `29fdf5efc62b0bc06aea5946271edcf3799e924a` (`P001: address accepted third re-review findings`).
 - Fourth re-review fixes: `5885db4890d5f7240166088e2674434a1e9d6eb1` (`P001: cover assembled health failure`).
-- Final: pending.
+- Final reviewed, validated, and human-QA boundary: `54c6e274fa0aa3d5b7d2498a60235b93b0cf2e5b` (`P001: record QA browser evidence`).
 
 ## Deferred Work
 
@@ -135,4 +135,5 @@ See `notes/P001/qa.md`. The human reported Q1-Q8 passed on 2026-07-26 using the 
 - Findings dispositioned: Yes; C1-C15 and R1-R13 accepted and independently verified fixed.
 - Required QA complete: Yes; Q1-Q8 passed by human report on 2026-07-26.
 - Durable docs updated: Yes; review, Docker validation, and human QA evidence recorded.
-- Ready for integration: Yes; awaiting human Git integration approval and human-owned phase completion.
+- Human integration and completion approval: Yes; explicitly granted on 2026-07-26.
+- Ready for integration: Yes; approved for local fast-forward integration to `main`.

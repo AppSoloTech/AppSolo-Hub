@@ -46,15 +46,41 @@ if (completion) {
     if (phaseText.includes(forbidden)) errors.push(`Completion cannot retain ${forbidden}.`);
   }
 
-  for (const name of requiredNoteNames) {
-    try {
-      const text = await readFile(path.join(noteDir, name), 'utf8');
-      if (/\bPending\b|Not run|not reviewed|review not started/i.test(text)) {
-        errors.push(`${name} still contains pending or unrun evidence.`);
-      }
-    } catch {
-      // Missing file already reported.
+  try {
+    const qa = await readFile(path.join(noteDir, 'qa.md'), 'utf8');
+    if (!qa.includes('> Status: Passed.')) errors.push('qa.md does not record a passed status.');
+    if (!qa.includes('Required QA complete: Yes.'))
+      errors.push('qa.md does not record required QA as complete.');
+    if (!qa.includes('Human acceptance: Passed'))
+      errors.push('qa.md does not record passing human acceptance.');
+  } catch {
+    // Missing file already reported.
+  }
+
+  try {
+    const review = await readFile(path.join(noteDir, 'claude-review.md'), 'utf8');
+    if (!/`ready(?: with non-blocking observations)?`/i.test(review)) {
+      errors.push('claude-review.md does not contain a ready verdict.');
     }
+  } catch {
+    // Missing file already reported.
+  }
+
+  try {
+    const disposition = await readFile(path.join(noteDir, 'review-disposition.md'), 'utf8');
+    const findingRows = disposition
+      .split('\n')
+      .filter((line) => /^\|\s*(?:C|R)\d+\s*\|/.test(line))
+      .map((line) => line.split('|').map((cell) => cell.trim()));
+    const allowedDispositions = new Set(['Accepted', 'Rejected', 'Deferred', 'Clarification required']);
+    if (findingRows.length === 0) errors.push('review-disposition.md contains no finding dispositions.');
+    for (const row of findingRows) {
+      if (!allowedDispositions.has(row[3])) {
+        errors.push(`review-disposition.md has an unresolved disposition for ${row[1]}.`);
+      }
+    }
+  } catch {
+    // Missing file already reported.
   }
 }
 

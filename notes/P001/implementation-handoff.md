@@ -1,6 +1,6 @@
 # P001 Implementation Handoff For Claude
 
-> Status: Claude review is clear and required human QA passed. P001 is ready for human Git integration; Codex did not mark the phase complete.
+> Status: Complete by explicit human approval on 2026-07-26 and approved for local fast-forward integration to `main`.
 
 ## Review Target
 
@@ -98,7 +98,8 @@ The human reported Q1-Q8 passed on 2026-07-26. Exact results and the browser/run
 
 ## Known Gaps
 
-- Human Git integration approval and human-owned phase completion remain.
+- No P001 completion gap remains.
+- P002 authentication and invitation scope remains draft and requires its own consolidated prompt and explicit approval.
 
 ## Review-Fix Verification
 
