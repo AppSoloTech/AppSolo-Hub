@@ -1,6 +1,8 @@
 # Claude Review — P002
 
-> Status: Complete. Independent review of the immutable candidate range.
+> Status: Complete through fix verification. Round 1 reviewed the immutable candidate range; Round 2 verified the accepted review-fix commit. The final verdict is at the end of this file.
+
+# Round 1 — Candidate Review
 
 ## Review Target
 
@@ -141,7 +143,7 @@ Non-goals NG1–NG12 were checked against the diff and none were breached. No AW
 
 No Blocker or High finding exists: there is no cross-tenant server-side disclosure, no data loss, no destructive migration, no leaked secret, no unusable build, and no production-environment auth exposure.
 
-## Verdict
+## Round 1 Verdict
 
 `ready with non-blocking observations`
 
@@ -150,3 +152,94 @@ P002 is substantially complete, well-structured, and materially stronger than th
 This verdict is not an approval to close the phase. Three Medium findings — P002-F1 (role-ceiling bypass through acceptance), P002-F2 (stale cross-identity data after development sign-out), and P002-F3 (two acceptance criteria recorded as tested that are not) — all require human disposition, and P002-F3 additionally requires correcting the AC5 and AC17–AC18 evidence rows in `notes/P002/implementation-handoff.md` and the phase record regardless of whether the test gap is closed now or deferred.
 
 Per `markdown/FLOW.md`, P002 must remain `review_pending` until the human dispositions each finding; no fix is authorized before that, and human Q1–Q10 QA and integration approval remain outstanding.
+
+# Round 2 — Accepted Review-Fix Verification
+
+## Verification Target
+
+- Review-fix SHA: `7ecacc31f0b5bac6d8bb773e260a01d1b3592818` (exists, `P002: address accepted review findings`)
+- Incremental fix range reviewed: `git diff 2b937c2df85fde94a0263b5ace66c60c08f4fa5c..7ecacc31f0b5bac6d8bb773e260a01d1b3592818` — the code, test, contract, and env-example changes. The handoff's wider `13cb4de..7ecacc3` range additionally replays the documentation-only commit `2b937c2`; both ranges contain the same source changes.
+- Disposition record: `notes/P002/review-disposition.md` — the human accepted P002-F1 through P002-F6 on 2026-07-26. All six are therefore in scope for verification, not only the Mediums.
+- Working tree at verification time: clean at `3ee2593` (`P002: record accepted review-fix handoff`). `7ecacc3..3ee2593` touches only `markdown/CURRENT_STATE.md`, the P002 phase record, `notes/P002/implementation-handoff.md`, and `notes/P002/review-disposition.md`. No source, test, migration, or contract file differs, so the reruns below are attributable to the fix commit.
+- No dependency manifest or lockfile changed in the fix range; no migration or Drizzle snapshot changed, so the P001-data migration and seed evidence from Round 1 still stands unaltered.
+- `git diff --check 13cb4de..7ecacc3` passes with no whitespace errors.
+
+## Validation Rerun
+
+| Command                                         | Result | Evidence                                                                                                |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`                                     | Passed | `eslint .` and `prettier --check .`, exit 0.                                                            |
+| `pnpm typecheck`                                | Passed | Strict `tsc` across shared, database, api, web.                                                         |
+| `pnpm test`                                     | Passed | 4 shared + 3 database tests.                                                                            |
+| `pnpm test:api`                                 | Passed | 22 tests / 4 files; `access.integration.test.ts` grew from 7 to 8 cases.                                |
+| `pnpm test:web`                                 | Passed | 15 tests / 6 files; `Session.test.tsx` 3→5 and the new `DashboardLayout.test.tsx` (2).                  |
+| `pnpm build`                                    | Passed | shared, database, api `tsc`; web Vite production bundle.                                                |
+| `pnpm test:e2e`                                 | Passed | 2 Playwright tests in real Chromium against live web + API + test PostgreSQL.                           |
+| `pnpm --filter @appsolo/database generate`      | Passed | `No schema changes, nothing to migrate` — the fix commit introduced no schema drift.                    |
+| `node scripts/check-scaffolding.mjs`            | Passed | 27 required files, 11 phase records.                                                                    |
+| `node scripts/generate-phase-index.mjs --check` | Passed | `PHASE_INDEX.md is current.`                                                                            |
+| `node scripts/validate-phase.mjs P002`          | Passed | `P002 phase structure is valid.`                                                                        |
+| `git diff --check 13cb4de..7ecacc3`             | Passed | No whitespace errors in the accepted-fix range.                                                         |
+| Prohibited-implementation search over the range | Passed | No AWS SDK, Cognito, SES, password, refresh-token, or production-session code; only documentation text. |
+| Direct assembled-API fix probes                 | Run    | Results below; the Round 1 P002-F1 reproduction now fails closed.                                       |
+
+The counts recorded in the updated handoff (22 API, 15 web, 7 shared/database, 2 Playwright) match what I observed exactly.
+
+## Fix-By-Fix Verification
+
+| Finding | Severity | Status       | Independent evidence                                                                                                                                                                                                                                                                                                                |
+| ------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P002-F1 | Medium   | **Verified** | `assertInvitationRole` now takes an optional `currentMembershipRole` and requires `canAssignRole(actorRole, currentMembershipRole)` (`access/service.ts:47-59`). Applied at create (`repository.ts:235-243`), resend (`repository.ts:318-328`), and acceptance (`repository.ts:494-499`). Reproduction below.                       |
+| P002-F2 | Medium   | **Verified** | `signOut` now calls `queryClient.clear()` and `establish` clears the cache when the incoming user ID differs (`session/SessionProvider.tsx:33-36,56-59`). Two new component tests seed an unrelated `['organization', …]` key and assert it is gone after sign-out and after identity switch.                                       |
+| P002-F3 | Medium   | **Verified** | A fixed clock is injectable through `createApp` (`app.ts:23-27,64-76`); the suite asserts `expiresAt` is exactly `2026-08-02T12:00:00.000Z` for a create at `2026-07-26T12:00:00.000Z` and `2026-08-03T12:00:00.000Z` after a resend one day later. Cross-tenant nested invitation and membership IDs now assert `404`/`NOT_FOUND`. |
+| P002-F4 | Low      | **Verified** | Capabilities now require `userStatus === 'ACTIVE'` in both the list and update DTO paths (`access/service.ts:180-183,315-320`); the integration suite asserts `[]` for a globally suspended member with a live membership.                                                                                                          |
+| P002-F5 | Low      | **Verified** | `WEB_ACCEPTANCE_BASE_URL` is an optional validated URL (`config/env.ts:49`), documented in `ENVIRONMENT.md`, `API.md`, `README.md`, and both `.env.example` files; env tests cover the valid and invalid cases. Probe confirms the link uses `http://localhost:4173` when set and falls back to the first `CORS_ORIGIN` when unset. |
+| P002-F6 | Low      | **Verified** | `DashboardLayout` derives the label from the `/organizations/:id/access` route, falls back to the single membership name, and uses `Multiple authorized organizations` otherwise (`layouts/DashboardLayout.tsx:8-19`), with a new two-case component test.                                                                          |
+
+### P002-F1 reproduction, rerun against the fix commit
+
+Same sequence as Round 1, on a freshly prepared test database:
+
+```text
+[F1] owner suspends DEVELOPER                       -> 200
+[F1] CLIENT_ADMIN invite of suspended DEVELOPER     -> 403 FORBIDDEN     (was 201)
+[F1] OWNER invite of same suspended DEVELOPER       -> 201
+[F1] acceptance by legitimate inviter               -> 200
+[F1] developer membership after                     -> CLIENT_MEMBER ACTIVE
+```
+
+The bypass is closed at the earliest point in the lifecycle, and the legitimate path — an actor who _may_ manage the target's current role — still completes end to end, so the fix is not a blunt denial. The new integration case `revalidates the inviter role ceiling before reactivating a suspended membership` additionally proves that an inviter demoted after issuing the invitation cannot have it accepted, and that the suspended membership is left untouched at `DEVELOPER/SUSPENDED`.
+
+I also re-verified that Round 1's other conclusions still hold under the fix: acceptance remains atomic and single-use, the P001 authorization joins still require `status = 'ACTIVE'`, audit writes remain in-transaction, and no token, hash, or acceptance URL crosses a list, audit, session, or log boundary.
+
+## New Finding
+
+### P002-F7 — Medium — Suspending or demoting an administrator silently voids their outstanding invitations, and resend reports success without repairing them
+
+- **Affected:** R4 (acceptance validates "the hashed token, pending state, expiry, organization state, user state, and role constraints" — inviter state is not among them), R2/R9 resend semantics, Q4 QA case, `markdown/contracts/SECURITY.md` "incomplete error handling" expectations. Introduced by the P002-F1 fix, not present in the candidate.
+- **Evidence:** `apps/api/src/modules/access/repository.ts:463-484` resolves a _live_ `inviterContext` from `invitation.invitedByUserId` inside `acceptInvitation` and throws `INVITATION_INVALID` when that user no longer holds an active membership in an active organization; `repository.ts:494-499` then re-runs the full ceiling check under `try { … } catch { throw new AccessStateError('INVITATION_INVALID'); }`, which also swallows the capability and organization-type checks. Meanwhile `resendInvitation` (`repository.ts:329-341`) updates `tokenHash`, `expiresAt`, `resendCount`, and `resentAt` but never re-anchors `invitedByUserId` to the resending administrator.
+- **Impact:** Offboarding an administrator invalidates every invitation they issued. The invitee sees the generic "This link is invalid, revoked, rotated, or was already used" state with no recovery path. Administrators see the row still listed as `PENDING`, and a resend by a fully authorized owner returns `200` and emits an `INVITATION_RESENT` audit event while producing a link that still fails. Because the partial unique index allows only one pending row per `(organization_id, email)`, the only recovery is revoke-then-recreate, which nothing in the UI or contract explains. This is a realistic operational scenario, not a contrived one.
+- **Reproduction** (assembled app, seeded test database, verified during this review):
+  1. As `admin@client.test` (`CLIENT_ADMIN`), `POST …/invitations` for a new `CLIENT_MEMBER` → `201`.
+  2. As the owner, suspend that `CLIENT_ADMIN`'s membership → `200`.
+  3. `GET …/invitations` as the owner → the invitation is still reported `PENDING`.
+  4. As the owner, `POST …/invitations/<id>/resend` → `200` with a fresh acceptance URL.
+  5. `POST /api/v1/invitations/accept` with the resent token → `400 INVITATION_INVALID`.
+  6. Revoke, recreate as the owner, and accept → `200`. Only this path recovers.
+- **Recommended correction:** Preferred — evaluate the acceptance-time ceiling against state recorded on the invitation rather than the inviter's live membership (the proposed role was already bounded at create and resend; only the target's _current_ membership role needs re-checking at acceptance, and that check does not require a live inviter). Minimum acceptable — have `resendInvitation` re-anchor `invitedByUserId` to the resending administrator so an authorized resend genuinely repairs the invitation, and surface a distinct, non-generic recoverable state to administrators when a pending invitation can no longer be accepted.
+
+## Round 2 Severity Rationale
+
+All six accepted fixes are real, minimal, and covered by tests that would fail if the fix were reverted; none of them widened scope, added a dependency, touched the schema, or disturbed P001 behavior. P002-F7 is a Medium for the same reason its parent was: it is a meaningful edge case with incomplete error handling and a support burden, not a tenant breach, privilege escalation, data loss, or auth bypass. Reporting a `200` for a resend that cannot work is the part that makes it more than Low.
+
+I found no Blocker or High finding in the fix range, and no regression in any Round 1 conclusion.
+
+## Final Verdict
+
+`ready with non-blocking observations`
+
+Every accepted finding from Round 1 is independently verified as fixed, and the full validation sequence passes against the review-fix commit. The evidence records were also corrected honestly: the handoff, phase record, and `CURRENT_STATE.md` now state that Claude verification is still outstanding and that P002 is not shipped, and the previously overclaimed AC5 and AC17–AC18 evidence rows now describe assertions that genuinely exist.
+
+One new Medium, P002-F7, arose from the P002-F1 fix and needs human disposition. It does not block: the security property the fix was meant to establish is correctly enforced, and the defect is an operational recovery gap on a path that fails closed rather than open.
+
+P002 must remain `review_pending`. Human Q1–Q10 QA, disposition of P002-F7, and integration approval are the remaining gates.

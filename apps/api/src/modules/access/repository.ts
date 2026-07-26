@@ -24,8 +24,9 @@ type AccessContext = {
   actorMembershipId: string;
   actorRole: OrganizationRole;
 };
+type InvitationAuthorizationContext = Pick<AccessContext, 'organizationType' | 'actorRole'>;
 type InvitationAuthorization = (
-  context: AccessContext,
+  context: InvitationAuthorizationContext,
   targetRole: OrganizationRole,
   currentMembershipRole?: OrganizationRole,
 ) => void;
@@ -251,6 +252,7 @@ export class AccessRepository {
             email: invitedUser.email,
             proposedRole: input.invitation.role,
             invitedByUserId: input.actorUserId,
+            authorizedByRole: context.actorRole,
             tokenHash: input.tokenHash,
             expiresAt: input.expiresAt,
           })
@@ -329,6 +331,8 @@ export class AccessRepository {
       const updatedRows = await tx
         .update(organizationInvitations)
         .set({
+          invitedByUserId: input.actorUserId,
+          authorizedByRole: context.actorRole,
           tokenHash: input.tokenHash,
           expiresAt: input.expiresAt,
           resendCount: invitation.resendCount + 1,
@@ -463,26 +467,9 @@ export class AccessRepository {
       await tx.execute(
         sql`select id from organization_memberships
             where organization_id = ${invitation.organizationId}
-              and user_id in (${invitation.invitedByUserId}, ${invitation.invitedUserId})
-            order by id
+              and user_id = ${invitation.invitedUserId}
             for update`,
       );
-      const inviterContextRows = await tx
-        .select(actorContextSelect)
-        .from(organizations)
-        .innerJoin(
-          organizationMemberships,
-          and(
-            eq(organizationMemberships.organizationId, organizations.id),
-            eq(organizationMemberships.userId, invitation.invitedByUserId),
-            eq(organizationMemberships.status, 'ACTIVE'),
-          ),
-        )
-        .innerJoin(users, and(eq(users.id, invitation.invitedByUserId), eq(users.status, 'ACTIVE')))
-        .where(and(eq(organizations.id, invitation.organizationId), eq(organizations.status, 'ACTIVE')))
-        .limit(1);
-      const inviterContext = inviterContextRows[0];
-      if (!inviterContext) throw new AccessStateError('INVITATION_INVALID');
 
       let membership = await tx.query.organizationMemberships.findFirst({
         where: (row, operators) =>
@@ -495,7 +482,14 @@ export class AccessRepository {
         throw new AccessStateError('INVITATION_INVALID');
       }
       try {
-        authorize(inviterContext, invitation.proposedRole, membership?.role);
+        authorize(
+          {
+            organizationType: organization.type,
+            actorRole: invitation.authorizedByRole,
+          },
+          invitation.proposedRole,
+          membership?.role,
+        );
       } catch {
         throw new AccessStateError('INVITATION_INVALID');
       }

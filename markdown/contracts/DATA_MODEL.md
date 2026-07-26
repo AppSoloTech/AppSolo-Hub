@@ -195,6 +195,7 @@ Membership rows are suspended/reactivated and never hard-deleted through the API
 | email              | varchar(320)      | required, lowercase                         |
 | proposed_role      | organization_role | required                                    |
 | invited_by_user_id | uuid              | required, FK users, restrict delete         |
+| authorized_by_role | organization_role | required authorization snapshot             |
 | status             | invitation_status | required, default `PENDING`                 |
 | token_hash         | varchar(64)       | required, unique SHA-256 digest             |
 | expires_at         | timestamptz       | required                                    |
@@ -212,6 +213,14 @@ Constraints and indexes:
 - organization/newest-first and invited-user indexes;
 - expiry is seven days from create or resend;
 - plaintext token material is never persisted.
+
+`authorized_by_role` records the inviter role that passed the role ceiling when
+the token was issued. An authorized resend replaces both `invited_by_user_id`
+and this role snapshot with the resending administrator's identity and current
+role. Acceptance evaluates the proposed role and any current suspended target
+membership role against this immutable token-generation snapshot, so later
+inviter suspension or demotion neither weakens the ceiling nor silently voids
+an already authorized token.
 
 ### access_audit_events
 

@@ -128,6 +128,7 @@ export const organizationInvitations = pgTable(
     invitedByUserId: uuid('invited_by_user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
+    authorizedByRole: organizationRole('authorized_by_role').notNull(),
     status: invitationStatus('status').notNull().default('PENDING'),
     tokenHash: varchar('token_hash', { length: 64 }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),

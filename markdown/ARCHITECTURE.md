@@ -151,9 +151,10 @@ Feature code may contain route components, queries, forms, and presentation comp
 
 1. The browser captures the fragment token and immediately replaces the visible history entry without the fragment.
 2. The public route validates a strict JSON token body and hashes the token.
-3. A transaction locks the pending invitation, checks expiry/organization/user/role state, activates the user, creates or reactivates membership, accepts the invitation, and inserts one audit event.
-4. Concurrent/repeated callers cannot produce a second success.
-5. The API returns a provider-neutral local session DTO; the browser stores only the development user ID.
+3. A transaction locks the pending invitation and any target membership, checks expiry/organization/user state, and evaluates current target role constraints against the authorization snapshot recorded when the token was created or resent.
+4. The same transaction activates the user, creates or reactivates membership, accepts the invitation, and inserts one audit event.
+5. Concurrent/repeated callers cannot produce a second success.
+6. The API returns a provider-neutral local session DTO; the browser stores only the development user ID.
 
 ### Administer Membership
 

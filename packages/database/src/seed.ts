@@ -157,6 +157,7 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
           email: 'pending-invitee@client.test',
           proposedRole: 'CLIENT_MEMBER',
           invitedByUserId: seedIds.owner,
+          authorizedByRole: 'OWNER',
           tokenHash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
           expiresAt: new Date('2036-07-26T12:00:00.000Z'),
         })

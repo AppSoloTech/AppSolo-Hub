@@ -196,6 +196,7 @@ describe('P002 session and access integration', () => {
       where: (invitation, operators) => operators.eq(invitation.id, created.invitationId),
     });
     expect(row?.tokenHash).toBe(createHash('sha256').update(created.token, 'utf8').digest('hex'));
+    expect(row?.authorizedByRole).toBe('OWNER');
     expect(JSON.stringify(created.response.body)).not.toContain(row?.tokenHash);
     expect(JSON.stringify(row)).not.toContain(created.token);
     const newUser = await db.query.users.findFirst({
@@ -347,23 +348,11 @@ describe('P002 session and access integration', () => {
     expect(membership).toMatchObject({ status: 'ACTIVE', role: 'CLIENT_MEMBER' });
   });
 
-  it('revalidates the inviter role ceiling before reactivating a suspended membership', async () => {
-    await db
-      .update(organizationMemberships)
-      .set({ status: 'SUSPENDED' })
-      .where(
-        and(
-          eq(organizationMemberships.organizationId, seedIds.clientOrganization),
-          eq(organizationMemberships.userId, seedIds.developer),
-        ),
-      );
+  it('revalidates the stored inviter ceiling against target membership state at acceptance', async () => {
     const created = await request(app)
       .post(`${organizationPath}/invitations`)
-      .set(ownerHeader)
-      .send({
-        ...invitationInput('developer@appsolo.test'),
-        role: 'CLIENT_MEMBER',
-      });
+      .set('x-dev-user-id', seedIds.clientAdmin)
+      .send(invitationInput('late-higher-role@client.test'));
     expect(created.status).toBe(201);
     const createdBody = created.body as {
       data: { invitation: { id: string }; acceptanceUrl: string };
@@ -372,20 +361,17 @@ describe('P002 session and access integration', () => {
     const token = new URLSearchParams(new URL(acceptanceUrl).hash.slice(1)).get('token');
     if (!token) throw new Error('Test invitation did not contain a fragment token.');
 
-    await db
-      .update(organizationMemberships)
-      .set({ role: 'CLIENT_ADMIN' })
-      .where(
-        and(
-          eq(organizationMemberships.organizationId, seedIds.clientOrganization),
-          eq(organizationMemberships.userId, seedIds.owner),
-        ),
-      );
-    const resend = await request(app)
-      .post(`${organizationPath}/invitations/${createdBody.data.invitation.id}/resend`)
-      .set(ownerHeader)
-      .send({});
-    expect(resend.status).toBe(403);
+    const invitedUser = await db.query.users.findFirst({
+      where: (row, operators) => operators.eq(row.email, 'late-higher-role@client.test'),
+    });
+    if (!invitedUser) throw new Error('Invited user was not created.');
+    await db.insert(organizationMemberships).values({
+      organizationId: seedIds.clientOrganization,
+      userId: invitedUser.id,
+      role: 'DEVELOPER',
+      status: 'SUSPENDED',
+    });
+
     const acceptance = await request(app).post('/api/v1/invitations/accept').send({ token });
     expect(acceptance.status).toBe(400);
     expect(errorBody(acceptance.body).error.code).toBe('INVITATION_INVALID');
@@ -393,10 +379,78 @@ describe('P002 session and access integration', () => {
       where: (row, operators) =>
         operators.and(
           operators.eq(row.organizationId, seedIds.clientOrganization),
-          operators.eq(row.userId, seedIds.developer),
+          operators.eq(row.userId, invitedUser.id),
         ),
     });
     expect(membership).toMatchObject({ status: 'SUSPENDED', role: 'DEVELOPER' });
+  });
+
+  it('survives inviter demotion and reanchors an authorized resend after suspension', async () => {
+    const createAsClientAdmin = async (email: string) => {
+      const response = await request(app)
+        .post(`${organizationPath}/invitations`)
+        .set('x-dev-user-id', seedIds.clientAdmin)
+        .send(invitationInput(email));
+      expect(response.status).toBe(201);
+      const body = response.body as {
+        data: { invitation: { id: string }; acceptanceUrl: string };
+      };
+      const token = new URLSearchParams(new URL(body.data.acceptanceUrl).hash.slice(1)).get('token');
+      if (!token) throw new Error('Test invitation did not contain a fragment token.');
+      return { invitationId: body.data.invitation.id, token };
+    };
+    const directAcceptance = await createAsClientAdmin('suspended-inviter-direct@client.test');
+    const repairedByResend = await createAsClientAdmin('suspended-inviter-resend@client.test');
+    const clientAdminMembership = await db.query.organizationMemberships.findFirst({
+      where: (row, operators) =>
+        operators.and(
+          operators.eq(row.organizationId, seedIds.clientOrganization),
+          operators.eq(row.userId, seedIds.clientAdmin),
+        ),
+    });
+    if (!clientAdminMembership) throw new Error('Client administrator membership was not found.');
+    const demotion = await request(app)
+      .patch(`${organizationPath}/memberships/${clientAdminMembership.id}`)
+      .set(ownerHeader)
+      .send({
+        role: 'CLIENT_MEMBER',
+        expectedUpdatedAt: clientAdminMembership.updatedAt.toISOString(),
+      });
+    expect(demotion.status).toBe(200);
+
+    const acceptedWithoutLiveInviter = await request(app)
+      .post('/api/v1/invitations/accept')
+      .send({ token: directAcceptance.token });
+    expect(acceptedWithoutLiveInviter.status).toBe(200);
+
+    const suspension = await request(app)
+      .patch(`${organizationPath}/memberships/${clientAdminMembership.id}`)
+      .set(ownerHeader)
+      .send({
+        status: 'SUSPENDED',
+        expectedUpdatedAt: (demotion.body as { data: { updatedAt: string } }).data.updatedAt,
+      });
+    expect(suspension.status).toBe(200);
+
+    const resend = await request(app)
+      .post(`${organizationPath}/invitations/${repairedByResend.invitationId}/resend`)
+      .set(ownerHeader)
+      .send({});
+    expect(resend.status).toBe(200);
+    const resentUrl = (resend.body as { data: { acceptanceUrl: string } }).data.acceptanceUrl;
+    const resentToken = new URLSearchParams(new URL(resentUrl).hash.slice(1)).get('token');
+    if (!resentToken) throw new Error('Resend did not return a fragment token.');
+    const reanchored = await db.query.organizationInvitations.findFirst({
+      where: (row, operators) => operators.eq(row.id, repairedByResend.invitationId),
+    });
+    expect(reanchored).toMatchObject({
+      invitedByUserId: seedIds.owner,
+      authorizedByRole: 'OWNER',
+    });
+    const acceptedAfterResend = await request(app)
+      .post('/api/v1/invitations/accept')
+      .send({ token: resentToken });
+    expect(acceptedAfterResend.status).toBe(200);
   });
 
   it('allows at most one concurrent acceptance and atomically creates membership and audit history', async () => {

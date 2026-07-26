@@ -26,6 +26,11 @@ It is not a claim of production security readiness. Production hardening remains
 - P002's email-only sign-in is an explicitly insecure local identity selector. It stores only the selected development user ID in browser storage and creates no password, cookie, refresh token, or production credential.
 - Invitation acceptance uses possession of at least 256 bits of random token material. Only its SHA-256 hash is persisted.
 - Acceptance tokens travel from the local link fragment to one strict JSON body. The browser removes the fragment from history immediately and never stores the token.
+- Invitation create/resend records the authorizing administrator role with the
+  token hash. Acceptance enforces the proposed role and any current suspended
+  target membership role against that snapshot, rather than requiring the
+  issuing administrator to remain active. An authorized resend replaces the
+  snapshot with the resending administrator's current identity and role.
 
 ## Authorization
 
