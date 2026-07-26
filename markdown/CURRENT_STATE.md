@@ -30,7 +30,7 @@ implementation state, and marked P002 complete on 2026-07-26.
 ## Active Phase
 
 - Active phase: `P003 — Estimates And Approval Workflow`.
-- P003 status: `approved`.
+- P003 status: `review_pending`.
 - P003 prompt: specification version 1 under `prompts/active/`.
 - P003 implementation approval: granted by the human on 2026-07-26.
 
@@ -49,8 +49,8 @@ implementation state, and marked P002 complete on 2026-07-26.
 - Comments, time tracking, attachments, notifications, AWS infrastructure,
   delivery automation, production authentication, and production hardening
   remain in their sequenced future phases.
-- P003 is approved but not yet implemented. Codex must revalidate the prompt
-  against the current repository, establish the exact local-main Git boundary,
-  and advance the phase through the normal review and QA lifecycle.
+- P003 has an immutable local candidate at
+  `9c9ab03899a5295cbcd54a3f22279c1280b5911f` and awaits independent review,
+  human finding disposition, and Q1-Q10 QA. It is not shipped or complete.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.
