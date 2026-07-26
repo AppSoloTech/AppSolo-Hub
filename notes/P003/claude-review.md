@@ -298,6 +298,81 @@ entered, and no speculative framework or base class was introduced.
   diff. The change-request integration test edit is a seed-count adjustment, not
   a behavior change.
 
+## Fix Verification — Review-Fix Commit `5de9490`
+
+> Verified on 2026-07-26 against
+> `git diff 9c9ab03899a5295cbcd54a3f22279c1280b5911f..5de9490cf80c3cdda286f0565608f415ee75241f`.
+> All seven findings were dispositioned `Accepted` by the human in
+> `notes/P003/review-disposition.md`.
+
+### Fix Boundary
+
+- Working tree clean; `git diff 5de9490..HEAD` (commit `ce3e268`) touches only
+  `markdown/` and `notes/`, so no code differs from the review-fix commit.
+- The fix diff touches 6 code paths plus one additive migration, its snapshot,
+  and documentation. No dependency, route, capability, or lifecycle rule
+  changed, and no candidate behavior outside the accepted findings was altered.
+- Migration `0005_early_namor.sql` is a single `ADD CONSTRAINT` — additive, no
+  drop, no rewrite, no data change. The development database reports 6 applied
+  migrations, confirming `0005` was layered onto existing P001/P002/P003 data
+  rather than a reset.
+
+### Revalidation After The Fix
+
+| Command                                        | Result | Evidence                                                         |
+| ---------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| `pnpm typecheck`                               | Passed | Strict checks in all four packages.                              |
+| `pnpm lint`                                    | Passed | ESLint and Prettier clean.                                       |
+| `pnpm test`                                    | Passed | 15 shared + 5 database tests (was 4; +1 NULL-reason invariant).  |
+| `pnpm test:api`                                | Passed | 34 tests in 5 files (was 31; estimates file 8 → 11).             |
+| `pnpm test:web`                                | Passed | 20 tests in 7 files (was 19).                                    |
+| `pnpm build`                                   | Passed | shared, database, api, and web builds.                           |
+| `pnpm test:e2e`                                | Passed | 3 real Playwright flows, 6.3s.                                   |
+| `pnpm --filter @appsolo/database generate`     | Passed | `No schema changes, nothing to migrate` — no drift after `0005`. |
+| `pnpm --filter @appsolo/database test:prepare` | Passed | Test-only reset applied `0000`–`0005` and reseeded.              |
+
+The handoff's "Accepted Review-Fix Validation" table matches these results, and
+its disclosure of three interim failures (a component alert query, a
+Markdown-only lint failure on this review file, and an unresolvable workspace
+alias in an ad hoc probe) is honest. Claude confirmed the Markdown normalization
+was formatting-only: all seven finding headings, severities, evidence, and the
+verdict section are unchanged in the committed file.
+
+### Per-Finding Verdicts
+
+| ID  | Severity | Status   | Independent evidence                                                                                                                                                                                                                                                                                           |
+| --- | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | Medium   | Verified | New `estimate_responses_reason_present` check. Direct SQL: `REJECTED` with `note = NULL` → `23514`; `CLARIFICATION_REQUESTED` with `note = '   '` → `23514`; `APPROVED` with `note = NULL` still inserts. Confirmed present in both the test and development databases. A database test now pins the behavior. |
+| F2  | Medium   | Verified | The seeding effect is keyed on `[draft?.id, draft?.updatedAt]`, so the refetch after a 409 re-seeds the inputs. The component test now asserts the form holds the server's newer `6.00 / 150.00 / <new scope>` after the conflict and that `update` was called exactly once. Copy no longer overstates.        |
+| F3  | Medium   | Verified | Feedback is a `{ kind, message }` union; failures render `className="error"` with `role="alert"`, successes keep `notice`/`status`. The component test asserts both the class and the role on the real component.                                                                                              |
+| F4  | Medium   | Verified | Three new integration cases: real `REJECT` and `REQUEST_CLARIFICATION` decisions asserting estimate status, request status, exactly one response row, and exactly one `AWAITING_APPROVAL →` history row each; `CLIENT_MEMBER` create `403` / edit `404` / submit `404` with no identifier echo; and overflow.  |
+| F5  | Low      | Verified | Guards are now explicit `!== null`. Probed live with `first_name = ''`: history still returns the full response with `actorDisplayName: "Admin"`. An integration test pins it.                                                                                                                                 |
+| F6  | Low      | Verified | Fields are now `div.field` with explicit `htmlFor`/`id`, conditional `aria-describedby`, and `role="alert"` error spans. The new component test asserts the accessible name stays "Estimated hours" while an accessible description exists and its element carries `role="alert"`.                             |
+| F7  | Low      | Verified | Overflow now reports `path: "estimatedCost"`. Probed live: `999999.99 × 9999999999.99` → `400` with `estimatedCost` / "The calculated cost is too large."                                                                                                                                                      |
+
+### Regression Recheck After The Fix
+
+Re-probed against the isolated test database: exact strings `4.50 / 125.00 /
+562.50` unchanged for a manager; client-member view of the same request still
+returns `[]` with `count: 0`, `canManage: false`, `canRespond: false`; the
+`23514` stored-cost invariant, cross-tenant `404`, capability matrix, and
+concurrency outcomes are unchanged. No finding was fixed by weakening tenant
+scope, lifecycle rules, or the exact-decimal contract.
+
+### Residual Observation (no action required)
+
+The superseded `estimate_responses_reason_required` check was left in place
+alongside the new `estimate_responses_reason_present` check rather than being
+dropped. Keeping it is the correct choice for an additive migration policy — the
+old predicate is now strictly weaker than the new one and can never admit a row
+the new one rejects. It is redundant, not incorrect; a future consolidation
+migration may drop it.
+
 ## Verdict
 
-ready with non-blocking observations
+ready
+
+Every accepted finding is verified fixed with independent evidence, all
+validation passes at the review-fix commit, and no regression was introduced.
+P003 remains gated on human Q1-Q10 QA and integration approval, which are
+outside Claude's authority.

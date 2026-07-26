@@ -1,6 +1,6 @@
 # P003 Implementation Handoff For Claude
 
-> Status: Accepted-fix verification pending. P003 is not complete.
+> Status: Review clear; human QA pending. P003 is not complete.
 
 ## Review Target
 
@@ -174,6 +174,16 @@ Interim failures were resolved and are not represented as passes:
   not resolve the workspace alias. The explicit repository-source-path rerun
   connected only to the isolated test database and passed.
 
+## Independent Fix Verification
+
+Claude independently reviewed
+`9c9ab03899a5295cbcd54a3f22279c1280b5911f..5de9490cf80c3cdda286f0565608f415ee75241f`,
+reran typecheck, lint, all test layers, build, Drizzle no-drift generation, and
+isolated test preparation, and re-probed the database/API regressions. P003-F1
+through P003-F7 are individually marked `Verified`; final verdict is `ready`
+with no open finding. The retained weaker legacy response-reason constraint is
+documented as harmless redundancy under the additive-migration policy.
+
 ## Direct Probe Details
 
 - Manager draft list: `200`; exact strings `4.50`, `125.00`, `562.50`.
@@ -187,16 +197,18 @@ Interim failures were resolved and are not represented as passes:
 
 ## Known Limitations
 
-- Claude's candidate review completed with verdict
-  `ready with non-blocking observations`; focused verification of the accepted
-  F1-F7 fix commit has not run.
+- Claude independently verified P003-F1 through P003-F7 fixed at
+  `5de9490cf80c3cdda286f0565608f415ee75241f`; the final review verdict is
+  `ready` and no finding remains open.
 - Human Q1-Q10 QA has not run.
 - P003 remains local-only and uses development authentication.
 - All approved non-goals remain excluded: no billing/currency variants/line
   items, comments, work execution/time tracking, attachments, notifications,
   production auth, AWS, deployment, queues, or background jobs.
 
-## Review Focus
+## Independent Review Focus — Completed
+
+Claude's candidate review and focused accepted-fix verification covered:
 
 - Recheck transaction lock ordering, conditional lifecycle updates, and unique
   constraint error mapping under concurrency.

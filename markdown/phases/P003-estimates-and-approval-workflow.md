@@ -69,13 +69,15 @@ response-note requirements, and concurrency behavior are binding for P003.
   `phase/P003-estimates-and-approval-workflow`.
 - Candidate SHA: `9c9ab03899a5295cbcd54a3f22279c1280b5911f`.
 - Candidate commit: `P003: implement estimates and approval workflow`.
-- Claude review: complete; verdict `ready with non-blocking observations`.
+- Claude candidate review: complete; verdict
+  `ready with non-blocking observations`.
 - Human disposition: P003-F1 through P003-F7 accepted on 2026-07-26.
 - Review-fix SHA: `5de9490cf80c3cdda286f0565608f415ee75241f`.
 - Review-fix commit: `P003: address accepted review findings`.
 - Accepted-fix range:
   `e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`.
-- Focused Claude verification: pending.
+- Focused Claude verification: P003-F1 through P003-F7 independently verified
+  fixed at `5de9490cf80c3cdda286f0565608f415ee75241f`; final verdict `ready`.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -145,10 +147,13 @@ Interim validation results are preserved honestly:
 - Accepted-fix target:
   `e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`.
 - Implementation handoff: `notes/P003/implementation-handoff.md`.
-- Independent candidate review: complete; verdict
+- Independent candidate review: complete; initial verdict
   `ready with non-blocking observations`.
-- Finding disposition: P003-F1 through P003-F7 accepted and fixed.
-- Focused verification of the accepted-fix commit: pending.
+- Finding disposition: P003-F1 through P003-F7 accepted, fixed, and
+  independently verified.
+- Focused verification: complete at
+  `5de9490cf80c3cdda286f0565608f415ee75241f`; final verdict `ready`, with no
+  open finding.
 - Human QA Q1-Q10: not run.
 - No push, remote creation, pull, origin reset, history rewrite, or merge occurred.
 
@@ -156,9 +161,10 @@ Interim validation results are preserved honestly:
 
 - Requirements implemented: Yes, including accepted P003-F1 through P003-F7.
 - Automated validation: passed as recorded above.
-- Independent review clear: Candidate review is complete; focused verification
-  of accepted fixes remains pending.
-- Findings dispositioned: Yes; P003-F1 through P003-F7 were accepted and fixed.
+- Independent review clear: Yes; all accepted fixes were independently verified
+  and the final verdict is `ready`.
+- Findings dispositioned: Yes; P003-F1 through P003-F7 were accepted, fixed,
+  and verified.
 - Required human QA complete: No; Q1-Q10 are not run.
 - Human integration and completion approval: No.
 - Ready for integration: No.

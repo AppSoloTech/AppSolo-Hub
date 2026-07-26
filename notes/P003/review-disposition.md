@@ -22,5 +22,6 @@ observations, must be recorded here by the human before accepted fixes begin.
   the approved P003 behavior and its regression evidence.
 - All seven findings are applied in review-fix commit
   `5de9490cf80c3cdda286f0565608f415ee75241f`
-  (`P003: address accepted review findings`). Focused Claude verification of
-  the accepted fix remains pending.
+  (`P003: address accepted review findings`). Claude independently verified
+  P003-F1 through P003-F7 fixed at that immutable commit and reported final
+  verdict `ready`.
