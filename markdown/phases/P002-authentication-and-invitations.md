@@ -34,18 +34,21 @@ Establish provider-neutral user access lifecycle, invitations, membership admini
 
 ## Approval State
 
-This phase is a roadmap record only.
+This phase remains a roadmap record only.
 
-- Prompt: not drafted.
+- Draft prompt: `prompts/drafts/P002-authentication-and-invitations.md`, specification version 1.
+- Draft basis: local `main` at `ccf344a406085a92669d867cc068e67c55519af3`.
 - Human approval: not granted.
 - Implementation: must not begin.
-- Dependencies: P001 must be complete or explicitly waived.
+- Dependencies: P001 is complete.
 
-Before approval, create a consolidated prompt with stable R, AC, V, Q, and NG identifiers and resolve material product decisions.
+The draft contains stable R, AC, V, Q, and NG identifiers. Before approval, the human must approve or revise its invitation lifetime/state, role ceiling, local delivery, development-session, invitee-profile, token-transport, and audit-retention decisions.
 
 ## Evidence
 
-- Base SHA: pending.
+- Drafted: 2026-07-26.
+- Draft basis SHA: `ccf344a406085a92669d867cc068e67c55519af3`.
+- Base SHA: pending implementation approval and revalidation.
 - Candidate SHA: pending.
 - Review: not started.
 - Human QA: not started.

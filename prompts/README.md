@@ -3,10 +3,13 @@
 This directory contains executable work orders.
 
 - `active/`: the consolidated prompt currently approved for implementation.
+- `drafts/`: non-authorizing work orders under human review.
 - `archive/`: superseded prompt revisions retained as historical evidence.
 - `PHASE_TEMPLATE.md`: starting structure for future prompts.
 
 A phase record is canonical for status. A prompt is canonical for the approved implementation contract only after the human approves its version.
+
+Draft prompts must say explicitly that they do not authorize implementation. On approval, move the consolidated revision to `active/`, update its approval frontmatter, and update the canonical phase record.
 
 ## Versioning Rules
 
