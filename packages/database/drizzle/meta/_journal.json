@@ -36,6 +36,13 @@
       "when": 1785100299235,
       "tag": "0004_sloppy_bloodaxe",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785103880315,
+      "tag": "0005_early_namor",
+      "breakpoints": true
     }
   ]
 }

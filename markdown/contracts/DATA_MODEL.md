@@ -336,7 +336,8 @@ through the API.
 
 Rows are immutable and have no update/delete API. Database checks limit notes
 to 2,000 characters and require a 3-character reason for rejection or
-clarification.
+clarification. The additive `estimate_responses_reason_present` check makes the
+reason explicitly non-null before evaluating its trimmed length.
 
 ### comments
 

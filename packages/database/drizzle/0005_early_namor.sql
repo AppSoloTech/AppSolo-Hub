@@ -1,0 +1,1 @@
+ALTER TABLE "estimate_responses" ADD CONSTRAINT "estimate_responses_reason_present" CHECK ("estimate_responses"."decision" = 'APPROVED' or ("estimate_responses"."note" is not null and char_length(btrim("estimate_responses"."note")) between 3 and 2000));

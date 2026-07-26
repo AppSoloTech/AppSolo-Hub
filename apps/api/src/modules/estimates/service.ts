@@ -37,7 +37,10 @@ const asDto = (row: EstimateRow): EstimateDto => ({
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
   response:
-    row.responseDecision && row.responseCreatedAt && row.responseFirstName && row.responseLastName
+    row.responseDecision !== null &&
+    row.responseCreatedAt !== null &&
+    row.responseFirstName !== null &&
+    row.responseLastName !== null
       ? {
           decision: row.responseDecision,
           note: row.responseNote,
@@ -79,7 +82,7 @@ export class EstimateService {
     } catch (error) {
       throw validationError([
         {
-          path: 'hourlyRate',
+          path: 'estimatedCost',
           message: error instanceof Error ? error.message : 'The calculated cost is invalid.',
         },
       ]);

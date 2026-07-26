@@ -1,6 +1,6 @@
 import { createDatabase, resolvedTestDatabaseUrl } from '@appsolo/database';
 import { seedDatabase, seedIds } from '@appsolo/database/seed';
-import { estimateResponses, estimates, statusHistory } from '@appsolo/database/schema';
+import { changeRequests, estimateResponses, estimates, statusHistory, users } from '@appsolo/database/schema';
 import { and, eq } from 'drizzle-orm';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -76,6 +76,19 @@ describe('estimate API integration', () => {
   });
 
   it('creates one server-numbered exact draft and atomically advances a submitted request', async () => {
+    const overflow = await request(app).post(listPath(seedIds.requestOne)).set(auth(seedIds.developer)).send({
+      estimatedHours: '999999.99',
+      hourlyRate: '9999999999.99',
+      scopeNotes: 'This otherwise valid request exceeds the stored cost range.',
+    });
+    expect(overflow.status).toBe(400);
+    expect(overflow.body).toMatchObject({
+      error: {
+        code: 'VALIDATION_ERROR',
+        details: [{ path: 'estimatedCost', message: 'The calculated cost is too large.' }],
+      },
+    });
+
     const response = await request(app)
       .post(listPath(seedIds.requestOne))
       .set(auth(seedIds.developer))
@@ -122,6 +135,31 @@ describe('estimate API integration', () => {
       .get(`${listPath(seedIds.requestOne)}?includeDraft=true`)
       .set(auth(seedIds.developer));
     expect(unknownQuery.status).toBe(400);
+  });
+
+  it('denies client-member create, edit, and submit operations without exposing draft state', async () => {
+    const draftList = await request(app).get(listPath(seedIds.requestTwo)).set(auth(seedIds.developer));
+    const draft = (draftList.body as { data: Array<{ id: string; updatedAt: string }> }).data[0];
+    expect(draft).toBeDefined();
+
+    const createDenied = await request(app)
+      .post(listPath(seedIds.requestOne))
+      .set(auth(seedIds.clientMember))
+      .send(validTerms);
+    expect(createDenied.status).toBe(403);
+
+    const editDenied = await request(app)
+      .patch(`/api/v1/estimates/${draft?.id}`)
+      .set(auth(seedIds.clientMember))
+      .send({ ...validTerms, expectedUpdatedAt: draft?.updatedAt });
+    expect(editDenied.status).toBe(404);
+
+    const submitDenied = await request(app)
+      .post(`/api/v1/estimates/${draft?.id}/submit`)
+      .set(auth(seedIds.clientMember))
+      .send({ expectedUpdatedAt: draft?.updatedAt });
+    expect(submitDenied.status).toBe(404);
+    expect(JSON.stringify([editDenied.body, submitDenied.body])).not.toContain(draft?.id);
   });
 
   it('serializes concurrent draft creation and preserves the single transition', async () => {
@@ -275,6 +313,109 @@ describe('estimate API integration', () => {
           version: 1,
           status: 'SUPERSEDED',
           response: { decision: 'CLARIFICATION_REQUESTED' },
+        },
+      ],
+    });
+  });
+
+  it('persists real rejection and clarification decisions with one response and transition each', async () => {
+    const rejectView = await request(app)
+      .get(listPath(seedIds.requestAwaitingApproval))
+      .set(auth(seedIds.clientAdmin));
+    const rejectable = (rejectView.body as { data: Array<{ id: string; updatedAt: string }> }).data[0];
+    const rejected = await request(app)
+      .post(`/api/v1/estimates/${rejectable?.id}/respond`)
+      .set(auth(seedIds.clientAdmin))
+      .send({
+        decision: 'REJECT',
+        note: 'Exclude archived filter presets.',
+        expectedUpdatedAt: rejectable?.updatedAt,
+      });
+    expect(rejected.status).toBe(200);
+    expect(rejected.body).toMatchObject({
+      data: {
+        status: 'REJECTED',
+        response: { decision: 'REJECTED', note: 'Exclude archived filter presets.' },
+      },
+    });
+
+    const clarificationView = await request(app)
+      .get(listPath(seedIds.requestRevision))
+      .set(auth(seedIds.clientAdmin));
+    const clarifiable = (
+      clarificationView.body as {
+        data: Array<{ id: string; status: string; updatedAt: string }>;
+      }
+    ).data.find((estimate) => estimate.status === 'SUBMITTED');
+    const clarified = await request(app)
+      .post(`/api/v1/estimates/${clarifiable?.id}/respond`)
+      .set(auth(seedIds.clientAdmin))
+      .send({
+        decision: 'REQUEST_CLARIFICATION',
+        note: 'Confirm whether regional totals include archived accounts.',
+        expectedUpdatedAt: clarifiable?.updatedAt,
+      });
+    expect(clarified.status).toBe(200);
+    expect(clarified.body).toMatchObject({
+      data: {
+        status: 'NEEDS_CLARIFICATION',
+        response: {
+          decision: 'CLARIFICATION_REQUESTED',
+          note: 'Confirm whether regional totals include archived accounts.',
+        },
+      },
+    });
+
+    for (const expected of [
+      {
+        requestId: seedIds.requestAwaitingApproval,
+        estimateId: seedIds.submittedEstimate,
+        requestStatus: 'REJECTED',
+      },
+      {
+        requestId: seedIds.requestRevision,
+        estimateId: seedIds.revisionEstimate,
+        requestStatus: 'NEEDS_CLARIFICATION',
+      },
+    ] as const) {
+      const responseRows = await db
+        .select()
+        .from(estimateResponses)
+        .where(eq(estimateResponses.estimateId, expected.estimateId));
+      expect(responseRows).toHaveLength(1);
+      const transitionRows = await db
+        .select()
+        .from(statusHistory)
+        .where(
+          and(
+            eq(statusHistory.changeRequestId, expected.requestId),
+            eq(statusHistory.previousStatus, 'AWAITING_APPROVAL'),
+            eq(statusHistory.newStatus, expected.requestStatus),
+          ),
+        );
+      expect(transitionRows).toHaveLength(1);
+      const [requestRow] = await db
+        .select({ status: changeRequests.status })
+        .from(changeRequests)
+        .where(eq(changeRequests.id, expected.requestId));
+      expect(requestRow?.status).toBe(expected.requestStatus);
+      const [estimateRow] = await db
+        .select({ status: estimates.status })
+        .from(estimates)
+        .where(eq(estimates.id, expected.estimateId));
+      expect(estimateRow?.status).toBe(expected.requestStatus);
+    }
+  });
+
+  it('retains response history when a responder name component is empty', async () => {
+    await db.update(users).set({ firstName: '' }).where(eq(users.id, seedIds.clientAdmin));
+    const history = await request(app).get(listPath(seedIds.requestApproved)).set(auth(seedIds.clientMember));
+    expect(history.status).toBe(200);
+    expect(history.body).toMatchObject({
+      data: [
+        {
+          status: 'APPROVED',
+          response: { decision: 'APPROVED', actorDisplayName: 'Admin' },
         },
       ],
     });

@@ -78,6 +78,29 @@ describe('estimate workflow UI', () => {
     expect(await screen.findByText('Draft estimate created.')).toBeVisible();
   });
 
+  it('associates each invalid estimate term with an assertive field description', async () => {
+    list.mockResolvedValue({ data: [], meta: { count: 0, canManage: true, canRespond: false } });
+    const user = userEvent.setup();
+    renderSection();
+
+    await screen.findByRole('heading', { name: 'Prepare an estimate' });
+    await user.click(screen.getByRole('button', { name: 'Create draft' }));
+
+    const hours = screen.getByLabelText('Estimated hours');
+    const rate = screen.getByLabelText('Hourly rate (USD)');
+    const scope = screen.getByLabelText('Scope notes');
+    expect(hours).toHaveAccessibleName('Estimated hours');
+    expect(hours).toHaveAccessibleDescription();
+    expect(rate).toHaveAccessibleDescription();
+    expect(scope).toHaveAccessibleDescription();
+    for (const input of [hours, rate, scope]) {
+      const descriptionId = input.getAttribute('aria-describedby');
+      expect(descriptionId).toBeTruthy();
+      expect(document.getElementById(descriptionId ?? '')).toHaveAttribute('role', 'alert');
+    }
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('shows submitted history to a client member without draft or response controls', async () => {
     list.mockResolvedValue({
       data: [estimate],
@@ -119,10 +142,23 @@ describe('estimate workflow UI', () => {
 
   it('announces stale-state conflicts and refetches the latest draft', async () => {
     const draft = { ...estimate, status: 'DRAFT' as const, submittedAt: null };
-    list.mockResolvedValue({
-      data: [draft],
-      meta: { count: 1, canManage: true, canRespond: false },
-    });
+    const latestDraft = {
+      ...draft,
+      estimatedHours: '6.00',
+      hourlyRate: '150.00',
+      estimatedCost: '900.00',
+      scopeNotes: 'Terms saved by another manager and reloaded after conflict.',
+      updatedAt: '2026-07-26T15:00:00.000Z',
+    };
+    list
+      .mockResolvedValueOnce({
+        data: [draft],
+        meta: { count: 1, canManage: true, canRespond: false },
+      })
+      .mockResolvedValue({
+        data: [latestDraft],
+        meta: { count: 1, canManage: true, canRespond: false },
+      });
     const { ApiError } = await import('../../api.js');
     update.mockRejectedValue(new ApiError(409, 'CONFLICT', 'Conflict'));
     const user = userEvent.setup();
@@ -132,7 +168,13 @@ describe('estimate workflow UI', () => {
     await user.clear(screen.getByLabelText('Estimated hours'));
     await user.type(screen.getByLabelText('Estimated hours'), '4.00');
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
-    expect(await screen.findByText(/This estimate changed or is no longer actionable\./)).toBeVisible();
+    const alert = await screen.findByText(/This estimate changed or is no longer actionable\./);
+    expect(alert).toHaveAttribute('role', 'alert');
+    expect(alert).toHaveClass('error');
     expect(list).toHaveBeenCalledTimes(2);
+    expect(screen.getByLabelText('Estimated hours')).toHaveValue('6.00');
+    expect(screen.getByLabelText('Hourly rate (USD)')).toHaveValue('150.00');
+    expect(screen.getByLabelText('Scope notes')).toHaveValue(latestDraft.scopeNotes);
+    expect(update).toHaveBeenCalledTimes(1);
   });
 });

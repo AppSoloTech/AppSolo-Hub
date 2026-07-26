@@ -35,4 +35,13 @@ describe('P003 estimate database invariants', () => {
     );
     expect(result.rows[0]?.estimated_cost).toBe('562.50');
   });
+
+  it('rejects a rejection or clarification response without a reason', async () => {
+    await expect(
+      pool.query(
+        "INSERT INTO estimate_responses (estimate_id, decision, responding_user_id, note) VALUES ($1, 'REJECTED', $2, NULL)",
+        [seedIds.draftEstimate, seedIds.clientAdmin],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
 });

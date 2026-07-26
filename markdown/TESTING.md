@@ -104,7 +104,8 @@ Component tests cover sign-in, fragment scrubbing, acceptance states, role-aware
 
 Shared tests cover decimal syntax, normalization, limits, exact multiplication,
 round-half-up boundaries, overflow, and response-note commands. Database tests
-prove the stored-cost constraint. PostgreSQL API integration tests cover the
+prove the stored-cost and non-null rejection/clarification-reason constraints.
+PostgreSQL API integration tests cover the
 capability matrix, draft invisibility, tenant denial, optimistic edits,
 single-draft and single-response concurrency, immutable submission, all
 decisions, revision/supersession, strict bodies, and P001/P002 regressions.

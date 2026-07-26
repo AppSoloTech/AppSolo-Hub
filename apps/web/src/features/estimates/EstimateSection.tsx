@@ -15,6 +15,7 @@ import { ApiError, estimatesApi } from '../../api.js';
 import styles from './EstimateSection.module.css';
 
 type Terms = { estimatedHours: string; hourlyRate: string; scopeNotes: string };
+type Feedback = { kind: 'success' | 'error'; message: string };
 const emptyTerms: Terms = { estimatedHours: '', hourlyRate: '', scopeNotes: '' };
 const draftableStatuses: ChangeRequestStatus[] = [
   'SUBMITTED',
@@ -38,7 +39,7 @@ const issueMap = (issues: Array<{ path: PropertyKey[]; message: string }>) =>
 
 const errorText = (error: unknown): string =>
   error instanceof ApiError && error.status === 409
-    ? 'This estimate changed or is no longer actionable. The latest state has been loaded.'
+    ? 'This estimate changed or is no longer actionable. The latest state is shown—review it before trying again.'
     : error instanceof ApiError
       ? error.message
       : 'The estimate action could not be completed.';
@@ -62,7 +63,7 @@ export function EstimateSection({
   const [termErrors, setTermErrors] = useState<Record<string, string>>({});
   const [decisionNote, setDecisionNote] = useState('');
   const [responseError, setResponseError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState(false);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
 
@@ -76,7 +77,7 @@ export function EstimateSection({
           }
         : emptyTerms,
     );
-  }, [draft?.id]);
+  }, [draft?.id, draft?.updatedAt]);
 
   useEffect(() => {
     if (feedback) feedbackRef.current?.focus();
@@ -106,9 +107,9 @@ export function EstimateSection({
     setFeedback(null);
     try {
       await action();
-      setFeedback(success);
+      setFeedback({ kind: 'success', message: success });
     } catch (error: unknown) {
-      setFeedback(errorText(error));
+      setFeedback({ kind: 'error', message: errorText(error) });
     } finally {
       await refresh();
       setBusy(false);
@@ -183,8 +184,13 @@ export function EstimateSection({
       </div>
 
       {feedback ? (
-        <p className="notice" role="status" tabIndex={-1} ref={feedbackRef}>
-          {feedback}
+        <p
+          className={feedback.kind === 'success' ? 'notice' : 'error'}
+          role={feedback.kind === 'success' ? 'status' : 'alert'}
+          tabIndex={-1}
+          ref={feedbackRef}
+        >
+          {feedback.message}
         </p>
       ) : null}
 
@@ -204,43 +210,61 @@ export function EstimateSection({
             <p>Hours, rate, and scope become immutable after submission.</p>
           </div>
           <div className={styles.termGrid}>
-            <label>
-              Estimated hours
+            <div className={styles.field}>
+              <label htmlFor="estimate-hours">Estimated hours</label>
               <input
+                id="estimate-hours"
                 inputMode="decimal"
                 value={terms.estimatedHours}
                 aria-invalid={Boolean(termErrors.estimatedHours)}
+                aria-describedby={termErrors.estimatedHours ? 'estimate-hours-error' : undefined}
                 onChange={(event) => setTerms({ ...terms, estimatedHours: event.target.value })}
               />
-              {termErrors.estimatedHours ? <span className="error">{termErrors.estimatedHours}</span> : null}
-            </label>
-            <label>
-              Hourly rate (USD)
+              {termErrors.estimatedHours ? (
+                <span id="estimate-hours-error" className="error" role="alert">
+                  {termErrors.estimatedHours}
+                </span>
+              ) : null}
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="estimate-rate">Hourly rate (USD)</label>
               <input
+                id="estimate-rate"
                 inputMode="decimal"
                 value={terms.hourlyRate}
                 aria-invalid={Boolean(termErrors.hourlyRate)}
+                aria-describedby={termErrors.hourlyRate ? 'estimate-rate-error' : undefined}
                 onChange={(event) => setTerms({ ...terms, hourlyRate: event.target.value })}
               />
-              {termErrors.hourlyRate ? <span className="error">{termErrors.hourlyRate}</span> : null}
-            </label>
-            <label>
-              Estimated cost (server-derived)
-              <output className={styles.cost} aria-live="polite">
+              {termErrors.hourlyRate ? (
+                <span id="estimate-rate-error" className="error" role="alert">
+                  {termErrors.hourlyRate}
+                </span>
+              ) : null}
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="estimate-cost">Estimated cost (server-derived)</label>
+              <output id="estimate-cost" className={styles.cost} aria-live="polite">
                 {preview}
               </output>
-            </label>
+            </div>
           </div>
-          <label>
-            Scope notes
+          <div className={styles.field}>
+            <label htmlFor="estimate-scope">Scope notes</label>
             <textarea
+              id="estimate-scope"
               rows={6}
               value={terms.scopeNotes}
               aria-invalid={Boolean(termErrors.scopeNotes)}
+              aria-describedby={termErrors.scopeNotes ? 'estimate-scope-error' : undefined}
               onChange={(event) => setTerms({ ...terms, scopeNotes: event.target.value })}
             />
-            {termErrors.scopeNotes ? <span className="error">{termErrors.scopeNotes}</span> : null}
-          </label>
+            {termErrors.scopeNotes ? (
+              <span id="estimate-scope-error" className="error" role="alert">
+                {termErrors.scopeNotes}
+              </span>
+            ) : null}
+          </div>
           <div className={styles.actions}>
             <button className="button" disabled={busy}>
               {busy ? 'Saving…' : draft ? 'Save draft' : 'Create draft'}

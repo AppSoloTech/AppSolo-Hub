@@ -288,6 +288,10 @@ export const estimateResponses = pgTable(
       'estimate_responses_reason_required',
       sql`${t.decision} = 'APPROVED' or char_length(btrim(${t.note})) between 3 and 2000`,
     ),
+    check(
+      'estimate_responses_reason_present',
+      sql`${t.decision} = 'APPROVED' or (${t.note} is not null and char_length(btrim(${t.note})) between 3 and 2000)`,
+    ),
     index('estimate_responses_user_created_idx').on(t.respondingUserId, t.createdAt.desc()),
   ],
 );
