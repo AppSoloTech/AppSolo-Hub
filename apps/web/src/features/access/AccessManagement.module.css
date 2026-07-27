@@ -28,6 +28,8 @@ table select {
   border-radius: 7px;
   padding: 9px 10px;
   width: 100%;
+  background: var(--surface);
+  color: inherit;
 }
 
 .inviteForm button {

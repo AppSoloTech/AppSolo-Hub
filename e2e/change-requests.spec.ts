@@ -3,6 +3,21 @@ const projectId = '10000000-0000-4000-8000-000000000003';
 const draftRequestId = '30000000-0000-4000-8000-000000000002';
 const clarificationRequestId = '30000000-0000-4000-8000-000000000006';
 const approvedWorkRequestId = '30000000-0000-4000-8000-000000000004';
+
+test('dark mode is applied and persists across a browser reload', async ({ page }) => {
+  await page.goto(`/projects/${projectId}/change-requests`);
+  await page.evaluate(() => window.localStorage.removeItem('appsolo.color-theme'));
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect(await page.evaluate(() => window.localStorage.getItem('appsolo.color-theme'))).toBe('dark');
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible();
+});
+
 test('seeded list, create, and refreshed detail persist through the real API', async ({ page }) => {
   const title = `Browser request ${Date.now()}`;
   await page.goto(`/projects/${projectId}/change-requests`);

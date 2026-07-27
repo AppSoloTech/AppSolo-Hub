@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SessionDto } from '@appsolo/shared';
+import { applyTheme, themeStorageKey } from '../theme.js';
 import { DashboardLayout } from './DashboardLayout.js';
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }));
@@ -39,6 +41,15 @@ const session: SessionDto = {
   ],
 };
 
+beforeEach(() => {
+  window.localStorage.clear();
+  applyTheme('light');
+});
+
+afterEach(() => {
+  cleanup();
+});
+
 describe('DashboardLayout organization context', () => {
   it('shows the organization selected by an access route', () => {
     useSession.mockReturnValue({ session, signOut: vi.fn() });
@@ -62,5 +73,26 @@ describe('DashboardLayout organization context', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('Multiple authorized organizations')).toBeVisible();
+  });
+});
+
+describe('DashboardLayout theme control', () => {
+  it('switches theme and saves the preference', async () => {
+    useSession.mockReturnValue({ session, signOut: vi.fn() });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/projects/project-id/change-requests']}>
+        <DashboardLayout>
+          <div>Project content</div>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const toggle = screen.getByRole('button', { name: 'Switch to dark mode' });
+    await user.click(toggle);
+
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(window.localStorage.getItem(themeStorageKey)).toBe('dark');
+    expect(screen.getByRole('button', { name: 'Switch to light mode' })).toHaveTextContent('Light mode');
   });
 });

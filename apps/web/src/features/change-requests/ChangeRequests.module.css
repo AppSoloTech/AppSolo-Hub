@@ -3,7 +3,7 @@
   gap: 12px;
 }
 .row {
-  background: white;
+  background: var(--surface);
   color: inherit;
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -29,10 +29,10 @@
 .status {
   font-size: 0.72rem;
   font-weight: 800;
-  color: #1e40af;
+  color: var(--status-blue);
 }
 .AWAITING_ESTIMATE {
-  color: #a15c00;
+  color: var(--warning-text);
 }
 .meta {
   display: grid;
@@ -55,10 +55,11 @@
 .form input,
 .form textarea,
 .form select {
-  border: 1px solid #b7c2d3;
+  border: 1px solid var(--field-border);
   border-radius: 6px;
   padding: 10px;
-  background: white;
+  background: var(--surface);
+  color: inherit;
 }
 .fields {
   display: grid;

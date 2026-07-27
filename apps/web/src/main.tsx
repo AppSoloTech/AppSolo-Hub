@@ -4,7 +4,11 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './app/App.js';
 import { SessionProvider } from './session/SessionProvider.js';
+import { initializeTheme } from './theme.js';
 import './styles/global.css';
+
+initializeTheme();
+
 const queryClient = new QueryClient();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -26,9 +26,9 @@
 }
 
 .clarification {
-  border-left: 4px solid #a26400;
+  border-left: 4px solid var(--warning-accent);
   border-radius: 6px;
-  background: #fff8e7;
+  background: var(--warning-bg);
   padding: 14px 16px;
 }
 
@@ -55,8 +55,8 @@
 .visibility {
   width: fit-content;
   border-radius: 999px;
-  background: #eef3fa;
-  color: #284c7a;
+  background: var(--info-bg);
+  color: var(--info-text);
   padding: 4px 9px;
   font-size: 0.78rem;
   font-weight: 700;
@@ -69,7 +69,7 @@
 .form {
   display: grid;
   gap: 16px;
-  border-color: #93b4e8;
+  border-color: var(--form-accent);
 }
 
 .field {
@@ -83,10 +83,10 @@
 
 .field textarea,
 .field select {
-  border: 1px solid #b7c2d3;
+  border: 1px solid var(--field-border);
   border-radius: 6px;
   padding: 10px;
-  background: white;
+  background: var(--surface);
   color: inherit;
   font: inherit;
 }

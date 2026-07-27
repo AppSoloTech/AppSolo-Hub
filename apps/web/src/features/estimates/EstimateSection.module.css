@@ -27,7 +27,7 @@
 .responseForm {
   display: grid;
   gap: 16px;
-  border-color: #93b4e8;
+  border-color: var(--form-accent);
 }
 
 .field,
@@ -45,10 +45,10 @@
 .form input,
 .form textarea,
 .responseForm textarea {
-  border: 1px solid #b7c2d3;
+  border: 1px solid var(--field-border);
   border-radius: 6px;
   padding: 10px;
-  background: white;
+  background: var(--surface);
   color: inherit;
   font: inherit;
 }
@@ -72,7 +72,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 10px;
-  background: #f7f9fc;
+  background: var(--cost-bg);
   font-variant-numeric: tabular-nums;
 }
 
@@ -91,7 +91,7 @@
 
 .versionHeader strong {
   font-size: 1.35rem;
-  color: #163f75;
+  color: var(--estimate-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -125,8 +125,8 @@
 }
 
 .response {
-  border-left: 3px solid #4d78b5;
-  background: #f5f8fd;
+  border-left: 3px solid var(--estimate-accent);
+  background: var(--estimate-bg);
   padding: 12px 14px;
   margin-top: 16px;
 }

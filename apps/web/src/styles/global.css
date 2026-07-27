@@ -1,18 +1,152 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  color: #172033;
-  background: #f5f7fb;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--page-bg);
+  --page-bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --text: #172033;
   --navy: #14233b;
   --mint: #62dfbf;
   --blue: #2563eb;
+  --button-bg: #2563eb;
   --muted: #637087;
   --border: #dce2ec;
+  --field-border: #b7c2d3;
+  --on-accent: #ffffff;
+  --card-shadow: #14233b0a;
+  --sidebar-muted: #b9c7dd;
+  --sidebar-border: #31425f;
+  --sidebar-link: #23395b;
+  --sidebar-control-border: #587092;
+  --status-blue: #1e40af;
+  --warning-text: #a15c00;
+  --warning-accent: #a26400;
+  --warning-bg: #fff8e7;
+  --info-text: #284c7a;
+  --info-bg: #eef3fa;
+  --form-accent: #93b4e8;
+  --purple-accent: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --teal-accent: #0f766e;
+  --teal-bg: #f0fdfa;
+  --badge-text: #3730a3;
+  --badge-bg: #eef2ff;
+  --danger: #b42318;
+  --danger-strong: #991b1b;
+  --danger-button: #b91c1c;
+  --success: #067647;
+  --success-bg: #ecfdf3;
+  --estimate-text: #163f75;
+  --estimate-accent: #4d78b5;
+  --estimate-bg: #f5f8fd;
+  --cost-bg: #f7f9fc;
 }
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page-bg: #0b1220;
+  --surface: #141f30;
+  --surface-subtle: #101a29;
+  --text: #e7edf7;
+  --navy: #0d1727;
+  --mint: #72e8c9;
+  --blue: #8aafff;
+  --button-bg: #366ad3;
+  --muted: #aab6c9;
+  --border: #33445b;
+  --field-border: #52637a;
+  --card-shadow: #0000003d;
+  --sidebar-muted: #b8c5d8;
+  --sidebar-border: #34445b;
+  --sidebar-link: #1d304c;
+  --sidebar-control-border: #6d819d;
+  --status-blue: #9bb8ff;
+  --warning-text: #ffc46b;
+  --warning-accent: #e9a23b;
+  --warning-bg: #332615;
+  --info-text: #bdd8ff;
+  --info-bg: #182b45;
+  --form-accent: #5d82b8;
+  --purple-accent: #c4b5fd;
+  --purple-bg: #2c2141;
+  --teal-accent: #5eead4;
+  --teal-bg: #12342f;
+  --badge-text: #c7d2fe;
+  --badge-bg: #242d55;
+  --danger: #fda29b;
+  --danger-strong: #fda29b;
+  --danger-button: #b4232f;
+  --success: #75e0a7;
+  --success-bg: #123524;
+  --estimate-text: #bdd8ff;
+  --estimate-accent: #7fa7dc;
+  --estimate-bg: #192a40;
+  --cost-bg: #101a29;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --page-bg: #0b1220;
+    --surface: #141f30;
+    --surface-subtle: #101a29;
+    --text: #e7edf7;
+    --navy: #0d1727;
+    --mint: #72e8c9;
+    --blue: #8aafff;
+    --button-bg: #366ad3;
+    --muted: #aab6c9;
+    --border: #33445b;
+    --field-border: #52637a;
+    --card-shadow: #0000003d;
+    --sidebar-muted: #b8c5d8;
+    --sidebar-border: #34445b;
+    --sidebar-link: #1d304c;
+    --sidebar-control-border: #6d819d;
+    --status-blue: #9bb8ff;
+    --warning-text: #ffc46b;
+    --warning-accent: #e9a23b;
+    --warning-bg: #332615;
+    --info-text: #bdd8ff;
+    --info-bg: #182b45;
+    --form-accent: #5d82b8;
+    --purple-accent: #c4b5fd;
+    --purple-bg: #2c2141;
+    --teal-accent: #5eead4;
+    --teal-bg: #12342f;
+    --badge-text: #c7d2fe;
+    --badge-bg: #242d55;
+    --danger: #fda29b;
+    --danger-strong: #fda29b;
+    --danger-button: #b4232f;
+    --success: #75e0a7;
+    --success-bg: #123524;
+    --estimate-text: #bdd8ff;
+    --estimate-accent: #7fa7dc;
+    --estimate-bg: #192a40;
+    --cost-bg: #101a29;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
+  background: var(--page-bg);
+  color: var(--text);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 .loadingPage {
   min-height: 100vh;
@@ -26,6 +160,7 @@ input,
 textarea,
 select {
   font: inherit;
+  color: inherit;
 }
 button {
   cursor: pointer;
@@ -56,8 +191,8 @@ h1 {
   border: 0;
   border-radius: 7px;
   padding: 10px 14px;
-  background: var(--blue);
-  color: white;
+  background: var(--button-bg);
+  color: var(--on-accent);
   text-decoration: none;
   font-weight: 700;
 }
@@ -66,18 +201,18 @@ h1 {
   cursor: wait;
 }
 .card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 8px #14233b0a;
+  box-shadow: 0 2px 8px var(--card-shadow);
 }
 .error {
-  color: #b42318;
+  color: var(--danger);
 }
 .notice {
-  color: #067647;
-  background: #ecfdf3;
+  color: var(--success);
+  background: var(--success-bg);
   padding: 12px;
   border-radius: 6px;
 }

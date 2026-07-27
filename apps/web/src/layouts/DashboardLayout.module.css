@@ -5,7 +5,7 @@
 }
 .sidebar {
   background: var(--navy);
-  color: white;
+  color: var(--on-accent);
   padding: 28px 20px;
 }
 .brand {
@@ -15,17 +15,41 @@
 .brand span {
   color: var(--mint);
 }
+.themeToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  border: 1px solid var(--sidebar-control-border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: transparent;
+  color: var(--on-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.themeToggle:hover {
+  background: var(--sidebar-link);
+}
+.themeToggle:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+.themeToggle span {
+  font-size: 1rem;
+  line-height: 1;
+}
 .org {
-  color: #b9c7dd;
+  color: var(--sidebar-muted);
   font-size: 0.86rem;
-  border-bottom: 1px solid #31425f;
+  border-bottom: 1px solid var(--sidebar-border);
   padding-bottom: 22px;
 }
 nav a {
   display: block;
   padding: 10px;
-  background: #23395b;
-  color: white;
+  background: var(--sidebar-link);
+  color: var(--on-accent);
   border-radius: 6px;
   text-decoration: none;
 }
@@ -35,7 +59,7 @@ nav a + a {
 .user {
   margin-top: auto;
   padding-top: 48px;
-  color: #b9c7dd;
+  color: var(--sidebar-muted);
   font-size: 0.83rem;
   display: grid;
   gap: 5px;
@@ -46,9 +70,9 @@ nav a + a {
 .user button {
   justify-self: start;
   margin-top: 8px;
-  border: 1px solid #587092;
+  border: 1px solid var(--sidebar-control-border);
   border-radius: 6px;
-  color: white;
+  color: var(--on-accent);
   background: transparent;
   padding: 6px 9px;
 }

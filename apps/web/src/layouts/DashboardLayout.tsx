@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { seededProjectId } from '../app/App.js';
 import { useSession } from '../session/SessionProvider.js';
+import { getAppliedTheme, saveTheme } from '../theme.js';
 import styles from './DashboardLayout.module.css';
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { session, signOut } = useSession();
   const location = useLocation();
+  const [theme, setTheme] = useState(getAppliedTheme);
   const accessMemberships =
     session?.memberships.filter((membership) => membership.capabilities.includes('VIEW_MEMBERS')) ?? [];
   const organizationRouteMatch = /^\/organizations\/([^/]+)\/access(?:\/|$)/.exec(location.pathname);
@@ -24,6 +28,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className={styles.brand}>
           AppSolo <span>Client Hub</span>
         </div>
+        <button
+          type="button"
+          className={styles.themeToggle}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          onClick={() => {
+            const nextTheme = theme === 'dark' ? 'light' : 'dark';
+            saveTheme(nextTheme);
+            setTheme(nextTheme);
+          }}
+        >
+          <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
+          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        </button>
         <p className={styles.org}>{organizationLabel}</p>
         <nav>
           <Link to={`/projects/${seededProjectId}/change-requests`}>Change requests</Link>

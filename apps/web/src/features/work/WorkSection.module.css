@@ -18,7 +18,7 @@
 }
 
 .heading > strong {
-  color: #1e40af;
+  color: var(--status-blue);
   font-size: 0.78rem;
   letter-spacing: 0.05em;
 }
@@ -39,10 +39,11 @@
 .form input,
 .form textarea,
 .inlineForm textarea {
-  border: 1px solid #b7c2d3;
+  border: 1px solid var(--field-border);
   border-radius: 6px;
   padding: 10px;
-  background: white;
+  background: var(--surface);
+  color: inherit;
   font: inherit;
 }
 
@@ -81,14 +82,14 @@
 
 .voided {
   border-style: dashed;
-  background: #f8fafc;
+  background: var(--surface-subtle);
 }
 
 .response,
 .pending,
 .privateNotice {
-  border-left: 3px solid #7c3aed;
-  background: #f5f3ff;
+  border-left: 3px solid var(--purple-accent);
+  background: var(--purple-bg);
   padding: 12px 14px;
   margin: 0;
 }
@@ -98,15 +99,15 @@
 }
 
 .privateNotice {
-  border-left-color: #0f766e;
-  background: #f0fdfa;
+  border-left-color: var(--teal-accent);
+  background: var(--teal-bg);
 }
 
 .visibility {
   width: fit-content;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--badge-bg);
+  color: var(--badge-text);
   padding: 4px 9px;
   font-size: 0.72rem;
   font-weight: 800;
@@ -147,7 +148,7 @@
 .cancel summary {
   cursor: pointer;
   font-weight: 800;
-  color: #991b1b;
+  color: var(--danger-strong);
 }
 
 .cancel[open] summary {
@@ -156,9 +157,9 @@
 
 .danger {
   width: fit-content;
-  border-color: #b91c1c;
-  background: #b91c1c;
-  color: white;
+  border-color: var(--danger-button);
+  background: var(--danger-button);
+  color: var(--on-accent);
 }
 
 @media (max-width: 620px) {
