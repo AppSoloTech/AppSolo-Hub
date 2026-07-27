@@ -1,7 +1,7 @@
 ---
 id: P004
 title: Comments And Clarification
-status: changes_requested
+status: qa_pending
 owner: codex
 reviewer: claude
 prompt: prompts/active/P004-comments-and-clarification.md
@@ -88,6 +88,10 @@ are binding for P004.
 - Review-fix commit: `P004: address accepted review findings`.
 - Accepted-fix range:
   `426e0491212d55ad4018055b7705779fab337062..4c328f74a57076fa19f57937ae30867d5fabcbd2`.
+- Focused fix verification: complete on 2026-07-27; Claude independently
+  verified P004-F1 through P004-F5 fixed at
+  `4c328f74a57076fa19f57937ae30867d5fabcbd2` and issued final verdict
+  `ready with non-blocking observations`.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -174,7 +178,10 @@ Accepted-fix interim results are preserved honestly:
 - Requirements implemented: Yes, including P004-F1 through P004-F5 at
   `4c328f74a57076fa19f57937ae30867d5fabcbd2`.
 - Automated validation: Passed for the candidate and accepted-fix boundaries.
-- Independent review clear: No; P004-F1 requires independent fix verification.
-- Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted and fixed.
+- Independent review clear: Yes; every accepted finding was independently
+  verified fixed; Claude's final verdict is ready with non-blocking
+  observations.
+- Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted, fixed,
+  and independently verified.
 - Required human QA complete: No.
 - Human integration and completion approval: No.

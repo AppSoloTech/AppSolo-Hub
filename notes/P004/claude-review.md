@@ -1,6 +1,7 @@
 # Claude Review — P004 Comments And Clarification
 
-> Status: Complete. Independent review executed on 2026-07-27.
+> Status: Complete. Candidate review and accepted-fix verification both executed
+> on 2026-07-27. The final verdict is at the end of this document.
 
 ## Review Target
 
@@ -256,6 +257,176 @@ untouched.
   `EstimateSection` pattern; in-progress composer text is preserved in state and
   reappears when the query recovers.
 
-## Verdict
+## Candidate Verdict
 
 `changes requested`
+
+---
+
+# Fix Verification — 2026-07-27
+
+> Status: Complete. All five findings verified fixed at the review-fix SHA.
+
+## Fix Review Target
+
+- Candidate SHA: `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`
+- Review-fix SHA: `4c328f74a57076fa19f57937ae30867d5fabcbd2` (exists, commit)
+- Evidence-handoff SHA: `d3c0d7581d0ad9a9ee99c7f7038c8b22f24d16cb` (exists, commit)
+- Exact fix range:
+  `git diff 426e0491212d55ad4018055b7705779fab337062..4c328f74a57076fa19f57937ae30867d5fabcbd2`
+- Fix size: 17 files, +785/-90. `d3c0d758` touches only `markdown/` and
+  `notes/`.
+- `git diff --check 426e0491..4c328f74`: clean.
+- Working tree clean at verification time.
+- No `package.json` or lockfile change; no migration, schema, seed, capability,
+  route, or repository change. The fixes touch `app.ts` logging, the shared
+  comment body schema, `CommentSection`, one `key` prop, tests, and contracts.
+  No new scope entered.
+
+## Independent Validation Rerun (Fix SHA)
+
+| ID  | Command                                         | Result | Evidence                                                      |
+| --- | ----------------------------------------------- | ------ | ------------------------------------------------------------- |
+| D1  | `pnpm lint`                                     | Passed | ESLint and Prettier clean.                                    |
+| D2  | `pnpm typecheck`                                | Passed | Strict shared, database, API, and web checks.                 |
+| D3  | `pnpm test`                                     | Passed | 17 shared + 8 database tests.                                 |
+| D4  | `pnpm test:api`                                 | Passed | 44 tests in 6 files, including the new forced-error log test. |
+| D5  | `pnpm test:web`                                 | Passed | 26 tests in 8 files, including 6 `CommentSection` tests.      |
+| D6  | `pnpm build`                                    | Passed | shared, database, api, and web builds.                        |
+| D7  | `pnpm test:e2e`                                 | Passed | 4 real Playwright flows in 7.3s.                              |
+| D8  | `pnpm --filter @appsolo/database generate`      | Passed | `No schema changes, nothing to migrate` — still no drift.     |
+| D9  | `node scripts/check-scaffolding.mjs`            | Passed | 27 required files, 11 phase records.                          |
+| D10 | `node scripts/generate-phase-index.mjs --check` | Passed | Index current.                                                |
+| D11 | `node scripts/validate-phase.mjs P004`          | Passed | Phase structure valid.                                        |
+| D12 | Direct API/log probes at the fix SHA            | Passed | All five findings verified fixed — see below.                 |
+
+Codex's claim of 99 passing tests (17 + 8 + 44 + 26 + 4) reproduces exactly, and
+its disclosure that the first serializer attempt failed because `pino-http`
+replaced the base logger's serializer is accurate — the fix installs
+`safeErrorSerializer` at both the base and `pinoHttp` layers
+([app.ts:60,86](apps/api/src/app.ts#L60)).
+
+**Environment note, not a finding:** my first `pnpm test` run failed one P003
+database assertion (`expected '0.02' to be '562.50'`) because I had run
+`pnpm test:e2e` immediately before, and the e2e estimate flow mutates the seeded
+draft. `pnpm test` does not run `test:prepare` itself. After
+`pnpm --filter @appsolo/database test:prepare` all 25 tests pass. This ordering
+dependency predates P004 and is outside its diff.
+
+## Finding-By-Finding Verification
+
+### P004-F1 — Verified fixed
+
+The fix adds `safeErrorSerializer` and wires it into both the base logger and
+the `pinoHttp` child ([app.ts:42-60,86](apps/api/src/app.ts#L42-L60)).
+
+I forced genuine PostgreSQL failures with `BEFORE INSERT` triggers that raise an
+exception carrying the row's own text, on three tables, and captured every log
+line through an injected destination:
+
+| Forced failure           | Response      | Sentinel in logs | `params` | `query` | `stack` | driver message |
+| ------------------------ | ------------- | ---------------- | -------- | ------- | ------- | -------------- |
+| `comments` insert        | `500` generic | absent           | absent   | absent  | absent  | absent         |
+| `change_requests` insert | `500` generic | absent           | absent   | absent  | absent  | absent         |
+| `estimates` insert       | `500` generic | absent           | absent   | absent  | absent  | absent         |
+
+The complete captured line is now:
+
+```json
+{"level":50,"time":…,"requestId":"9b4a00ef-…","err":{"type":"DrizzleQueryError"},"msg":"unhandled request error"}
+```
+
+No comment body, change-request title, estimate scope note, SQL text, bound
+parameter, stack frame, or database URL survives. The original reproduction from
+P004-F1 no longer leaks, and the P001/P003 paths I cited in the finding's scope
+note are covered by the same central fix. The new integration test at
+[comments.integration.test.ts:255-307](apps/api/src/modules/comments/comments.integration.test.ts#L255-L307)
+uses the same forced-trigger technique and asserts the absence of the sentinel,
+`params`, `query`, and `stack`, so AC16 now has durable error-path evidence.
+
+`SECURITY.md` was updated to state that raw messages, stacks, SQL, and
+parameters are omitted from logs, so the deliberate loss of stack traces is a
+recorded contract decision rather than an oversight.
+
+### P004-F2 — Verified fixed
+
+`safeTextSchema` rejects `U+0000` in the comment body
+([index.ts](packages/shared/src/index.ts)). Live probe:
+
+```json
+400 {"code":"VALIDATION_ERROR","details":[{"path":"body","message":"Comment contains an unsupported character."}]}
+```
+
+The rejection is field-specific on `body`, happens before PostgreSQL sees the
+value, inserts nothing, and no longer produces an error-level log line. Covered
+by both a shared unit case and
+[comments.integration.test.ts:222-232](apps/api/src/modules/comments/comments.integration.test.ts#L222-L232).
+
+### P004-F3 — Verified fixed
+
+`submit` now resolves the created comment's real page via
+`findCommentPageOffset` and navigates there
+([CommentSection.tsx:11-25,66-75](apps/web/src/features/comments/CommentSection.tsx#L11-L25)).
+
+I replicated the browser's algorithm against the real API with 45
+client-visible comments (plus 44 interleaved internal rows):
+
+| Scenario                                 | Result                                                    |
+| ---------------------------------------- | --------------------------------------------------------- |
+| Post while on the final page (offset 40) | Located offset `40`; new comment rendered; no duplicate   |
+| Post while on the first page (offset 0)  | Relocated to offset `40`; new comment rendered            |
+| Scan requests needed                     | One `limit=100` call per 100 rows from the current offset |
+
+The returned offset stays a multiple of the page size in every case, and the
+implementation searches for the returned comment ID rather than assuming it
+sorts last — which is the more robust choice, since a seeded or backdated
+`created_at` can place a new comment mid-list. The `catch` fallback keeps the
+current offset if the scan fails, so a network error cannot strand the user.
+
+### P004-F4 — Verified fixed
+
+The feed now fetches `PAGE_SIZE + 1`, renders 20, and derives
+`hasNext = data.length > PAGE_SIZE`
+([CommentSection.tsx:112-114](apps/web/src/features/comments/CommentSection.tsx#L112-L114)).
+
+With exactly 40 visible comments, the second page fetches 20 rows and reports
+`hasNext = false` — the misleading "Later comments" button and the
+"Comments 21–20" label are both gone. The `Showing …` and range labels now use
+the rendered slice rather than `meta.count`.
+
+I specifically checked the concern raised in the fix handoff — that the
+21st lookahead row could become an existence oracle. It cannot: the API filters
+internal rows in SQL, so a client's `limit=21` response contained only
+`CLIENT_VISIBLE` rows at every offset (0/20/40 → 21/21/5 rows). The lookahead
+slot is filled from the viewer's own filtered set and reveals nothing about the
+44 internal rows present on the same request.
+
+### P004-F5 — Verified fixed
+
+`CommentSection` is now composed with `key={request.id}`
+([ChangeRequestDetail.tsx:50](apps/web/src/features/change-requests/ChangeRequestDetail.tsx#L50)),
+which forces a remount on any request change, so `visibility`, `body`, and
+`offset` all reinitialize and the composer always starts at `INTERNAL_ONLY`.
+This closes the latent trap exactly as recommended.
+
+## Residual Observations (Non-Blocking, No Action Required For P004)
+
+- **Error logs carry no SQLSTATE.** In every forced failure I produced, the
+  serialized object was `{"type":"DrizzleQueryError"}` — the `code` branch of
+  `safeErrorSerializer` did not surface a value even though the underlying
+  `DatabaseError.code` (`22021`, `P0001`) was present on `error.cause`. A
+  SQLSTATE contains no user data and is the single most useful triage datum, so
+  a future phase may want to make that branch reliably resolve. Nothing unsafe
+  is emitted either way.
+- **`U+0000` still yields `500` on the P001 change-request and P003 estimate
+  write paths.** `safeTextSchema` was applied only to the comment body, which is
+  correct scope discipline for P004; the log-leak half of that behavior is
+  already fixed globally by P004-F1's serializer. Worth a small follow-up in a
+  later phase.
+- **`findCommentPageOffset` costs one extra `limit=100` request per 100 rows
+  after each post.** Negligible at realistic conversation sizes and bounded by
+  the real data, but worth remembering if comment volumes grow.
+
+## Verdict
+
+`ready with non-blocking observations`

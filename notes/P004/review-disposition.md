@@ -20,3 +20,6 @@ Allowed dispositions are `Accepted`, `Rejected`, `Deferred`, and
 
 No post-candidate product or architecture decision has been made. These
 accepted corrections preserve the approved P004 outcome and contracts.
+Claude independently verified P004-F1 through P004-F5 fixed at
+`4c328f74a57076fa19f57937ae30867d5fabcbd2` and issued final verdict
+`ready with non-blocking observations`.

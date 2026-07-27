@@ -40,7 +40,7 @@ approved completion and local integration on 2026-07-27.
 ## Active Phase
 
 - Active phase: `P004 — Comments And Clarification`.
-- P004 status: `changes_requested`.
+- P004 status: `qa_pending`.
 - P004 prompt: specification version 1 under `prompts/active/`.
 - P004 implementation approval: granted by the human on 2026-07-27, including
   all twelve binding decisions.
@@ -52,8 +52,9 @@ approved completion and local integration on 2026-07-27.
   `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`; Claude completed its candidate
   review with five findings, and the human accepted P004-F1 through P004-F5 for
   correction. All accepted fixes are committed at
-  `4c328f74a57076fa19f57937ae30867d5fabcbd2`; independent verification of the
-  High finding and human QA remain pending.
+  `4c328f74a57076fa19f57937ae30867d5fabcbd2`; Claude independently verified
+  P004-F1 through P004-F5 fixed with final verdict
+  `ready with non-blocking observations`. Human QA remains pending.
 
 ## Current Constraints
 

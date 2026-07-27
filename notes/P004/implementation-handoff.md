@@ -1,7 +1,7 @@
 # P004 Implementation Handoff For Claude
 
-> Status: Accepted review fixes committed and validated. Independent
-> verification of P004-F1 and human QA remain pending.
+> Status: Review clear. All accepted findings are independently verified fixed;
+> human QA remains pending.
 
 ## Review Target
 
@@ -208,21 +208,27 @@ Accepted-fix interim results are preserved honestly:
 - Comments remain available for every active request status by approved design;
   they never transition request or estimate state.
 
-## Independent Fix Verification Focus
+## Independent Fix Verification
 
-- Reproduce P004-F1 against the accepted-fix SHA and confirm request-child
-  error logs contain type/code only, including forced database failures.
-- Confirm `U+0000` returns the documented field-specific `400` without an
-  insert or error-level database failure.
-- Recheck that the 21-row lookahead cannot expose internal-comment existence
-  and that posting from an earlier/later page opens the page containing the
-  returned comment without duplication.
-- Confirm request-ID keyed composition restores `INTERNAL_ONLY` for a fresh
-  internal composer.
+Claude completed focused verification on 2026-07-27 against
+`4c328f74a57076fa19f57937ae30867d5fabcbd2`:
+
+- P004-F1 through P004-F5 were each independently verified fixed.
+- The forced-failure log probe covered comments, change requests, and estimates
+  and found no body/title/scope sentinel, SQL, parameter, stack, database URL,
+  or driver message.
+- Real API probes confirmed field-specific null-character rejection,
+  created-comment page targeting, exact-full lookahead behavior without a
+  client visibility oracle, and request-keyed safe composer state.
+- Claude reproduced all 99 tests and issued final verdict
+  `ready with non-blocking observations`.
+- Residual observations require no P004 action: SQLSTATE is not retained in
+  sanitized logs, `U+0000` remains a `500` on older P001/P003 write schemas, and
+  created-comment targeting performs one extra scan request per 100 rows.
 
 ## Completion Status
 
 - Candidate implementation, human finding disposition, accepted fixes, and all
-  automated validation are complete.
-- Independent verification of P004-F1 and human Q1-Q10 QA remain pending.
-- Phase status is `changes_requested`; Codex has not marked P004 complete.
+  automated validation and independent verification are complete.
+- Human Q1-Q10 QA remains pending.
+- Phase status is `qa_pending`; Codex has not marked P004 complete.
