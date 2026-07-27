@@ -137,4 +137,24 @@ describe('P005 time and review database invariants', () => {
     );
     expect(result.rows.map((row) => row.new_status)).toEqual(expectedStatuses);
   });
+
+  it('seeds every private-time creation after the request enters progress', async () => {
+    const result = await pool.query<{ id: string; created_after_start: boolean }>(
+      `SELECT te.id,
+              te.created_at > started.created_at AS created_after_start
+         FROM time_entries te
+         JOIN status_history started
+           ON started.change_request_id = te.change_request_id
+          AND started.previous_status = 'APPROVED'
+          AND started.new_status = 'IN_PROGRESS'
+        WHERE te.change_request_id = $1
+        ORDER BY te.created_at, te.id`,
+      [seedIds.requestInProgress],
+    );
+    expect(result.rows).toEqual([
+      { id: seedIds.voidedTimeEntry, created_after_start: true },
+      { id: seedIds.suspendedAuthorTimeEntry, created_after_start: true },
+      { id: seedIds.activeTimeEntry, created_after_start: true },
+    ]);
+  });
 });

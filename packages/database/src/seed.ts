@@ -1,3 +1,4 @@
+import { and, eq } from 'drizzle-orm';
 import { createDatabase } from './index.js';
 import {
   accessAuditEvents,
@@ -538,7 +539,7 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             voidedByUserId: seedIds.owner,
             voidReason: 'Recorded against the wrong work date.',
             voidedAt: new Date('2026-07-27T10:00:00.000Z'),
-            createdAt: new Date('2026-07-26T15:00:00.000Z'),
+            createdAt: new Date('2026-07-27T09:10:00.000Z'),
             updatedAt: new Date('2026-07-27T10:00:00.000Z'),
           },
           {
@@ -548,11 +549,33 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             durationMinutes: 15,
             description: 'Historical time remains attributed after suspension.',
             workDate: '2026-07-25',
-            createdAt: new Date('2026-07-25T15:00:00.000Z'),
-            updatedAt: new Date('2026-07-25T15:00:00.000Z'),
+            createdAt: new Date('2026-07-27T09:20:00.000Z'),
+            updatedAt: new Date('2026-07-27T09:20:00.000Z'),
           },
         ])
         .onConflictDoNothing();
+      await tx
+        .update(timeEntries)
+        .set({ createdAt: new Date('2026-07-27T09:10:00.000Z') })
+        .where(
+          and(
+            eq(timeEntries.id, seedIds.voidedTimeEntry),
+            eq(timeEntries.createdAt, new Date('2026-07-26T15:00:00.000Z')),
+          ),
+        );
+      await tx
+        .update(timeEntries)
+        .set({
+          createdAt: new Date('2026-07-27T09:20:00.000Z'),
+          updatedAt: new Date('2026-07-27T09:20:00.000Z'),
+        })
+        .where(
+          and(
+            eq(timeEntries.id, seedIds.suspendedAuthorTimeEntry),
+            eq(timeEntries.createdAt, new Date('2026-07-25T15:00:00.000Z')),
+            eq(timeEntries.updatedAt, new Date('2026-07-25T15:00:00.000Z')),
+          ),
+        );
       await tx
         .insert(workReviewHandoffs)
         .values([
