@@ -6,8 +6,19 @@
 
 - Operating system: Not supplied.
 - Browser/version: Not supplied.
-- Application boundary: `0480a392b734750fe4612d353ea534bfd832de75`.
+- Application boundary: `8a734cc36b1457051021b2277d768ff24c328940`.
 - Development identity/tenant: Not run.
+
+## Pre-QA UI Follow-Up
+
+- Human-requested persistent dark mode was added in
+  `8a734cc36b1457051021b2277d768ff24c328940` after independent P005 review and
+  before human QA.
+- Automated checks passed: lint, strict typecheck, 38/38 web tests, all
+  workspace production builds, and 6/6 isolated Playwright tests.
+- Before Q1, select **Dark mode** in the sidebar, reload the page, and confirm
+  the dark preference remains applied. This visual check is supplemental and
+  does not replace Q1–Q10.
 
 ## Test Cases
 

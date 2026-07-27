@@ -113,7 +113,13 @@ binding for P005.
 - P005-F7 validation: lint, typecheck, shared/database tests (20/20 and
   16/16), API tests (52/52), builds, isolated test preparation, two local seed
   runs, exact diff check, and a direct local SQL chronology probe passed.
-- Human QA: not started.
+- Pre-QA UI follow-up: at the human's request, persistent system-aware dark
+  mode was added in `8a734cc36b1457051021b2277d768ff24c328940` without changing
+  P005 domain, privacy, tenancy, history, or provider boundaries. Lint, strict
+  typecheck, 38/38 web tests, all workspace builds, and 6/6 isolated
+  Playwright tests passed.
+- Human QA: not started; the application boundary is
+  `8a734cc36b1457051021b2277d768ff24c328940`.
 - Completion: not eligible.
 
 ## Completion Gate

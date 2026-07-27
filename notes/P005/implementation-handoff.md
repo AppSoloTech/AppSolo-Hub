@@ -17,6 +17,10 @@
   `P005: correct accepted seed chronology observation`.
 - P005-F7 fix range:
   `50a6b8bf384385b08303ceb44fd5f8af012bd98a..0480a392b734750fe4612d353ea534bfd832de75`.
+- Pre-QA dark-mode follow-up SHA:
+  `8a734cc36b1457051021b2277d768ff24c328940`.
+- Pre-QA dark-mode follow-up commit:
+  `feat(web): add persistent dark mode`.
 - Implementation branch:
   `phase/P005-time-tracking-status-and-completion`.
 - No remote was created, no branch was pushed, and P005 was not integrated into
@@ -131,14 +135,33 @@ legacy fixture timestamps in an already-seeded local database.
 | Passed  | `git diff --check 50a6b8bf384385b08303ceb44fd5f8af012bd98a..0480a392b734750fe4612d353ea534bfd832de75` — no output, exit 0.                                                                                                                                                             |
 | Not run | `pnpm install`, `pnpm db:migrate`, schema drift generation, web component tests, and Playwright were not rerun because F7 changes no dependency, migration/schema, API/UI behavior, or browser flow. Their previously passing evidence remains at the independently reviewed boundary. |
 
+## Pre-QA Dark-Mode Follow-Up
+
+The human explicitly requested dark mode before starting manual QA. This
+separate post-review UI follow-up adds a sidebar toggle that uses the operating
+system preference when no choice is stored, persists an explicit choice in
+local storage, applies native control color scheme, and themes all existing
+cards, forms, badges, notices, and workflow panels through semantic color
+tokens. It does not change P005 domain behavior or its reviewed security and
+privacy boundaries.
+
+| Result | Command and evidence                                                                                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passed | `pnpm lint` — ESLint and Prettier passed.                                                                                                                                       |
+| Passed | `pnpm typecheck` — strict shared, database, API, and web checks passed.                                                                                                         |
+| Passed | `pnpm test:web` — 10 files and 38/38 tests passed, including operating-system fallback, stored-preference precedence, persistence, application, and accessible toggle behavior. |
+| Passed | `pnpm build` — shared, database, API, and Vite web production builds passed.                                                                                                    |
+| Passed | `PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e` — 6/6 isolated full-stack browser tests passed, including applying dark mode and retaining it across reload.  |
+| Passed | `git diff --check` — no whitespace errors before the implementation commit.                                                                                                     |
+
 ## Coverage Summary
 
 - Shared: 20 tests.
 - Database: 16 tests against PostgreSQL invariants and deterministic lifecycle
   chronology.
 - API: 52 tests across seven files against isolated PostgreSQL.
-- Web: 34 tests across nine files.
-- Playwright: 5 full-stack workflows.
+- Web: 38 tests across ten files.
+- Playwright: 6 full-stack workflows.
 
 ## Known Limitations And Non-Goals
 
