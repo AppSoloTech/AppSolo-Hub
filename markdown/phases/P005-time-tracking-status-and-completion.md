@@ -1,7 +1,7 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: qa_pending
+status: complete
 owner: codex
 reviewer: claude
 prompt: prompts/active/P005-time-tracking-status-and-completion.md
@@ -125,9 +125,13 @@ binding for P005.
   original 4000/5173 stack and exact developer sign-in were verified. Lint,
   strict typecheck, 38/38 web tests, all workspace builds, and 6/6 isolated
   Playwright tests passed.
-- Human QA: not started; the application boundary is
-  `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`.
-- Completion: not eligible.
+- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27 at
+  `386a856ad85fdb94a900596b1b8a4cf9df5978dd`; the tested application boundary
+  is `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`. See `notes/P005/qa.md`.
+- Final reviewed, validated, and human-QA boundary:
+  `386a856ad85fdb94a900596b1b8a4cf9df5978dd`.
+- Completion: explicitly granted by the human on 2026-07-27; approved for local
+  fast-forward integration to `main`.
 
 ## Completion Gate
 
@@ -138,5 +142,9 @@ binding for P005.
   findings fixed. Final verdict: `ready with non-blocking observations`.
 - Findings dispositioned: Yes; F1–F7 were accepted by the human, and all
   accepted corrections are implemented.
-- Required human QA complete: No.
-- Human integration and completion approval: No.
+- Required human QA complete: Yes; Q1-Q10 passed by explicit human attestation
+  on 2026-07-27.
+- Human integration and completion approval: Yes; explicitly granted on
+  2026-07-27.
+- Ready for integration: Yes; approved for local fast-forward integration to
+  `main`.

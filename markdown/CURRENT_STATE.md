@@ -6,6 +6,7 @@ P001 — Local Foundation And Change-Request Vertical Slice is complete and inte
 P002 — Authentication And Invitations is complete and integrated locally.
 P003 — Estimates And Approval Workflow is complete and integrated locally.
 P004 — Comments And Clarification is complete and integrated locally.
+P005 — Time Tracking, Status, And Completion is complete and integrated locally.
 
 The shipped local application includes:
 
@@ -26,9 +27,15 @@ The shipped local application includes:
   internal-only capability enforcement;
 - clarification follow-up that preserves immutable estimate reasons and never
   mutates request or estimate lifecycle state;
+- private internal time with durable void correction, exact integer totals, and
+  complete client redaction;
+- controlled work, versioned review handoff, client response, completion, and
+  cancellation transitions with immutable role-filtered history;
+- persistent system-aware light/dark appearance and a strict canonical local
+  web port that prevents CORS-breaking fallback;
 - meaningful unit, API integration, component, and Playwright browser tests;
 - reviewed error handling, request correlation, environment isolation, redaction,
-  and durable P001/P002/P003/P004 evidence.
+  and durable P001/P002/P003/P004/P005 evidence.
 
 P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2498a60235b93b0cf2e5b`. Claude reported no open finding, and the human passed Q1-Q8 and approved integration on 2026-07-26.
 
@@ -48,32 +55,20 @@ P004-F5 fixed with final verdict `ready with non-blocking observations`; the
 human passed Q1-Q10 and explicitly approved completion and local integration on
 2026-07-27.
 
+P005's final reviewed, validated, and human-QA boundary is
+`386a856ad85fdb94a900596b1b8a4cf9df5978dd`. Claude verified P005-F1 through
+P005-F6 with final verdict `ready with non-blocking observations`; the human
+accepted and Codex corrected the resulting Low P005-F7 observation. The human
+passed Q1-Q10 and explicitly approved completion and local integration on
+2026-07-27.
+
 ## Active Phase
 
-- Active phase: `P005 — Time Tracking, Status, And Completion`.
-- P005 status: `qa_pending`.
-- P005 prompt: approved specification version 1 under `prompts/active/`.
-- P005 revalidation: passed against authoritative local `main` at
-  `33e233130579cc4be479e588bc1229f2a8a94579`; the approved scope remains one
-  cohesive phase.
-- P005 implementation approval: granted by the human on 2026-07-27, including
-  all fifteen binding decisions.
-- Approval/base commit:
-  `96f3d6158e2971f49a1b7e832dc6c2292001580e`.
-- Implementation branch:
-  `phase/P005-time-tracking-status-and-completion`.
-- Immutable candidate:
-  `df588175193707db9a65446eebb29de76e44eb21`.
-- Automated validation: V1–V20 passed and the implementation handoff is
-  recorded.
-- Independent review: Claude returned `changes requested` with P005-F1 through
-  P005-F6. The human accepted F1–F5 for correction and accepted F6 as a
-  documented P005 scaling limitation with no runtime change. Accepted fixes are
-  implemented and their applicable validation passes at immutable review-fix
-  commit `eb5821202696da134fa26094ce2a44f5a45f670f`. Claude independently
-  verified F1–F6 with final verdict `ready with non-blocking observations`.
-  The human accepted the resulting Low P005-F7 seed observation, which is fixed
-  and validated at `0480a392b734750fe4612d353ea534bfd832de75`.
+- No phase is approved or active.
+- Next roadmap candidate: `P006 — Attachments With S3`.
+- P006 status: `draft`.
+- P006 prompt: not drafted.
+- P006 implementation approval: not granted.
 
 ## Current Constraints
 
@@ -89,7 +84,8 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 - Attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
-- P005 awaits human Q1–Q10 QA. It is not complete and has not been integrated
-  or pushed.
+- P006 requires a consolidated non-authorizing prompt with stable requirements,
+  acceptance criteria, validation, QA, non-goal identifiers, and resolved
+  material product decisions before human approval.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

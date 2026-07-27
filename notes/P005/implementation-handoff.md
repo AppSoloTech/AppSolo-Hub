@@ -1,7 +1,7 @@
 # P005 Implementation Handoff
 
-> Status: Independent review clear; accepted P005-F7 correction validated;
-> human QA pending.
+> Status: Complete; independent review clear, accepted P005-F7 correction
+> validated, human QA passed, and local integration approved.
 
 ## Git Boundary
 
@@ -199,10 +199,10 @@ API and web processes.
 - There is no running timer, time edit/hard-delete, assignment, scheduling,
   reopen, arbitrary status patch, notification/outbox, attachment work, AWS,
   deployment, or production authentication.
-- Human Q1–Q10 QA has not started. Claude independently verified F1–F6 with
-  final verdict `ready with non-blocking observations`; the human accepted the
-  resulting Low F7 seed observation, and its correction is committed and
-  validated.
+- Human Q1–Q10 QA passed by explicit attestation on 2026-07-27. Claude
+  independently verified F1–F6 with final verdict
+  `ready with non-blocking observations`; the human accepted the resulting Low
+  F7 seed observation, and its correction is committed and validated.
 - The original local development servers were preserved; only the confirmed
   redundant 5174 web process was stopped. Formal Playwright evidence used
   isolated ports 4100/5273; the temporary direct-probe API on port 4200 was
@@ -210,11 +210,15 @@ API and web processes.
 
 ## Completion Status
 
-- Phase status: `qa_pending`.
+- Phase status: `complete`.
 - Human implementation approval: Granted on 2026-07-27.
 - Automated validation: applicable review-fix checks pass; V2 and V4 were not
   run because the accepted fix changed no dependency or migration.
-- Human QA: Not run.
+- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27.
+- Final reviewed, validated, and human-QA boundary:
+  `386a856ad85fdb94a900596b1b8a4cf9df5978dd`.
 - Independent review: Clear; final verdict
   `ready with non-blocking observations`.
-- Human integration/completion approval: Not granted.
+- Human integration/completion approval: Explicitly granted on 2026-07-27 for
+  local fast-forward integration to `main`.
+- No push or remote action is authorized.
