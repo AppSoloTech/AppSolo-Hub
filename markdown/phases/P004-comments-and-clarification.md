@@ -1,14 +1,14 @@
 ---
 id: P004
 title: Comments And Clarification
-status: implementing
+status: review_pending
 owner: codex
 reviewer: claude
 prompt: prompts/active/P004-comments-and-clarification.md
 depends_on: [P003]
 base_branch: main
 base_sha: c64e42d6f08901b7dd72be9d11bfc37ed3af3149
-candidate_sha: null
+candidate_sha: f7d5d43fa43fafbccbc8f2525b31c9d01a87b045
 risk: high
 human_qa_required: true
 ---
@@ -79,35 +79,37 @@ are binding for P004.
   `phase/P004-comments-and-clarification`.
 - Active prompt: `prompts/active/P004-comments-and-clarification.md`, version 1.
 - Draft authorization: human, 2026-07-27.
-- Candidate SHA: pending.
+- Candidate SHA: `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`.
+- Candidate commit: `P004: implement comments and clarification`.
+- Review handoff: `notes/P004/implementation-handoff.md`.
 - Review: not started.
 - Human QA: not started.
 - Completion: not eligible.
 
 ## Validation Evidence
 
-| ID  | Command                                         | Result  | Evidence                                                                                                          |
-| --- | ----------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
-| V1  | `node scripts/check-scaffolding.mjs`            | Passed  | 27 required files and 11 phase records.                                                                           |
-| V2  | `pnpm install`                                  | Passed  | All five workspace projects were already up to date with pnpm 11.10.0.                                            |
-| V3  | `pnpm docker:up`                                | Passed  | Local PostgreSQL Compose container reached healthy.                                                               |
-| V4  | `pnpm db:migrate`                               | Passed  | Additive P004 migration `0006_rapid_blockbuster.sql` applied to existing development data.                        |
-| V5  | `pnpm db:seed` twice                            | Passed  | Both runs completed without duplicate comments or related fixtures.                                               |
-| V6  | `pnpm --filter @appsolo/database test:prepare`  | Passed  | Only the allowlisted `appsolo_client_hub_test` database was reset, migrated, and seeded.                          |
-| V7  | `pnpm --filter @appsolo/database generate`      | Passed  | Drizzle reported no schema changes after checked-in migration `0006` and its snapshot.                            |
-| V8  | `pnpm lint`                                     | Passed  | ESLint and Prettier passed after formatting the generated snapshot/journal and newest test.                       |
-| V9  | `pnpm typecheck`                                | Passed  | Strict shared, database, API, and web checks passed.                                                              |
-| V10 | `pnpm test`                                     | Passed  | 17 shared and 8 database tests passed, including strict bodies and PostgreSQL `23514` checks.                     |
-| V11 | `pnpm test:api`                                 | Passed  | 43 tests in 6 files passed against PostgreSQL, including P004 and P001/P002/P003 regressions.                     |
-| V12 | `pnpm test:web`                                 | Passed  | 24 tests in 8 files passed, including safe reset, client redaction, recovery, guidance, and pagination.           |
-| V13 | `pnpm build`                                    | Passed  | All four workspace package/application builds completed.                                                          |
-| V14 | `pnpm test:e2e`                                 | Passed  | 4 real Playwright/API/PostgreSQL flows passed, including internal/shared clarification comments.                  |
-| V15 | direct isolated SQL/API probe                   | Passed  | Confirmed filtered offset count 0, no client leak, 403/404 safety, `23514`, lifecycle stability, and two creates. |
-| V16 | captured structured-log probe                   | Passed  | Body/auth/cookie/URL sentinels were absent and the development identity header was redacted.                      |
-| V17 | `node scripts/generate-phase-index.mjs --check` | Passed  | Canonical phase index is current.                                                                                 |
-| V18 | `git diff --check <base_sha>..<candidate_sha>`  | Not run | Candidate SHA does not exist until the immutable implementation commit is created.                                |
-| V19 | prohibited implementation/dependency searches   | Passed  | No deferred comment mutation, service/chat dependency, or prohibited-scope path entered the diff.                 |
-| V20 | `node scripts/validate-phase.mjs P004`          | Not run | Review-pending notes and the candidate SHA are created after the immutable candidate commit.                      |
+| ID  | Command                                         | Result | Evidence                                                                                                          |
+| --- | ----------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| V1  | `node scripts/check-scaffolding.mjs`            | Passed | 27 required files and 11 phase records.                                                                           |
+| V2  | `pnpm install`                                  | Passed | All five workspace projects were already up to date with pnpm 11.10.0.                                            |
+| V3  | `pnpm docker:up`                                | Passed | Local PostgreSQL Compose container reached healthy.                                                               |
+| V4  | `pnpm db:migrate`                               | Passed | Additive P004 migration `0006_rapid_blockbuster.sql` applied to existing development data.                        |
+| V5  | `pnpm db:seed` twice                            | Passed | Both runs completed without duplicate comments or related fixtures.                                               |
+| V6  | `pnpm --filter @appsolo/database test:prepare`  | Passed | Only the allowlisted `appsolo_client_hub_test` database was reset, migrated, and seeded.                          |
+| V7  | `pnpm --filter @appsolo/database generate`      | Passed | Drizzle reported no schema changes after checked-in migration `0006` and its snapshot.                            |
+| V8  | `pnpm lint`                                     | Passed | ESLint and Prettier passed after formatting the generated snapshot/journal and newest test.                       |
+| V9  | `pnpm typecheck`                                | Passed | Strict shared, database, API, and web checks passed.                                                              |
+| V10 | `pnpm test`                                     | Passed | 17 shared and 8 database tests passed, including strict bodies and PostgreSQL `23514` checks.                     |
+| V11 | `pnpm test:api`                                 | Passed | 43 tests in 6 files passed against PostgreSQL, including P004 and P001/P002/P003 regressions.                     |
+| V12 | `pnpm test:web`                                 | Passed | 24 tests in 8 files passed, including safe reset, client redaction, recovery, guidance, and pagination.           |
+| V13 | `pnpm build`                                    | Passed | All four workspace package/application builds completed.                                                          |
+| V14 | `pnpm test:e2e`                                 | Passed | 4 real Playwright/API/PostgreSQL flows passed, including internal/shared clarification comments.                  |
+| V15 | direct isolated SQL/API probe                   | Passed | Confirmed filtered offset count 0, no client leak, 403/404 safety, `23514`, lifecycle stability, and two creates. |
+| V16 | captured structured-log probe                   | Passed | Body/auth/cookie/URL sentinels were absent and the development identity header was redacted.                      |
+| V17 | `node scripts/generate-phase-index.mjs --check` | Passed | Canonical phase index is current.                                                                                 |
+| V18 | `git diff --check <base_sha>..<candidate_sha>`  | Passed | Exact immutable range `c64e42d6..f7d5d43f` has no whitespace errors.                                              |
+| V19 | prohibited implementation/dependency searches   | Passed | No deferred comment mutation, service/chat dependency, or prohibited-scope path entered the diff.                 |
+| V20 | `node scripts/validate-phase.mjs P004`          | Passed | Canonical phase and pending review/disposition/QA note structure is valid.                                        |
 
 Interim validation results are preserved honestly:
 
@@ -128,9 +130,8 @@ Interim validation results are preserved honestly:
 
 ## Completion Gate
 
-- Requirements implemented: Yes; candidate creation remains pending.
-- Automated validation: Passed except candidate-dependent V18/V20, which are
-  honestly not run yet.
+- Requirements implemented: Yes at the immutable candidate SHA.
+- Automated validation: Passed as recorded above.
 - Independent review clear: No; review has not started.
 - Findings dispositioned: not applicable yet.
 - Required human QA complete: No.

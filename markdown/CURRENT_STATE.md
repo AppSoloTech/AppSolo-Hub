@@ -40,7 +40,7 @@ approved completion and local integration on 2026-07-27.
 ## Active Phase
 
 - Active phase: `P004 — Comments And Clarification`.
-- P004 status: `implementing`.
+- P004 status: `review_pending`.
 - P004 prompt: specification version 1 under `prompts/active/`.
 - P004 implementation approval: granted by the human on 2026-07-27, including
   all twelve binding decisions.
@@ -48,6 +48,9 @@ approved completion and local integration on 2026-07-27.
   `06c1e0714ea18b1b37173917a45c023220f49e30`.
 - Implementation branch: `phase/P004-comments-and-clarification`, based on
   immutable approval commit `c64e42d6f08901b7dd72be9d11bfc37ed3af3149`.
+- Immutable candidate:
+  `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`; independent Claude review and
+  human QA remain pending.
 
 ## Current Constraints
 
@@ -60,8 +63,9 @@ approved completion and local integration on 2026-07-27.
 
 ## Significant Gaps
 
-- P004 comments are under implementation and are not shipped until review, QA,
-  human completion, and local integration are complete.
+- P004 comments are implemented as a review candidate but are not shipped until
+  independent review, finding disposition, human QA, completion approval, and
+  local integration are complete.
 - Time tracking, attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
