@@ -1,7 +1,7 @@
 ---
 id: P004
 title: Comments And Clarification
-status: qa_pending
+status: complete
 owner: codex
 reviewer: claude
 prompt: prompts/active/P004-comments-and-clarification.md
@@ -92,11 +92,12 @@ are binding for P004.
   verified P004-F1 through P004-F5 fixed at
   `4c328f74a57076fa19f57937ae30867d5fabcbd2` and issued final verdict
   `ready with non-blocking observations`.
-- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27; see
-  `notes/P004/qa.md`.
-- Human completion and local integration approval: not yet granted.
-- Completion: all implementation, validation, review, disposition, and QA gates
-  are satisfied; explicit human integration/completion approval remains.
+- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27 at
+  `a2b187b5e346d766f9e66e4e3642d105dd555b70`; see `notes/P004/qa.md`.
+- Final reviewed, validated, and human-QA boundary:
+  `a2b187b5e346d766f9e66e4e3642d105dd555b70`.
+- Completion: explicitly granted by the human on 2026-07-27; approved for local
+  fast-forward integration to `main` with no push or remote action.
 
 ## Validation Evidence
 
@@ -188,6 +189,7 @@ Accepted-fix interim results are preserved honestly:
   and independently verified.
 - Required human QA complete: Yes; Q1-Q10 passed by explicit human attestation
   on 2026-07-27.
-- Human integration and completion approval: No.
-- Ready for integration: Yes, pending explicit human integration/completion
-  approval.
+- Human integration and completion approval: Yes; explicitly granted on
+  2026-07-27.
+- Ready for integration: Yes; approved for local fast-forward integration to
+  `main`.

@@ -38,4 +38,6 @@
 - Browser/version, operating-system details, screenshots, and the exact session
   sequence were not supplied; these limitations are preserved rather than
   inferred.
-- P004 completion and integration approval: Not granted by this QA statement.
+- Final integration/completion approval: Explicitly granted by the human on
+  2026-07-27 for local fast-forward integration to `main`, with no push or
+  remote action.

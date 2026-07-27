@@ -198,9 +198,9 @@ Accepted-fix interim results are preserved honestly:
 
 ## Known Limitations And Non-Goals
 
-- Claude's candidate review is complete and every finding is accepted/fixed.
-  P004-F1 still requires independent verification, and human Q1-Q10 QA has not
-  run. P004 is not complete and must not be integrated yet.
+- Claude's candidate review and focused fix verification are complete. Every
+  finding is accepted, fixed, and independently verified. Human Q1-Q10 QA
+  passed by explicit attestation on 2026-07-27.
 - The implementation remains local-only with development authentication.
 - No real-time transport, threading, edit/delete, rich text, moderation,
   attachments, notification delivery/outbox, time tracking, production auth,
@@ -228,7 +228,11 @@ Claude completed focused verification on 2026-07-27 against
 
 ## Completion Status
 
-- Candidate implementation, human finding disposition, accepted fixes, and all
-  automated validation and independent verification are complete.
-- Human Q1-Q10 QA remains pending.
-- Phase status is `qa_pending`; Codex has not marked P004 complete.
+- Candidate implementation, human finding disposition, accepted fixes,
+  automated validation, independent verification, and human Q1-Q10 QA are
+  complete.
+- Final reviewed, validated, and human-QA boundary:
+  `a2b187b5e346d766f9e66e4e3642d105dd555b70`.
+- The human explicitly approved completion and local fast-forward integration
+  to `main` on 2026-07-27.
+- Phase status is `complete`; no push or remote action is authorized.
