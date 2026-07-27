@@ -78,6 +78,7 @@ apps/api/src/
 │   ├── access/
 │   ├── estimates/
 │   ├── comments/
+│   ├── work/
 │   └── change-requests/
 │       ├── change-request.routes.ts
 │       ├── change-request.controller.ts
@@ -119,6 +120,23 @@ Middleware constructs request IDs, logging context, parsed authentication contex
   for client roles and joins authors only for a safe display name.
 - Comment creation rechecks request scope and active membership inside its
   transaction and mutates only the new comment row.
+
+### P005 Work And History Composition
+
+- `work` owns private-time list/create/void, explicit work transitions,
+  immutable review handoffs/responses, cancellation, and the mixed request
+  chronology.
+- Services derive every action from the centralized membership capability
+  policy. Repositories recheck active client organization, project, membership,
+  request scope, lifecycle state, and optimistic timestamps under transaction
+  locks.
+- Private time and internal comments are excluded at source-query time for
+  client roles. The service orders only authorized events by event time, event
+  kind, and source ID before applying pagination.
+- Work commands update request status and insert one status-history row in the
+  same transaction. Handoffs and responses are append-only, request-versioned
+  records; time corrections preserve the original row through all-or-none void
+  metadata.
 
 ## Frontend Composition
 
@@ -172,6 +190,36 @@ Feature code may contain route components, queries, forms, and presentation comp
 5. React resets internal users to `INTERNAL_ONLY`, keeps client composition
    explicitly shared, and invalidates only the current request/identity query.
 6. No comment operation calls estimate or request lifecycle mutation code.
+
+### Start, Review, And Complete Work
+
+1. The route validates one command-specific body; no generic destination status
+   is accepted.
+2. The repository locks the tenant-scoped request and rechecks capability,
+   source status, and `expectedUpdatedAt`.
+3. Starting work changes only `APPROVED -> IN_PROGRESS`.
+4. A handoff allocates the next request-local version and commits it with
+   `IN_PROGRESS -> READY_FOR_REVIEW` and status history.
+5. A client-administrator response locks the current unanswered handoff. It
+   commits one immutable response with either
+   `READY_FOR_REVIEW -> IN_PROGRESS` or
+   `READY_FOR_REVIEW -> COMPLETED`.
+6. Cancellation uses the same optimistic transaction pattern for the approved
+   eligible nonterminal states. Completed and cancelled requests have no reopen
+   command.
+
+### Read Private Time And Complete History
+
+1. The service resolves the viewer's active client-tenant membership and
+   capability.
+2. Private-time routes return `404` to client roles and never query or construct
+   their rows or totals for those viewers.
+3. History source queries omit mutable estimate drafts for everyone and omit
+   private time plus internal comments for client roles.
+4. Explicit tagged DTOs are assembled from application-owned fields, ordered
+   oldest-first with deterministic tie-breakers, and only then paginated.
+5. React mounts no private-time component or request for client roles; API
+   filtering remains the security boundary.
 
 ### Accept Invitation
 
@@ -278,7 +326,7 @@ P001 uses global design tokens and CSS Modules. This avoids a large component fr
 
 No AWS-specific package belongs in P001.
 
-## Architectural Non-Goals Through P002
+## Architectural Non-Goals Through P005
 
 - microservices;
 - event buses;
@@ -295,5 +343,6 @@ No AWS-specific package belongs in P001.
 - email delivery or an invitation outbox;
 - AWS SDKs, Cognito, SES, or AWS resources.
 
-P003 retains these boundaries and additionally excludes billing, line items,
-comments, work execution, notifications, and estimate withdrawal/deletion.
+P005 retains these boundaries and additionally excludes billing, timers,
+assignments, time editing/deletion, terminal-state reopening, notifications,
+and arbitrary status mutation.

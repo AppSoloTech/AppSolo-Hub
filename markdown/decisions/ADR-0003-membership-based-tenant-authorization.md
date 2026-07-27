@@ -25,6 +25,10 @@ Client projects and their requests must be isolated. Internal AppSolo users also
 - P004 request comments use the same active client-organization membership
   boundary. Internal-only capability is role-specific, and its SQL visibility
   predicate is applied before pagination or DTO construction.
+- P005 work, private time, review responses, cancellation, and complete history
+  use the same boundary. Private time and internal comments are filtered from
+  client history before ordering/pagination, and internal AppSolo membership
+  still supplies no implicit client access.
 
 ## Alternatives Considered
 
@@ -42,3 +46,6 @@ Client projects and their requests must be isolated. Internal AppSolo users also
 - Suspended membership must be included in every project/request and administration authorization query, never only hidden in React.
 - Historical comment authorship remains joinable after suspension, while the
   suspended actor immediately loses authenticated tenant access.
+- Historical time, handoff, response, and status attribution likewise remains
+  joinable after suspension; a suspended actor immediately loses all new P005
+  read/write capability.

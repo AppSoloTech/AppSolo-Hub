@@ -68,6 +68,14 @@ export const capabilities = [
   'MANAGE_INVITATIONS',
   'MANAGE_MEMBERSHIPS',
   'VIEW_ACCESS_EVENTS',
+  'VIEW_REQUEST_HISTORY',
+  'VIEW_PRIVATE_TIME',
+  'CREATE_PRIVATE_TIME',
+  'VOID_OWN_PRIVATE_TIME',
+  'MANAGE_PRIVATE_TIME',
+  'MANAGE_REQUEST_WORK',
+  'RESPOND_TO_WORK_REVIEW',
+  'CANCEL_REQUESTS',
 ] as const;
 
 export type UserStatus = (typeof userStatuses)[number];
@@ -82,6 +90,13 @@ export type Capability = (typeof capabilities)[number];
 export const commentVisibilities = ['CLIENT_VISIBLE', 'INTERNAL_ONLY'] as const;
 export type CommentVisibility = (typeof commentVisibilities)[number];
 
+export const p005PaginationSchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  })
+  .strict();
+
 export const commentPaginationSchema = z
   .object({
     limit: z.coerce.number().int().min(1).max(100).default(50),
@@ -91,6 +106,9 @@ export const commentPaginationSchema = z
 
 const safeTextSchema = (schema: z.ZodString) =>
   schema.refine((value) => !value.includes('\u0000'), 'Comment contains an unsupported character.');
+
+const safeDomainTextSchema = (schema: z.ZodString, label: string) =>
+  schema.refine((value) => !value.includes('\u0000'), `${label} contains an unsupported character.`);
 
 export const createCommentSchema = z
   .object({
@@ -251,6 +269,260 @@ export const estimateListMetaSchema = z.object({
   canRespond: z.boolean(),
 });
 export type EstimateListMeta = z.infer<typeof estimateListMetaSchema>;
+
+const calendarDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.')
+  .refine((value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    if (year === undefined || month === undefined || day === undefined) return false;
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  }, 'Use a valid calendar date.');
+
+export const createTimeEntrySchema = z
+  .object({
+    durationMinutes: z
+      .number()
+      .int('Duration must be a whole number of minutes.')
+      .min(1, 'Duration must be at least 1 minute.')
+      .max(1440, 'Duration must be at most 1,440 minutes.'),
+    description: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(3, 'Description must be at least 3 characters.')
+        .max(2000, 'Description must be at most 2,000 characters.'),
+      'Description',
+    ),
+    workDate: calendarDateSchema,
+  })
+  .strict();
+export const voidTimeEntrySchema = z
+  .object({
+    reason: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(3, 'A void reason of at least 3 characters is required.')
+        .max(2000, 'Void reason must be at most 2,000 characters.'),
+      'Void reason',
+    ),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+export const startWorkSchema = z.object({ expectedUpdatedAt: z.string().datetime() }).strict();
+export const createReviewHandoffSchema = z
+  .object({
+    workSummary: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(10, 'Work summary must be at least 10 characters.')
+        .max(5000, 'Work summary must be at most 5,000 characters.'),
+      'Work summary',
+    ),
+    releaseNotes: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(3, 'Release notes must be at least 3 characters.')
+        .max(5000, 'Release notes must be at most 5,000 characters.'),
+      'Release notes',
+    )
+      .optional()
+      .transform((value) => value || undefined),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+const acceptWorkReviewSchema = z
+  .object({
+    decision: z.literal('ACCEPT'),
+    note: safeDomainTextSchema(
+      z.string().trim().max(2000, 'Completion note must be at most 2,000 characters.'),
+      'Completion note',
+    )
+      .optional()
+      .transform((value) => value || undefined),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+const requestWorkChangesSchema = z
+  .object({
+    decision: z.literal('REQUEST_CHANGES'),
+    note: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(3, 'A change reason of at least 3 characters is required.')
+        .max(2000, 'Change reason must be at most 2,000 characters.'),
+      'Change reason',
+    ),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+export const respondToReviewHandoffSchema = z.discriminatedUnion('decision', [
+  acceptWorkReviewSchema,
+  requestWorkChangesSchema,
+]);
+export const cancelChangeRequestSchema = z
+  .object({
+    reason: safeDomainTextSchema(
+      z
+        .string()
+        .trim()
+        .min(3, 'A cancellation reason of at least 3 characters is required.')
+        .max(2000, 'Cancellation reason must be at most 2,000 characters.'),
+      'Cancellation reason',
+    ),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export type CreateTimeEntryInput = z.infer<typeof createTimeEntrySchema>;
+export type VoidTimeEntryInput = z.infer<typeof voidTimeEntrySchema>;
+export type StartWorkInput = z.infer<typeof startWorkSchema>;
+export type CreateReviewHandoffInput = z.infer<typeof createReviewHandoffSchema>;
+export type RespondToReviewHandoffInput = z.infer<typeof respondToReviewHandoffSchema>;
+export type CancelChangeRequestInput = z.infer<typeof cancelChangeRequestSchema>;
+
+export const workReviewDecisions = ['ACCEPTED', 'CHANGES_REQUESTED'] as const;
+export type WorkReviewDecision = (typeof workReviewDecisions)[number];
+
+export const timeEntryDtoSchema = z.object({
+  id: uuidSchema,
+  changeRequestId: uuidSchema,
+  durationMinutes: z.number().int().min(1).max(1440),
+  description: z.string(),
+  workDate: calendarDateSchema,
+  authorUserId: uuidSchema,
+  authorDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  voidedAt: z.string().datetime().nullable(),
+  voidReason: z.string().nullable(),
+  voidedByUserId: uuidSchema.nullable(),
+  voidedByDisplayName: z.string().nullable(),
+});
+export type TimeEntryDto = z.infer<typeof timeEntryDtoSchema>;
+
+export const timeEntryListMetaSchema = z.object({
+  count: z.number().int().nonnegative(),
+  limit: z.number().int().min(1).max(100),
+  offset: z.number().int().nonnegative(),
+  activeDurationMinutes: z.number().int().nonnegative(),
+  canCreate: z.boolean(),
+  canVoidOwn: z.boolean(),
+  canManage: z.boolean(),
+});
+export type TimeEntryListMeta = z.infer<typeof timeEntryListMetaSchema>;
+
+export const workReviewResponseDtoSchema = z.object({
+  id: uuidSchema,
+  decision: z.enum(workReviewDecisions),
+  note: z.string().nullable(),
+  actorDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+});
+export const reviewHandoffDtoSchema = z.object({
+  id: uuidSchema,
+  changeRequestId: uuidSchema,
+  version: z.number().int().positive(),
+  workSummary: z.string(),
+  releaseNotes: z.string().nullable(),
+  actorDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+  response: workReviewResponseDtoSchema.nullable(),
+});
+export type WorkReviewResponseDto = z.infer<typeof workReviewResponseDtoSchema>;
+export type ReviewHandoffDto = z.infer<typeof reviewHandoffDtoSchema>;
+
+export const workCommandDtoSchema = z.object({
+  changeRequestId: uuidSchema,
+  status: z.enum(changeRequestStatuses),
+  updatedAt: z.string().datetime(),
+  handoff: reviewHandoffDtoSchema.nullable(),
+});
+export type WorkCommandDto = z.infer<typeof workCommandDtoSchema>;
+
+const historyBase = {
+  id: z.string(),
+  sourceId: uuidSchema,
+  eventTime: z.string().datetime(),
+  actorDisplayName: z.string(),
+};
+export const requestHistoryItemSchema = z.discriminatedUnion('kind', [
+  z.object({
+    ...historyBase,
+    kind: z.literal('STATUS_CHANGED'),
+    previousStatus: z.enum(changeRequestStatuses).nullable(),
+    newStatus: z.enum(changeRequestStatuses),
+    note: z.string().nullable(),
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('ESTIMATE_SUBMITTED'),
+    version: z.number().int().positive(),
+    estimatedHours: normalizedDecimalSchema,
+    hourlyRate: normalizedDecimalSchema,
+    estimatedCost: normalizedDecimalSchema,
+    scopeNotes: z.string(),
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('ESTIMATE_RESPONDED'),
+    version: z.number().int().positive(),
+    decision: z.enum(estimateResponseDecisions),
+    note: z.string().nullable(),
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('COMMENT'),
+    body: z.string(),
+    visibility: z.enum(commentVisibilities),
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('TIME_CREATED'),
+    durationMinutes: z.number().int().positive(),
+    description: z.string(),
+    workDate: calendarDateSchema,
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('TIME_VOIDED'),
+    durationMinutes: z.number().int().positive(),
+    reason: z.string(),
+    originalEntryId: uuidSchema,
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('WORK_HANDOFF'),
+    version: z.number().int().positive(),
+    workSummary: z.string(),
+    releaseNotes: z.string().nullable(),
+  }),
+  z.object({
+    ...historyBase,
+    kind: z.literal('WORK_REVIEW_RESPONSE'),
+    handoffVersion: z.number().int().positive(),
+    decision: z.enum(workReviewDecisions),
+    note: z.string().nullable(),
+  }),
+]);
+export type RequestHistoryItem = z.infer<typeof requestHistoryItemSchema>;
+
+export const requestHistoryMetaSchema = z.object({
+  count: z.number().int().nonnegative(),
+  limit: z.number().int().min(1).max(100),
+  offset: z.number().int().nonnegative(),
+  canManageWork: z.boolean(),
+  canRespondToReview: z.boolean(),
+  canCancel: z.boolean(),
+  canViewPrivateTime: z.boolean(),
+  currentHandoff: reviewHandoffDtoSchema.nullable(),
+});
+export type RequestHistoryMeta = z.infer<typeof requestHistoryMetaSchema>;
 
 export const developmentSignInSchema = z
   .object({ email: z.string().trim().toLowerCase().email().max(320) })

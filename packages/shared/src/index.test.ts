@@ -3,13 +3,20 @@ import {
   acceptInvitationSchema,
   calculateEstimatedCost,
   commentPaginationSchema,
+  cancelChangeRequestSchema,
   createCommentSchema,
   createChangeRequestSchema,
   createEstimateSchema,
   createInvitationSchema,
+  createReviewHandoffSchema,
+  createTimeEntrySchema,
   developmentSignInSchema,
+  p005PaginationSchema,
+  respondToReviewHandoffSchema,
   respondToEstimateSchema,
+  startWorkSchema,
   updateMembershipSchema,
+  voidTimeEntrySchema,
 } from './index.js';
 
 describe('createChangeRequestSchema', () => {
@@ -166,5 +173,94 @@ describe('P002 access contracts', () => {
         expectedUpdatedAt: '2026-07-26T12:00:00.000Z',
       }),
     ).toMatchObject({ status: 'SUSPENDED' });
+  });
+});
+
+describe('P005 time, work, and review contracts', () => {
+  const expectedUpdatedAt = '2026-07-27T12:00:00.000Z';
+
+  it('normalizes strict private-time input and accepts calendar dates only', () => {
+    expect(
+      createTimeEntrySchema.parse({
+        durationMinutes: 90,
+        description: '  Implemented the approved workflow.  ',
+        workDate: '2026-07-27',
+      }),
+    ).toEqual({
+      durationMinutes: 90,
+      description: 'Implemented the approved workflow.',
+      workDate: '2026-07-27',
+    });
+    for (const workDate of ['2026-02-30', '2026-13-01', '07/27/2026']) {
+      expect(() =>
+        createTimeEntrySchema.parse({
+          durationMinutes: 1,
+          description: 'Valid description',
+          workDate,
+        }),
+      ).toThrow();
+    }
+  });
+
+  it('rejects invalid duration, text, unknown, and server-owned time fields', () => {
+    for (const durationMinutes of [0, -1, 1.5, 1441]) {
+      expect(() =>
+        createTimeEntrySchema.parse({
+          durationMinutes,
+          description: 'Valid description',
+          workDate: '2026-07-27',
+        }),
+      ).toThrow();
+    }
+    expect(() =>
+      createTimeEntrySchema.parse({
+        durationMinutes: 30,
+        description: 'bad\u0000text',
+        workDate: '2026-07-27',
+        userId: '20000000-0000-4000-8000-000000000001',
+      }),
+    ).toThrow();
+    expect(p005PaginationSchema.parse({})).toEqual({ limit: 50, offset: 0 });
+    expect(() => p005PaginationSchema.parse({ limit: 101, private: true })).toThrow();
+  });
+
+  it('enforces optimistic void, start, handoff, response, and cancellation bodies', () => {
+    expect(
+      voidTimeEntrySchema.parse({
+        reason: '  Wrong work date. ',
+        expectedUpdatedAt,
+      }),
+    ).toMatchObject({ reason: 'Wrong work date.' });
+    expect(startWorkSchema.parse({ expectedUpdatedAt })).toEqual({ expectedUpdatedAt });
+    expect(
+      createReviewHandoffSchema.parse({
+        workSummary: '  Completed all approved delivery work. ',
+        releaseNotes: '  Ready for client verification. ',
+        expectedUpdatedAt,
+      }),
+    ).toMatchObject({
+      workSummary: 'Completed all approved delivery work.',
+      releaseNotes: 'Ready for client verification.',
+    });
+    expect(
+      respondToReviewHandoffSchema.parse({
+        decision: 'ACCEPT',
+        note: '  Verified and accepted. ',
+        expectedUpdatedAt,
+      }),
+    ).toMatchObject({ note: 'Verified and accepted.' });
+    expect(() =>
+      respondToReviewHandoffSchema.parse({
+        decision: 'REQUEST_CHANGES',
+        note: '  ',
+        expectedUpdatedAt,
+      }),
+    ).toThrow();
+    expect(
+      cancelChangeRequestSchema.parse({
+        reason: '  Client no longer needs this request. ',
+        expectedUpdatedAt,
+      }),
+    ).toMatchObject({ reason: 'Client no longer needs this request.' });
   });
 });

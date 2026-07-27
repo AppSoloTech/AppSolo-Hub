@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 const projectId = '10000000-0000-4000-8000-000000000003';
 const draftRequestId = '30000000-0000-4000-8000-000000000002';
 const clarificationRequestId = '30000000-0000-4000-8000-000000000006';
+const approvedWorkRequestId = '30000000-0000-4000-8000-000000000004';
 test('seeded list, create, and refreshed detail persist through the real API', async ({ page }) => {
   const title = `Browser request ${Date.now()}`;
   await page.goto(`/projects/${projectId}/change-requests`);
@@ -92,10 +93,14 @@ test('internal exact draft submission and client approval persist through the re
   await page.getByRole('button', { name: 'Approve estimate' }).click();
   await expect(page.getByText('Estimate approved.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Approved' })).toBeVisible();
-  await expect(page.getByText('Approved through the browser workflow.')).toBeVisible();
+  await expect(
+    page.getByLabel('Estimate version history').getByText('Approved through the browser workflow.'),
+  ).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Approved' })).toBeVisible();
-  await expect(page.getByText('Approved through the browser workflow.')).toBeVisible();
+  await expect(
+    page.getByLabel('Estimate version history').getByText('Approved through the browser workflow.'),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve estimate' })).not.toBeVisible();
 });
 
@@ -112,7 +117,9 @@ test('internal-safe and client-visible clarification comments persist without re
   await expect(page.getByRole('heading', { name: 'Change requests' })).toBeVisible();
   await page.goto(`/change-requests/${clarificationRequestId}`);
 
-  await expect(page.getByText('Which thresholds are included in the estimate?')).toBeVisible();
+  await expect(
+    page.getByLabel('Estimate version history').getByText('Which thresholds are included in the estimate?'),
+  ).toBeVisible();
   await expect(page.getByText('Clarification is needed.')).toBeVisible();
   await expect(page.getByLabel('Who can see this?')).toHaveValue('INTERNAL_ONLY');
   await page.getByRole('textbox', { name: 'Comment', exact: true }).fill(internalBody);
@@ -135,8 +142,77 @@ test('internal-safe and client-visible clarification comments persist without re
   await page.getByRole('button', { name: 'Add comment' }).click();
   await expect(page.getByText('Comment added.')).toBeVisible();
   await page.reload();
-  await expect(page.getByText(sharedBody)).toBeVisible();
+  await expect(page.getByLabel('Request comments').getByText(sharedBody)).toBeVisible();
   await expect(page.getByText('Shared with client').last()).toBeVisible();
-  await expect(page.getByText('Which thresholds are included in the estimate?')).toBeVisible();
+  await expect(
+    page.getByLabel('Estimate version history').getByText('Which thresholds are included in the estimate?'),
+  ).toBeVisible();
   await expect(page.getByText('NEEDS CLARIFICATION · NORMAL priority')).toBeVisible();
+});
+
+test('approved work records private time, repeats review, and completes through client acceptance', async ({
+  page,
+}) => {
+  const workDescription = `Private browser work ${Date.now()}`;
+  const firstSummary = `First browser handoff ${Date.now()} completed for client review.`;
+  const secondSummary = `Second browser handoff ${Date.now()} includes requested changes.`;
+
+  await page.goto(`/projects/${projectId}/change-requests`);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('developer@appsolo.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Change requests' })).toBeVisible();
+  await page.goto(`/change-requests/${approvedWorkRequestId}`);
+  await page.getByRole('button', { name: 'Start work' }).click();
+  await expect(page.getByText('Work started.')).toBeVisible();
+
+  await page.getByLabel('Duration in minutes').fill('45');
+  await page.getByLabel('Work date').fill('2026-07-27');
+  await page.getByLabel('Work description').fill(workDescription);
+  await page.getByRole('button', { name: 'Record time' }).click();
+  await expect(page.getByText('Private time entry recorded.')).toBeVisible();
+  await expect(page.getByText(workDescription).first()).toBeVisible();
+
+  await page.getByLabel('Work summary').fill(firstSummary);
+  await page.getByLabel('Release notes (optional)').fill('Review the browser-tested progress feedback.');
+  await page.getByRole('button', { name: 'Send for review' }).click();
+  await expect(page.getByText('Review handoff created.')).toBeVisible();
+  await expect(page.getByText(firstSummary).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('admin@client.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Improve export progress feedback' })).toBeVisible();
+  await page.goto(`/change-requests/${approvedWorkRequestId}`);
+  await expect(page.getByText(firstSummary).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Private time' })).not.toBeVisible();
+  await expect(page.getByText(workDescription)).not.toBeVisible();
+  await page.getByLabel('Request changes').check();
+  await page.getByLabel(/^Change reason/).fill('Please clarify the completion feedback.');
+  await page.getByRole('button', { name: 'Request changes' }).click();
+  await expect(page.getByText(/Changes requested; work returned to in progress/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('developer@appsolo.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Improve export progress feedback' })).toBeVisible();
+  await page.goto(`/change-requests/${approvedWorkRequestId}`);
+  await page.getByLabel('Work summary').fill(secondSummary);
+  await page.getByRole('button', { name: 'Send for review' }).click();
+  await expect(page.getByText('Review handoff created.')).toBeVisible();
+  await expect(page.getByText('Review handoff · Version 2')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('admin@client.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Improve export progress feedback' })).toBeVisible();
+  await page.goto(`/change-requests/${approvedWorkRequestId}`);
+  await page.getByLabel('Accept completion').check();
+  await page.getByLabel('Completion note (optional)').fill('Verified and accepted in the browser.');
+  await page.getByRole('button', { name: 'Accept delivery' }).click();
+  await expect(page.getByText('Delivery accepted and request completed.')).toBeVisible();
+  await expect(page.getByText('COMPLETED · LOW priority')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Verified and accepted in the browser.').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Accept delivery' })).not.toBeVisible();
 });

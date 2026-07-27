@@ -51,14 +51,17 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 ## Active Phase
 
 - Active phase: `P005 — Time Tracking, Status, And Completion`.
-- P005 status: `approved`.
+- P005 status: `implementing`.
 - P005 prompt: approved specification version 1 under `prompts/active/`.
 - P005 revalidation: passed against authoritative local `main` at
   `33e233130579cc4be479e588bc1229f2a8a94579`; the approved scope remains one
   cohesive phase.
 - P005 implementation approval: granted by the human on 2026-07-27, including
   all fifteen binding decisions.
-- Approval commit and implementation branch: pending.
+- Approval/base commit:
+  `96f3d6158e2971f49a1b7e832dc6c2292001580e`.
+- Implementation branch:
+  `phase/P005-time-tracking-status-and-completion`.
 
 ## Current Constraints
 
@@ -74,8 +77,8 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 - Attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
-- P005 is approved but not yet implemented. Codex must establish the immutable
-  approval/base commit, implement on the prescribed phase branch, and advance
-  the phase only through `review_pending`.
+- P005 implementation is in progress on its prescribed phase branch. It may
+  advance only through `review_pending` after an immutable candidate commit and
+  complete evidence exist.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

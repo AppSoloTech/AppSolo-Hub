@@ -1,13 +1,13 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: approved
+status: implementing
 owner: codex
 reviewer: claude
 prompt: prompts/active/P005-time-tracking-status-and-completion.md
 depends_on: [P004]
 base_branch: main
-base_sha: null
+base_sha: 96f3d6158e2971f49a1b7e832dc6c2292001580e
 candidate_sha: null
 risk: high
 human_qa_required: true
@@ -52,6 +52,10 @@ decisions without revision on 2026-07-27.
 - Implementation: authorized, subject to the immutable approval boundary and
   prescribed phase branch.
 - Dependencies: P004 is complete and locally integrated.
+- Implementation branch:
+  `phase/P005-time-tracking-status-and-completion`.
+- Implementation base: immutable approval commit
+  `96f3d6158e2971f49a1b7e832dc6c2292001580e` on local `main`.
 
 The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its
 private-time boundary, durable void correction, exact transition authority,
@@ -66,23 +70,31 @@ binding for P005.
 - Draft basis SHA: `33e233130579cc4be479e588bc1229f2a8a94579`.
 - Approval boundary revalidated: authoritative local `main` at
   `33e233130579cc4be479e588bc1229f2a8a94579`.
-- Base branch: `main`; implementation base SHA remains pending approval commit
-  creation.
+- Base branch: `main`.
+- Base SHA: `96f3d6158e2971f49a1b7e832dc6c2292001580e`.
 - Revalidated: 2026-07-27; approved assumptions match the current schema, seed,
   capability policy, API composition, request detail UI, P003/P004 lifecycle
   boundaries, log redaction, dependency manifests, and local toolchain.
 - Active prompt:
   `prompts/active/P005-time-tracking-status-and-completion.md`, version 1.
 - Draft authorization: human, 2026-07-27.
+- Implementation started: 2026-07-27 on
+  `phase/P005-time-tracking-status-and-completion`.
 - Candidate SHA: pending.
+- Implementation: complete on the phase branch; immutable candidate creation
+  and SHA-dependent validation remain.
+- Automated validation: V1–V17 and V19 passed. V8 initially found
+  formatting-only differences and passed after formatting. V14 exposed and
+  corrected legacy locator ambiguity plus isolated invitation-origin setup
+  before the final 5/5 pass. V18 and V20 await the candidate SHA.
 - Review: not started.
 - Human QA: not started.
 - Completion: not eligible.
 
 ## Completion Gate
 
-- Requirements implemented: No; implementation has not started.
-- Automated validation: pending.
+- Requirements implemented: Yes on the phase branch; candidate commit pending.
+- Automated validation: V1–V17 and V19 passed; V18/V20 pending candidate SHA.
 - Independent review clear: No; review has not started.
 - Findings dispositioned: not applicable yet.
 - Required human QA complete: No.

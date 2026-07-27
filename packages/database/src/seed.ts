@@ -11,7 +11,10 @@ import {
   organizations,
   projects,
   statusHistory,
+  timeEntries,
   users,
+  workReviewHandoffs,
+  workReviewResponses,
 } from './schema.js';
 
 export const seedIds = {
@@ -36,6 +39,10 @@ export const seedIds = {
   requestRevision: '30000000-0000-4000-8000-000000000005',
   requestClarification: '30000000-0000-4000-8000-000000000006',
   otherTenantRequest: '30000000-0000-4000-8000-000000000007',
+  requestInProgress: '30000000-0000-4000-8000-000000000008',
+  requestReadyForReview: '30000000-0000-4000-8000-000000000009',
+  requestCompleted: '30000000-0000-4000-8000-000000000010',
+  requestCancelled: '30000000-0000-4000-8000-000000000011',
   draftEstimate: '50000000-0000-4000-8000-000000000001',
   submittedEstimate: '50000000-0000-4000-8000-000000000002',
   approvedEstimate: '50000000-0000-4000-8000-000000000003',
@@ -49,6 +56,14 @@ export const seedIds = {
   clarificationInternalComment: '60000000-0000-4000-8000-000000000004',
   suspendedAuthorComment: '60000000-0000-4000-8000-000000000005',
   otherTenantComment: '60000000-0000-4000-8000-000000000006',
+  activeTimeEntry: '61000000-0000-4000-8000-000000000001',
+  voidedTimeEntry: '61000000-0000-4000-8000-000000000002',
+  suspendedAuthorTimeEntry: '61000000-0000-4000-8000-000000000003',
+  readyHandoff: '62000000-0000-4000-8000-000000000001',
+  completedHandoffOne: '62000000-0000-4000-8000-000000000002',
+  completedHandoffTwo: '62000000-0000-4000-8000-000000000003',
+  completedResponseOne: '63000000-0000-4000-8000-000000000001',
+  completedResponseTwo: '63000000-0000-4000-8000-000000000002',
 } as const;
 
 export async function seedDatabase(databaseUrl?: string): Promise<void> {
@@ -279,6 +294,50 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             priority: 'NORMAL',
             status: 'AWAITING_ESTIMATE',
           },
+          {
+            id: seedIds.requestInProgress,
+            projectId: seedIds.project,
+            submittedByUserId: seedIds.clientAdmin,
+            title: 'Seeded work in progress',
+            description: 'A deterministic request used for private time and review handoff testing.',
+            priority: 'NORMAL',
+            status: 'IN_PROGRESS',
+            createdAt: new Date('2026-07-20T09:00:00.000Z'),
+            updatedAt: new Date('2026-07-27T09:00:00.000Z'),
+          },
+          {
+            id: seedIds.requestReadyForReview,
+            projectId: seedIds.project,
+            submittedByUserId: seedIds.clientMember,
+            title: 'Seeded work awaiting review',
+            description: 'A deterministic request with a current immutable client review handoff.',
+            priority: 'HIGH',
+            status: 'READY_FOR_REVIEW',
+            createdAt: new Date('2026-07-20T10:00:00.000Z'),
+            updatedAt: new Date('2026-07-27T12:00:00.000Z'),
+          },
+          {
+            id: seedIds.requestCompleted,
+            projectId: seedIds.project,
+            submittedByUserId: seedIds.clientAdmin,
+            title: 'Seeded completed delivery',
+            description: 'A deterministic completed request with two preserved client review cycles.',
+            priority: 'LOW',
+            status: 'COMPLETED',
+            createdAt: new Date('2026-07-19T09:00:00.000Z'),
+            updatedAt: new Date('2026-07-27T16:00:00.000Z'),
+          },
+          {
+            id: seedIds.requestCancelled,
+            projectId: seedIds.project,
+            submittedByUserId: seedIds.clientMember,
+            title: 'Seeded cancelled request',
+            description: 'A deterministic cancelled request retaining its client-visible reason.',
+            priority: 'NORMAL',
+            status: 'CANCELLED',
+            createdAt: new Date('2026-07-18T09:00:00.000Z'),
+            updatedAt: new Date('2026-07-27T11:00:00.000Z'),
+          },
         ])
         .onConflictDoNothing();
       await tx
@@ -457,6 +516,97 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
         ])
         .onConflictDoNothing();
       await tx
+        .insert(timeEntries)
+        .values([
+          {
+            id: seedIds.activeTimeEntry,
+            changeRequestId: seedIds.requestInProgress,
+            userId: seedIds.developer,
+            durationMinutes: 90,
+            description: 'Implemented the deterministic private time fixture.',
+            workDate: '2026-07-27',
+            createdAt: new Date('2026-07-27T09:30:00.000Z'),
+            updatedAt: new Date('2026-07-27T09:30:00.000Z'),
+          },
+          {
+            id: seedIds.voidedTimeEntry,
+            changeRequestId: seedIds.requestInProgress,
+            userId: seedIds.owner,
+            durationMinutes: 30,
+            description: 'Original entry preserved after a durable correction.',
+            workDate: '2026-07-26',
+            voidedByUserId: seedIds.owner,
+            voidReason: 'Recorded against the wrong work date.',
+            voidedAt: new Date('2026-07-27T10:00:00.000Z'),
+            createdAt: new Date('2026-07-26T15:00:00.000Z'),
+            updatedAt: new Date('2026-07-27T10:00:00.000Z'),
+          },
+          {
+            id: seedIds.suspendedAuthorTimeEntry,
+            changeRequestId: seedIds.requestInProgress,
+            userId: seedIds.suspendedMember,
+            durationMinutes: 15,
+            description: 'Historical time remains attributed after suspension.',
+            workDate: '2026-07-25',
+            createdAt: new Date('2026-07-25T15:00:00.000Z'),
+            updatedAt: new Date('2026-07-25T15:00:00.000Z'),
+          },
+        ])
+        .onConflictDoNothing();
+      await tx
+        .insert(workReviewHandoffs)
+        .values([
+          {
+            id: seedIds.readyHandoff,
+            changeRequestId: seedIds.requestReadyForReview,
+            version: 1,
+            createdByUserId: seedIds.developer,
+            workSummary: 'Completed the requested review-ready workflow and verification.',
+            releaseNotes: 'Review the updated workflow in the local client portal.',
+            createdAt: new Date('2026-07-27T12:00:00.000Z'),
+          },
+          {
+            id: seedIds.completedHandoffOne,
+            changeRequestId: seedIds.requestCompleted,
+            version: 1,
+            createdByUserId: seedIds.developer,
+            workSummary: 'Delivered the first implementation for structured client review.',
+            releaseNotes: 'Initial review candidate for the completed fixture.',
+            createdAt: new Date('2026-07-27T13:00:00.000Z'),
+          },
+          {
+            id: seedIds.completedHandoffTwo,
+            changeRequestId: seedIds.requestCompleted,
+            version: 2,
+            createdByUserId: seedIds.owner,
+            workSummary: 'Applied the requested changes and prepared the final delivery.',
+            releaseNotes: 'Final candidate includes the clarified empty state.',
+            createdAt: new Date('2026-07-27T15:00:00.000Z'),
+          },
+        ])
+        .onConflictDoNothing();
+      await tx
+        .insert(workReviewResponses)
+        .values([
+          {
+            id: seedIds.completedResponseOne,
+            handoffId: seedIds.completedHandoffOne,
+            decision: 'CHANGES_REQUESTED',
+            respondingUserId: seedIds.clientAdmin,
+            note: 'Please clarify the empty-state wording.',
+            createdAt: new Date('2026-07-27T14:00:00.000Z'),
+          },
+          {
+            id: seedIds.completedResponseTwo,
+            handoffId: seedIds.completedHandoffTwo,
+            decision: 'ACCEPTED',
+            respondingUserId: seedIds.clientAdmin,
+            note: 'Accepted after verifying the final wording.',
+            createdAt: new Date('2026-07-27T16:00:00.000Z'),
+          },
+        ])
+        .onConflictDoNothing();
+      await tx
         .insert(statusHistory)
         .values([
           {
@@ -520,6 +670,63 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             changedByUserId: seedIds.otherTenantUser,
             previousStatus: 'SUBMITTED',
             newStatus: 'AWAITING_ESTIMATE',
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000010',
+            changeRequestId: seedIds.requestInProgress,
+            changedByUserId: seedIds.owner,
+            previousStatus: 'APPROVED',
+            newStatus: 'IN_PROGRESS',
+            createdAt: new Date('2026-07-27T09:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000011',
+            changeRequestId: seedIds.requestReadyForReview,
+            changedByUserId: seedIds.developer,
+            previousStatus: 'IN_PROGRESS',
+            newStatus: 'READY_FOR_REVIEW',
+            createdAt: new Date('2026-07-27T12:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000012',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.developer,
+            previousStatus: 'IN_PROGRESS',
+            newStatus: 'READY_FOR_REVIEW',
+            createdAt: new Date('2026-07-27T13:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000013',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.clientAdmin,
+            previousStatus: 'READY_FOR_REVIEW',
+            newStatus: 'IN_PROGRESS',
+            createdAt: new Date('2026-07-27T14:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000014',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.owner,
+            previousStatus: 'IN_PROGRESS',
+            newStatus: 'READY_FOR_REVIEW',
+            createdAt: new Date('2026-07-27T15:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000015',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.clientAdmin,
+            previousStatus: 'READY_FOR_REVIEW',
+            newStatus: 'COMPLETED',
+            createdAt: new Date('2026-07-27T16:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000016',
+            changeRequestId: seedIds.requestCancelled,
+            changedByUserId: seedIds.clientAdmin,
+            previousStatus: 'SUBMITTED',
+            newStatus: 'CANCELLED',
+            note: 'The client no longer needs this requested change.',
+            createdAt: new Date('2026-07-27T11:00:00.000Z'),
           },
         ])
         .onConflictDoNothing();

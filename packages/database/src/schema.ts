@@ -70,6 +70,7 @@ export const estimateResponseDecision = pgEnum('estimate_response_decision', [
   'CLARIFICATION_REQUESTED',
 ]);
 export const commentVisibility = pgEnum('comment_visibility', ['CLIENT_VISIBLE', 'INTERNAL_ONLY']);
+export const workReviewDecision = pgEnum('work_review_decision', ['ACCEPTED', 'CHANGES_REQUESTED']);
 export const users = pgTable(
   'users',
   {
@@ -336,7 +337,11 @@ export const statusHistory = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    index('status_history_request_created_idx').on(t.changeRequestId, t.createdAt),
+    check(
+      'status_history_note_length',
+      sql`${t.note} is null or char_length(btrim(${t.note})) between 3 and 2000`,
+    ),
+    index('status_history_request_created_id_idx').on(t.changeRequestId, t.createdAt, t.id),
     index('status_history_user_created_idx').on(t.changedByUserId, t.createdAt.desc()),
   ],
 );
@@ -353,12 +358,85 @@ export const timeEntries = pgTable(
     durationMinutes: integer('duration_minutes').notNull(),
     description: text('description').notNull(),
     workDate: date('work_date').notNull(),
+    voidedByUserId: uuid('voided_by_user_id').references(() => users.id, { onDelete: 'restrict' }),
+    voidReason: text('void_reason'),
+    voidedAt: timestamp('voided_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
-    check('time_entries_duration_positive', sql`${t.durationMinutes} > 0`),
-    index('time_entries_request_date_idx').on(t.changeRequestId, t.workDate.desc()),
-    index('time_entries_user_date_idx').on(t.userId, t.workDate.desc()),
+    check('time_entries_duration_bounds', sql`${t.durationMinutes} between 1 and 1440`),
+    check('time_entries_description_length', sql`char_length(btrim(${t.description})) between 3 and 2000`),
+    check(
+      'time_entries_void_all_or_none',
+      sql`(${t.voidedByUserId} is null and ${t.voidReason} is null and ${t.voidedAt} is null) or (${t.voidedByUserId} is not null and ${t.voidReason} is not null and ${t.voidedAt} is not null)`,
+    ),
+    check(
+      'time_entries_void_reason_length',
+      sql`${t.voidReason} is null or char_length(btrim(${t.voidReason})) between 3 and 2000`,
+    ),
+    index('time_entries_request_date_created_id_idx').on(
+      t.changeRequestId,
+      t.workDate.desc(),
+      t.createdAt.desc(),
+      t.id.desc(),
+    ),
+    index('time_entries_user_date_id_idx').on(t.userId, t.workDate.desc(), t.id.desc()),
+  ],
+);
+export const workReviewHandoffs = pgTable(
+  'work_review_handoffs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    changeRequestId: uuid('change_request_id')
+      .notNull()
+      .references(() => changeRequests.id, { onDelete: 'restrict' }),
+    version: integer('version').notNull(),
+    createdByUserId: uuid('created_by_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    workSummary: text('work_summary').notNull(),
+    releaseNotes: text('release_notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('work_review_handoffs_version_positive', sql`${t.version} > 0`),
+    check(
+      'work_review_handoffs_summary_length',
+      sql`char_length(btrim(${t.workSummary})) between 10 and 5000`,
+    ),
+    check(
+      'work_review_handoffs_release_notes_length',
+      sql`${t.releaseNotes} is null or char_length(btrim(${t.releaseNotes})) between 3 and 5000`,
+    ),
+    unique('work_review_handoffs_request_version_unique').on(t.changeRequestId, t.version),
+    index('work_review_handoffs_request_created_id_idx').on(t.changeRequestId, t.createdAt, t.id),
+  ],
+);
+export const workReviewResponses = pgTable(
+  'work_review_responses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    handoffId: uuid('handoff_id')
+      .notNull()
+      .references(() => workReviewHandoffs.id, { onDelete: 'restrict' }),
+    decision: workReviewDecision('decision').notNull(),
+    respondingUserId: uuid('responding_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('work_review_responses_handoff_unique').on(t.handoffId),
+    check(
+      'work_review_responses_note_length',
+      sql`${t.note} is null or char_length(btrim(${t.note})) between 1 and 2000`,
+    ),
+    check(
+      'work_review_responses_change_reason_required',
+      sql`${t.decision} = 'ACCEPTED' or (${t.note} is not null and char_length(btrim(${t.note})) between 3 and 2000)`,
+    ),
+    index('work_review_responses_user_created_id_idx').on(t.respondingUserId, t.createdAt, t.id),
   ],
 );
 export const attachments = pgTable(

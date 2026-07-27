@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevelopmentSignIn } from './DevelopmentSignIn.js';
@@ -95,10 +96,15 @@ describe('development session UI', () => {
     const token = 'sensitive-invitation-token-material-which-is-long-enough';
     acceptInvitation.mockResolvedValue({ data: session, meta: {} });
     window.history.replaceState({}, '', `/invitations/accept#token=${token}`);
-    renderWithSession(<InvitationAcceptance />);
+    renderWithSession(
+      <StrictMode>
+        <InvitationAcceptance />
+      </StrictMode>,
+    );
     expect(window.location.hash).toBe('');
     expect(await screen.findByRole('heading', { name: 'Invitation accepted' })).toBeVisible();
     expect(acceptInvitation).toHaveBeenCalledWith(token);
+    expect(acceptInvitation).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(window.localStorage)).not.toContain(token);
   });
 

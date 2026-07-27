@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { ApiError, requestsApi } from '../../api.js';
 import { CommentSection } from '../comments/CommentSection.js';
 import { EstimateSection } from '../estimates/EstimateSection.js';
+import { WorkSection } from '../work/WorkSection.js';
 export function ChangeRequestDetail() {
   const { changeRequestId = '' } = useParams();
   const location = useLocation();
@@ -46,6 +47,7 @@ export function ChangeRequestDetail() {
           <dd>{new Date(request.createdAt).toLocaleString()}</dd>
         </dl>
       </article>
+      <WorkSection request={request} />
       <EstimateSection changeRequestId={request.id} requestStatus={request.status} />
       <CommentSection key={request.id} changeRequestId={request.id} requestStatus={request.status} />
     </>

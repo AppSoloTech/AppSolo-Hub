@@ -27,6 +27,8 @@ Organization
       -> Comment
       -> StatusHistory
       -> TimeEntry
+      -> WorkReviewHandoff
+        -> WorkReviewResponse
       -> Attachment
 ```
 
@@ -138,6 +140,11 @@ P001 creation produces `SUBMITTED`. Saving drafts is deferred.
 
 - `CLIENT_VISIBLE`
 - `INTERNAL_ONLY`
+
+### WorkReviewDecision
+
+- `ACCEPTED`
+- `CHANGES_REQUESTED`
 
 ## Tables
 
@@ -377,10 +384,13 @@ membership is later suspended.
 
 Indexes:
 
-- `(change_request_id, created_at)`;
+- `(change_request_id, created_at, id)`;
 - `(changed_by_user_id, created_at desc)`.
 
-P001 creates an initial history row in the same transaction as the change request.
+Notes are null or trimmed 3–2,000 character client-safe lifecycle context.
+P001 creates an initial history row in the same transaction as the change
+request. Every P005 transition likewise inserts exactly one matching row in the
+same transaction.
 
 ### time_entries
 
@@ -389,16 +399,59 @@ P001 creates an initial history row in the same transaction as the change reques
 | id                | uuid        | primary key                                   |
 | change_request_id | uuid        | required, FK change_requests, restrict delete |
 | user_id           | uuid        | required, FK users, restrict delete           |
-| duration_minutes  | integer     | required, greater than 0                      |
-| description       | text        | required                                      |
+| duration_minutes  | integer     | required, 1 through 1,440                     |
+| description       | text        | required, trimmed length 3 through 2,000      |
 | work_date         | date        | required                                      |
+| voided_by_user_id | uuid        | nullable, FK users, restrict delete           |
+| void_reason       | text        | nullable, trimmed length 3 through 2,000      |
+| voided_at         | timestamptz | nullable                                      |
 | created_at        | timestamptz | required                                      |
 | updated_at        | timestamptz | required                                      |
 
 Indexes:
 
-- `(change_request_id, work_date desc)`;
-- `(user_id, work_date desc)`.
+- `(change_request_id, work_date desc, created_at desc, id desc)`;
+- `(user_id, work_date desc, id desc)`.
+
+Void actor, reason, and time are either all null or all present. The P005 API
+creates rows only for the authenticated internal actor while a request is
+`IN_PROGRESS`; it exposes no edit or hard-delete. Active totals exclude voided
+rows, while history retains creation and void facts.
+
+### work_review_handoffs
+
+| Column             | Type        | Rules                                         |
+| ------------------ | ----------- | --------------------------------------------- |
+| id                 | uuid        | primary key                                   |
+| change_request_id  | uuid        | required, FK change requests, restrict delete |
+| version            | integer     | required, positive request-local sequence     |
+| created_by_user_id | uuid        | required, FK users, restrict delete           |
+| work_summary       | text        | required, trimmed length 10 through 5,000     |
+| release_notes      | text        | nullable, trimmed length 3 through 5,000      |
+| created_at         | timestamptz | required                                      |
+
+Constraints and indexes:
+
+- unique `(change_request_id, version)`;
+- `(change_request_id, created_at, id)`.
+
+Rows are immutable through the application. Handoff creation and
+`IN_PROGRESS -> READY_FOR_REVIEW` status/history commit together.
+
+### work_review_responses
+
+| Column             | Type                 | Rules                                      |
+| ------------------ | -------------------- | ------------------------------------------ |
+| id                 | uuid                 | primary key                                |
+| handoff_id         | uuid                 | required, unique, FK handoffs, restrict    |
+| decision           | work_review_decision | required                                   |
+| responding_user_id | uuid                 | required, FK users, restrict delete        |
+| note               | text                 | optional acceptance note; required changes |
+| created_at         | timestamptz          | required                                   |
+
+Notes are at most 2,000 trimmed characters; `CHANGES_REQUESTED` requires at
+least three. Rows are immutable through the application and one per handoff.
+The response, request transition, and status-history row commit together.
 
 ### attachments
 
@@ -448,6 +501,14 @@ response changes request/estimate state and inserts request status history in
 one transaction. One response per version is enforced by both state and a
 unique constraint.
 
+P005 locks the tenant-scoped request for every work transition and handoff
+version allocation, the current handoff for client response, and the original
+time row for void correction. Start, handoff, response, and cancellation each
+commit one request-status update with one status-history row. Handoff and
+response rows join those transactions where applicable. Optimistic timestamps,
+exact source states, unique constraints, and row locks ensure concurrent
+commands produce at most one success.
+
 ## Seed Contract
 
 Seed data must include:
@@ -481,3 +542,8 @@ P004 adds deterministic equal-time ordering, clarification follow-up,
 internal-only, client-visible, suspended-author history, and cross-tenant
 comment fixtures. The durable comment row is the notification-ready source;
 outboxes and delivery remain deferred.
+
+P005 adds deterministic in-progress, ready-for-review, completed, cancelled,
+active/voided time, repeated handoff/response, suspended-author, and
+cross-tenant fixtures. Seed execution remains twice-idempotent. These source
+rows do not imply billing or notification delivery.

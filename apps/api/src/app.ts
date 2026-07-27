@@ -25,6 +25,9 @@ import { EstimateService } from './modules/estimates/service.js';
 import { SessionRepository } from './modules/session/repository.js';
 import { authenticatedSessionRouter, developmentSessionRouter } from './modules/session/session.routes.js';
 import { SessionService } from './modules/session/service.js';
+import { WorkRepository } from './modules/work/repository.js';
+import { WorkService } from './modules/work/service.js';
+import { workRouter } from './modules/work/work.routes.js';
 
 type AppDependencies = {
   db: Database;
@@ -111,6 +114,7 @@ export function createApp(dependencies: AppDependencies): Express {
   const changeRequestRepository = new ChangeRequestRepository(db);
   const estimateService = new EstimateService(new EstimateRepository(db));
   const commentService = new CommentService(new CommentRepository(db));
+  const workService = new WorkService(new WorkRepository(db));
   app.use(
     '/api/v1',
     developmentAuthentication(config, sessionRepository),
@@ -119,6 +123,7 @@ export function createApp(dependencies: AppDependencies): Express {
     changeRequestRouter(new ChangeRequestService(changeRequestRepository)),
     estimateRouter(estimateService),
     commentRouter(commentService),
+    workRouter(workService),
   );
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),

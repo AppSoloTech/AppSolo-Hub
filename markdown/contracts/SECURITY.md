@@ -62,6 +62,16 @@ page counting for client roles. Missing and inaccessible identifiers share
 `404`; authorized client attempts to create internal-only content receive
 `403` without insertion.
 
+P005 adds centralized history, private-time, work-management, review-response,
+and cancellation capabilities. Every route repeats the active tenant path
+before reading or mutating. Client roles never receive private-time rows,
+totals, dates, authors, void facts, counts, offsets, placeholders, or timing
+signals. Complete-history source queries remove private time and internal
+comments before ordering, pagination, counting, or DTO construction; mutable
+estimate drafts are not history events for any role. Work transitions,
+handoffs, review responses, cancellation, and time voids are protected by
+scoped locks, exact source states, and optimistic timestamps.
+
 ## Input And Output
 
 - Zod validates all params, query values, and write bodies.
@@ -87,6 +97,8 @@ page counting for client roles. Missing and inaccessible identifiers share
 - Estimate scope, response notes, hours, rates, and monetary write bodies remain
   covered by whole-body redaction.
 - Do not log comment bodies, attachment content, authorization headers, cookies, or database URLs.
+- Do not log private-time descriptions, void reasons, work summaries, release
+  notes, cancellation reasons, or work-review notes.
 - Request-path internal errors are serialized to safe error type/code metadata;
   raw error messages, stacks, SQL, and parameter values are omitted from
   application logs and client responses.
@@ -116,6 +128,14 @@ Rate limiting, CSRF strategy, Content Security Policy tuning, secure cookies, an
 - Exact stored cost is protected by a PostgreSQL rounded-product check.
 - Comments have no update/delete API; trimmed body length is database-checked,
   and deterministic indexes include the ID tie-breaker.
+- Time entries have no edit/delete API. A correction adds all-or-none void
+  actor/reason/time metadata while preserving the original entry.
+- Work handoffs and review responses have no update/delete API, use restrictive
+  foreign keys, and enforce request-local versions and one response per
+  handoff.
+- Every P005 request-status transition and its status-history row commit or
+  roll back together. Completed and cancelled requests have no P005 reopen
+  path.
 
 ## Attachments
 

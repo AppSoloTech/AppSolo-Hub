@@ -155,7 +155,9 @@ For this detail route, both a missing request and an inaccessible request return
 
 Success `200`: standard envelope containing one change request.
 
-P001 detail does not need to expose estimates, comments, time entries, attachments, or status history. Those remain separate future contracts.
+P001 detail does not embed estimates, comments, time entries, attachments, or
+status history. Later phases expose applicable resources through separate
+contracts rather than expanding this DTO.
 
 ### POST `/api/v1/projects/:projectId/change-requests`
 
@@ -311,6 +313,56 @@ the returned page count, limit, offset, and the current membership's comment
 capabilities. Comment creation returns `201` and never changes request,
 estimate, response, revision, supersession, or status-history state. P004
 exposes no edit or delete route.
+
+## P005 Work, Time, Review, Cancellation, And History Routes
+
+Every P005 route requires an active user, active client organization, active
+project, and active membership in the request's owning client organization.
+Internal-organization membership alone grants nothing. Bodies and queries are
+strict; write fields not named below are rejected.
+
+- `GET /api/v1/change-requests/:changeRequestId/time-entries` is internal-only.
+  It accepts `limit`/`offset` (50/0 defaults, maximum 100), orders work date,
+  creation time, and ID descending, and returns the current page plus the
+  active integer-minute total. Client roles receive `404` and no time
+  existence signal.
+- `POST /api/v1/change-requests/:changeRequestId/time-entries` accepts exactly
+  `durationMinutes` (integer 1–1,440), trimmed `description` (3–2,000), and a
+  valid calendar `workDate`. It records the authenticated internal actor only
+  while the request is `IN_PROGRESS` and returns `201`.
+- `POST /api/v1/time-entries/:timeEntryId/void` accepts a required trimmed
+  `reason` (3–2,000) and `expectedUpdatedAt`. A developer can void an active
+  entry they authored; owner/admin can void any authorized entry. Stale or
+  repeated attempts return `409`.
+- `POST /api/v1/change-requests/:changeRequestId/work/start` accepts only
+  `expectedUpdatedAt` and performs `APPROVED -> IN_PROGRESS`.
+- `POST /api/v1/change-requests/:changeRequestId/review-handoffs` accepts
+  `workSummary` (10–5,000), optional `releaseNotes` (3–5,000), and
+  `expectedUpdatedAt`. It atomically creates the next immutable request-local
+  handoff and performs `IN_PROGRESS -> READY_FOR_REVIEW`; success is `201`.
+- `POST /api/v1/review-handoffs/:handoffId/respond` is client-admin-only. It
+  accepts `decision` as `ACCEPT` or `REQUEST_CHANGES`, `expectedUpdatedAt`, and
+  the decision-specific note. Acceptance has an optional note up to 2,000
+  characters and completes the request; requested changes require a 3–2,000
+  character reason and return it to in-progress.
+- `POST /api/v1/change-requests/:changeRequestId/cancel` accepts a required
+  3–2,000 character shared `reason` and `expectedUpdatedAt`.
+  Owner/admin/client-admin may cancel only the approved eligible nonterminal
+  source states.
+- `GET /api/v1/change-requests/:changeRequestId/history` accepts the same strict
+  pagination and returns explicitly tagged, oldest-first status, submitted
+  estimate, estimate-response, visible-comment, authorized-time, work-handoff,
+  and work-review-response events. Ordering uses event time, a stable kind
+  order, and source ID. Mutable estimate drafts are never events. Private time
+  and internal comments are filtered before client ordering, pagination, and
+  page counting.
+
+Every successful work transition writes exactly one matching status-history row
+in the same transaction. Missing and inaccessible request or nested IDs share
+`404`; missing action capability returns `403` except where private-time
+existence itself is protected; invalid lifecycle or optimistic state returns
+`409`. P005 exposes no time edit/delete, arbitrary status patch, response
+update/delete, or terminal-state reopen route.
 
 ## CORS And Body Limits
 

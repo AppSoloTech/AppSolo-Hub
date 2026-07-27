@@ -213,6 +213,7 @@ export class EstimateRepository {
           id: estimates.id,
           status: estimates.status,
           updatedAt: estimates.updatedAt,
+          requestStatus: changeRequests.status,
           role: organizationMemberships.role,
         })
         .from(estimates)
@@ -239,7 +240,11 @@ export class EstimateRepository {
         .for('update', { of: estimates });
       const row = rows[0];
       if (!row || !canManage(row.role)) return { outcome: 'NOT_FOUND' };
-      if (row.status !== 'DRAFT' || row.updatedAt.toISOString() !== input.expectedUpdatedAt)
+      if (
+        row.status !== 'DRAFT' ||
+        row.updatedAt.toISOString() !== input.expectedUpdatedAt ||
+        !['AWAITING_ESTIMATE', 'REJECTED', 'NEEDS_CLARIFICATION'].includes(row.requestStatus)
+      )
         return { outcome: 'CONFLICT' };
       const [updated] = await tx
         .update(estimates)

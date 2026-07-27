@@ -5,7 +5,9 @@ requests, access, exact estimates, client decisions, and request conversation.
 P001 delivers the request vertical slice. P002 adds provider-neutral local
 sessions and access administration. P003 adds versioned estimate drafting,
 submission, approval, rejection, clarification, and immutable response history.
-P004 adds ordered client-visible and internal-only comments.
+P004 adds ordered client-visible and internal-only comments. P005 adds private
+time, controlled delivery status, immutable review handoffs and responses,
+cancellation, and a role-filtered request chronology.
 
 Tenant authorization happens in the Express API. The React UI is a convenience layer, never the authorization boundary.
 
@@ -17,13 +19,13 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
                        shared Zod contracts (packages/shared)
 ```
 
-| Area                | Responsibility                                                     |
-| ------------------- | ------------------------------------------------------------------ |
-| `apps/web`          | React Router, session/access/estimate/comment UI and query state   |
-| `apps/api`          | Express routes, local auth, tenant-scoped domain services, logging |
-| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces              |
-| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset |
-| `e2e`               | Playwright request regression and invitation/session browser flow  |
+| Area                | Responsibility                                                        |
+| ------------------- | --------------------------------------------------------------------- |
+| `apps/web`          | React Router, session/access/estimate/comment/work UI and query state |
+| `apps/api`          | Express routes, local auth, tenant-scoped domain services, logging    |
+| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces                 |
+| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset    |
+| `e2e`               | Playwright request, access, estimate, comment, and work workflows     |
 
 `markdown/` is the canonical product and delivery control plane.
 
@@ -94,10 +96,12 @@ Seeded development identities include:
 
 | Identity             | ID                                     | Access                                                      |
 | -------------------- | -------------------------------------- | ----------------------------------------------------------- |
-| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar Demo Co. project                                  |
-| Client member        | `20000000-0000-4000-8000-000000000004` | Northstar Demo Co. project                                  |
-| Other tenant user    | `20000000-0000-4000-8000-000000000005` | Acme Demo Co. client member; denied from Northstar project  |
-| Internal-only user   | `20000000-0000-4000-8000-000000000006` | AppSolo internal developer; denied from all client projects |
+| AppSolo owner        | `20000000-0000-4000-8000-000000000001` | Northstar internal work, time, cancellation, and history    |
+| AppSolo developer    | `20000000-0000-4000-8000-000000000002` | Northstar internal work, own time correction, and history   |
+| Client administrator | `20000000-0000-4000-8000-000000000003` | Northstar review response, cancellation, and shared history |
+| Client member        | `20000000-0000-4000-8000-000000000004` | Northstar read-only shared history                          |
+| Other tenant user    | `20000000-0000-4000-8000-000000000005` | Acme client member; denied from Northstar                   |
+| Internal-only user   | `20000000-0000-4000-8000-000000000006` | AppSolo developer; denied without a client membership       |
 
 Sign in with the seeded email address shown by the UI or send `x-dev-user-id` directly when testing the API. The browser stores only the selected development user ID and clears cached tenant data when that identity changes or signs out. It never stores invitation tokens, which arrive in a URL fragment and are removed before acceptance. Development authentication is prohibited when `NODE_ENV=production`. Set `WEB_ACCEPTANCE_BASE_URL` when copy-only invitation links should use a canonical web origin other than the first `CORS_ORIGIN`.
 
@@ -118,6 +122,17 @@ internal composer defaulting to **Internal only**. Client roles receive no
 internal row, count, selector, or pagination gap. Comments do not resolve
 clarification or change request/estimate lifecycle state.
 
+Approved requests can be started by internal work managers, receive private
+internal time only while in progress, and be handed to the client with an
+immutable numbered work summary and optional release notes. A client
+administrator can request another work cycle or accept completion. Owners,
+administrators, and client administrators can cancel eligible nonterminal
+requests with a durable shared reason. Completed and cancelled requests remain
+terminal. The oldest-first request chronology combines authorized status,
+submitted estimate, response, comment, time, handoff, and review-response
+events; client roles receive no private-time or internal-comment existence
+signal.
+
 ## Commands
 
 ```bash
@@ -131,13 +146,19 @@ pnpm test:e2e       # resets test DB, then Playwright browser smoke
 pnpm build          # production builds
 pnpm db:generate    # generate Drizzle migration from schema changes
 pnpm db:migrate     # apply checked-in migration to configured DB
-pnpm db:seed        # idempotently add fake P001/P002/P003/P004 data
+pnpm db:seed        # idempotently add fake P001-P005 data
 pnpm db:reset       # guarded local configured DB reset
 pnpm docker:up      # start local PostgreSQL Compose service
 pnpm docker:down    # stop local PostgreSQL Compose service
 ```
 
-The Playwright command always starts its own API and web processes. If either development port is already occupied, stop that process before running the smoke test; Playwright will not reuse an API that may be connected to the development database.
+The Playwright command always starts its own API and web processes and will not
+reuse a process that may be connected to the development database. When the
+default ports are already in intentional use, choose isolated alternatives:
+
+```bash
+PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e
+```
 
 ## Troubleshooting
 
@@ -151,12 +172,12 @@ The Playwright command always starts its own API and web processes. If either de
 
 ## Current limitations and future direction
 
-P004 deliberately excludes real-time chat, editing/deletion, nested threads,
-attachments, notifications/delivery, time tracking/execution, payments,
-Cognito, production sessions, AWS SDKs/resources, deployment, and CI/CD. A
-later phase can replace the development adapter with Cognito without changing
-business modules.
+P005 deliberately excludes billing, time editing/deletion, timers, assignments,
+attachments, notifications/delivery, reopening terminal requests, Cognito,
+production sessions, AWS SDKs/resources, deployment, and CI/CD. A later phase
+can replace the development adapter with Cognito without changing business
+modules.
 
 See [the current state](markdown/CURRENT_STATE.md),
 [architecture](markdown/ARCHITECTURE.md), and
-[P004 record](markdown/phases/P004-comments-and-clarification.md).
+[P005 record](markdown/phases/P005-time-tracking-status-and-completion.md).

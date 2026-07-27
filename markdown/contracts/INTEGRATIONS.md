@@ -53,6 +53,12 @@ visibility, ID, and creation time. That durable row is notification-ready input,
 not a delivery claim. P004 adds no outbox, preference, template, email adapter,
 queue, webhook, or provider integration; those decisions remain P007 scope.
 
+P005 persists private time, durable void metadata, request status history,
+immutable work handoffs, and immutable client review responses as application
+source rows. It does not emit an outbox event, send a notification, call an
+email provider, schedule work, or add a queue/webhook. P007 owns any later
+notification projection over these records.
+
 ## Logging And Monitoring
 
 P001 emits structured application logs through Pino. Business modules do not call CloudWatch APIs.

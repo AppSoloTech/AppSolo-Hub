@@ -129,6 +129,23 @@ lookahead, and relocation to a newly created comment on paginated feeds.
 Playwright covers persisted internal and shared clarification discussion
 against the isolated test database.
 
+### P005 Coverage
+
+Shared tests cover strict time/work/review/cancellation bodies, real calendar
+dates, text safety, pagination, and the centralized capability surface.
+Database tests cover duration/description/void invariants, request-local
+handoff uniqueness, and one response per handoff. PostgreSQL API integration
+tests cover the exact role matrix; active tenant lifecycle; private-time
+redaction, totals, durable/concurrent voids; exact status transitions and
+atomic history; concurrent handoffs/responses; repeated review and completion;
+cancellation and estimate freezing; deterministic equal-time history with
+filtering before pagination; historical suspended authorship; strict errors;
+and forced-failure log redaction. Component tests cover role-aware work, time,
+review, cancellation, history, recoverable validation/server failures, and
+client absence of private-time artifacts. Playwright covers the complete
+approved-to-completed lifecycle with private time, requested changes, a second
+handoff, client acceptance, and P001–P004 browser regressions.
+
 ## Database Test Isolation
 
 Docker Compose should initialize:
@@ -171,6 +188,12 @@ P002 uses the active prompt's V1-V20 sequence. `pnpm --filter @appsolo/database 
 P004 uses the active prompt's V1-V20 sequence. Drizzle generation must report
 no drift after the checked-in P004 migration/snapshot, and
 `node scripts/validate-phase.mjs P004` must pass before handoff.
+
+P005 uses the active prompt's V1–V20 sequence. Drizzle generation must report
+no drift after the checked-in P005 migration/snapshot. Direct probes must cover
+transaction/concurrency, terminal-state, totals, history-oracle, and structured
+log redaction claims. `node scripts/validate-phase.mjs P005` must pass before
+handoff.
 
 ## Validation Evidence
 

@@ -1,0 +1,175 @@
+.section {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.heading,
+.itemHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading h2,
+.itemHeader h3 {
+  margin: 0;
+}
+
+.heading > strong {
+  color: #1e40af;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+}
+
+.form,
+.inlineForm {
+  display: grid;
+  gap: 14px;
+}
+
+.form label,
+.inlineForm label {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.form input,
+.form textarea,
+.inlineForm textarea {
+  border: 1px solid #b7c2d3;
+  border-radius: 6px;
+  padding: 10px;
+  background: white;
+  font: inherit;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.feed,
+.timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.timeEntry,
+.historyItem,
+.handoff {
+  display: grid;
+  gap: 10px;
+}
+
+.itemHeader time,
+.itemHeader span,
+.attribution,
+.response span,
+.historyItem > span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.itemHeader > div {
+  display: grid;
+  gap: 4px;
+}
+
+.voided {
+  border-style: dashed;
+  background: #f8fafc;
+}
+
+.response,
+.pending,
+.privateNotice {
+  border-left: 3px solid #7c3aed;
+  background: #f5f3ff;
+  padding: 12px 14px;
+  margin: 0;
+}
+
+.response p {
+  margin: 6px 0;
+}
+
+.privateNotice {
+  border-left-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.visibility {
+  width: fit-content;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.actions,
+.pagination {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pagination {
+  justify-content: space-between;
+}
+
+.pagination span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.radio,
+.confirm {
+  display: flex !important;
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.radio input,
+.confirm input {
+  width: auto;
+}
+
+.cancel summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+.cancel[open] summary {
+  margin-bottom: 14px;
+}
+
+.danger {
+  width: fit-content;
+  border-color: #b91c1c;
+  background: #b91c1c;
+  color: white;
+}
+
+@media (max-width: 620px) {
+  .heading,
+  .itemHeader,
+  .fieldGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    justify-content: flex-start;
+  }
+}

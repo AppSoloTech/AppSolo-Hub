@@ -5,36 +5,50 @@ import { useSession } from './SessionProvider.js';
 import styles from './Session.module.css';
 
 type AcceptanceState = 'accepting' | 'success' | 'expired' | 'invalid' | 'error';
+type AcceptanceResult = Awaited<ReturnType<typeof accessApi.acceptInvitation>>;
+type AcceptanceAttempt = {
+  token: string | null;
+  promise: Promise<AcceptanceResult> | null;
+};
+
+let activeAttempt: AcceptanceAttempt | null = null;
+
+const initializeAttempt = (): AcceptanceAttempt => {
+  const fragment = new URLSearchParams(window.location.hash.slice(1));
+  const fragmentToken = fragment.get('token');
+  if (fragmentToken !== null || activeAttempt === null) {
+    activeAttempt = { token: fragmentToken, promise: null };
+  }
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${window.location.pathname}${window.location.search}`,
+  );
+  return activeAttempt;
+};
 
 export function InvitationAcceptance() {
   const { establish } = useSession();
-  const tokenRef = useRef<string | null>(null);
-  const initializedRef = useRef(false);
+  const attemptRef = useRef<AcceptanceAttempt | null>(null);
   const startedRef = useRef(false);
   const [state, setState] = useState<AcceptanceState>('accepting');
 
-  if (!initializedRef.current) {
-    const fragment = new URLSearchParams(window.location.hash.slice(1));
-    tokenRef.current = fragment.get('token');
-    window.history.replaceState(
-      window.history.state,
-      document.title,
-      `${window.location.pathname}${window.location.search}`,
-    );
-    initializedRef.current = true;
-  }
+  if (attemptRef.current === null) attemptRef.current = initializeAttempt();
 
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    const token = tokenRef.current;
-    tokenRef.current = null;
-    if (!token) {
+    const attempt = attemptRef.current;
+    if (attempt === null || (attempt.token === null && attempt.promise === null)) {
       setState('invalid');
       return;
     }
-    void accessApi
-      .acceptInvitation(token)
+    if (attempt.promise === null && attempt.token !== null) {
+      attempt.promise = accessApi.acceptInvitation(attempt.token);
+      attempt.token = null;
+    }
+    if (attempt.promise === null) return;
+    void attempt.promise
       .then((response) => {
         establish(response.data);
         setState('success');
@@ -47,6 +61,11 @@ export function InvitationAcceptance() {
         } else {
           setState('error');
         }
+      })
+      .finally(() => {
+        window.setTimeout(() => {
+          if (activeAttempt === attempt) activeAttempt = null;
+        }, 0);
       });
   }, [establish]);
 

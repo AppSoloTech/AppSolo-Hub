@@ -17,6 +17,16 @@ import type {
   UpdateMembershipInput,
   UpdateEstimateInput,
   RespondToEstimateInput,
+  CancelChangeRequestInput,
+  CreateReviewHandoffInput,
+  CreateTimeEntryInput,
+  RequestHistoryItem,
+  RequestHistoryMeta,
+  RespondToReviewHandoffInput,
+  TimeEntryDto,
+  TimeEntryListMeta,
+  VoidTimeEntryInput,
+  WorkCommandDto,
 } from '@appsolo/shared';
 import { env } from './env.js';
 
@@ -122,6 +132,47 @@ export const commentsApi = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+};
+
+export const workApi = {
+  timeEntries: (changeRequestId: string, limit: number, offset: number) =>
+    api<{ data: TimeEntryDto[]; meta: TimeEntryListMeta }>(
+      `/change-requests/${changeRequestId}/time-entries?limit=${limit}&offset=${offset}`,
+    ),
+  createTimeEntry: (changeRequestId: string, input: CreateTimeEntryInput) =>
+    api<SuccessEnvelope<TimeEntryDto>>(`/change-requests/${changeRequestId}/time-entries`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  voidTimeEntry: (timeEntryId: string, input: VoidTimeEntryInput) =>
+    api<SuccessEnvelope<TimeEntryDto>>(`/time-entries/${timeEntryId}/void`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  start: (changeRequestId: string, expectedUpdatedAt: string) =>
+    api<SuccessEnvelope<WorkCommandDto>>(`/change-requests/${changeRequestId}/work/start`, {
+      method: 'POST',
+      body: JSON.stringify({ expectedUpdatedAt }),
+    }),
+  createHandoff: (changeRequestId: string, input: CreateReviewHandoffInput) =>
+    api<SuccessEnvelope<WorkCommandDto>>(`/change-requests/${changeRequestId}/review-handoffs`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  respond: (handoffId: string, input: RespondToReviewHandoffInput) =>
+    api<SuccessEnvelope<WorkCommandDto>>(`/review-handoffs/${handoffId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  cancel: (changeRequestId: string, input: CancelChangeRequestInput) =>
+    api<SuccessEnvelope<WorkCommandDto>>(`/change-requests/${changeRequestId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  history: (changeRequestId: string, limit: number, offset: number) =>
+    api<{ data: RequestHistoryItem[]; meta: RequestHistoryMeta }>(
+      `/change-requests/${changeRequestId}/history?limit=${limit}&offset=${offset}`,
+    ),
 };
 
 export const sessionApi = {

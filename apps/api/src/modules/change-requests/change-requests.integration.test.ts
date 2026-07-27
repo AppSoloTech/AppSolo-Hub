@@ -87,7 +87,7 @@ describe('change request API integration', () => {
     const authorized = await request(app).get(projectPath).set('x-dev-user-id', seedIds.clientAdmin);
     const list = authorized.body as { data: Array<{ id: string; projectId: string }> };
     expect(authorized.status).toBe(200);
-    expect(list.data).toHaveLength(6);
+    expect(list.data).toHaveLength(10);
     expect(list.data.every((entry) => entry.projectId === seedIds.project)).toBe(true);
     expect(list.data.map((entry) => entry.id)).toEqual([
       seedIds.requestClarification,
@@ -96,6 +96,10 @@ describe('change request API integration', () => {
       seedIds.requestAwaitingApproval,
       seedIds.requestTwo,
       seedIds.requestOne,
+      seedIds.requestReadyForReview,
+      seedIds.requestInProgress,
+      seedIds.requestCompleted,
+      seedIds.requestCancelled,
     ]);
     const detail = await request(app)
       .get(`/api/v1/change-requests/${seedIds.requestOne}`)

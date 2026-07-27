@@ -59,3 +59,63 @@ describe('P004 comment database invariants', () => {
     ).rejects.toMatchObject({ code: '23514' });
   });
 });
+
+describe('P005 time and review database invariants', () => {
+  const { pool } = createDatabase(resolvedTestDatabaseUrl(process.env));
+
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it('enforces bounded time, valid descriptions, and all-or-none void metadata', async () => {
+    await expect(
+      pool.query('UPDATE time_entries SET duration_minutes = 1441 WHERE id = $1', [seedIds.activeTimeEntry]),
+    ).rejects.toMatchObject({ code: '23514' });
+    await expect(
+      pool.query("UPDATE time_entries SET description = '  ' WHERE id = $1", [seedIds.activeTimeEntry]),
+    ).rejects.toMatchObject({ code: '23514' });
+    await expect(
+      pool.query("UPDATE time_entries SET void_reason = 'partial' WHERE id = $1", [seedIds.activeTimeEntry]),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
+
+  it('enforces request-local handoff versions and one immutable response row', async () => {
+    await expect(
+      pool.query(
+        `INSERT INTO work_review_handoffs
+          (change_request_id, version, created_by_user_id, work_summary)
+         VALUES ($1, 1, $2, 'A duplicate request-local handoff version.')`,
+        [seedIds.requestReadyForReview, seedIds.owner],
+      ),
+    ).rejects.toMatchObject({ code: '23505' });
+    await expect(
+      pool.query(
+        `INSERT INTO work_review_responses
+          (handoff_id, decision, responding_user_id, note)
+         VALUES ($1, 'ACCEPTED', $2, 'Duplicate response.')`,
+        [seedIds.completedHandoffOne, seedIds.clientAdmin],
+      ),
+    ).rejects.toMatchObject({ code: '23505' });
+  });
+
+  it('enforces status, handoff, and review-response text invariants', async () => {
+    await expect(
+      pool.query("UPDATE status_history SET note = ' ' WHERE change_request_id = $1", [
+        seedIds.requestReadyForReview,
+      ]),
+    ).rejects.toMatchObject({ code: '23514' });
+    await expect(
+      pool.query("UPDATE work_review_handoffs SET work_summary = 'short' WHERE id = $1", [
+        seedIds.readyHandoff,
+      ]),
+    ).rejects.toMatchObject({ code: '23514' });
+    await expect(
+      pool.query(
+        `INSERT INTO work_review_responses
+          (handoff_id, decision, responding_user_id, note)
+         VALUES ($1, 'CHANGES_REQUESTED', $2, NULL)`,
+        [seedIds.readyHandoff, seedIds.clientAdmin],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
+});
