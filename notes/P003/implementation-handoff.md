@@ -200,7 +200,9 @@ documented as harmless redundancy under the additive-migration policy.
 - Claude independently verified P003-F1 through P003-F7 fixed at
   `5de9490cf80c3cdda286f0565608f415ee75241f`; the final review verdict is
   `ready` and no finding remains open.
-- Human Q1-Q10 QA has not run.
+- Human Q1-Q10 QA passed by explicit attestation on 2026-07-27 at
+  `d277584c87eb90498060bc9d2279d9abf7292f5a`; browser/version, OS details, and
+  screenshots were not supplied.
 - P003 remains local-only and uses development authentication.
 - All approved non-goals remain excluded: no billing/currency variants/line
   items, comments, work execution/time tracking, attachments, notifications,
@@ -226,3 +228,12 @@ Claude's candidate review and focused accepted-fix verification covered:
   every input before another submission.
 - Confirm failure announcements, term-error descriptions, real decision tests,
   blank-name response DTO behavior, and `estimatedCost` overflow detail.
+
+## Completion Status
+
+- Requirements, automated validation, independent review, finding disposition,
+  accepted-fix verification, and human Q1-Q10 QA are complete.
+- P003 remains incomplete until the human explicitly approves final local
+  integration and phase completion.
+- No push, remote creation, pull, origin reset, history rewrite, or merge has
+  occurred.

@@ -78,7 +78,9 @@ response-note requirements, and concurrency behavior are binding for P003.
   `e41fbca9ff4e6c38537440685a6d13a367b2324b..5de9490cf80c3cdda286f0565608f415ee75241f`.
 - Focused Claude verification: P003-F1 through P003-F7 independently verified
   fixed at `5de9490cf80c3cdda286f0565608f415ee75241f`; final verdict `ready`.
-- Human QA: not started.
+- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27 at
+  `d277584c87eb90498060bc9d2279d9abf7292f5a`; browser/version, OS details, and
+  screenshots were not supplied.
 - Completion: not eligible.
 
 ## Validation Evidence
@@ -154,7 +156,8 @@ Interim validation results are preserved honestly:
 - Focused verification: complete at
   `5de9490cf80c3cdda286f0565608f415ee75241f`; final verdict `ready`, with no
   open finding.
-- Human QA Q1-Q10: not run.
+- Human QA Q1-Q10: passed by explicit human attestation on 2026-07-27; see
+  `notes/P003/qa.md`.
 - No push, remote creation, pull, origin reset, history rewrite, or merge occurred.
 
 ## Completion Gate
@@ -165,6 +168,7 @@ Interim validation results are preserved honestly:
   and the final verdict is `ready`.
 - Findings dispositioned: Yes; P003-F1 through P003-F7 were accepted, fixed,
   and verified.
-- Required human QA complete: No; Q1-Q10 are not run.
+- Required human QA complete: Yes; Q1-Q10 passed by explicit human attestation.
 - Human integration and completion approval: No.
-- Ready for integration: No.
+- Ready for integration: Yes; awaiting explicit human integration/completion
+  approval.
