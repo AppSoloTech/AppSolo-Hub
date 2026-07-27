@@ -51,7 +51,9 @@ approved completion and local integration on 2026-07-27.
 - Immutable candidate:
   `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`; Claude completed its candidate
   review with five findings, and the human accepted P004-F1 through P004-F5 for
-  correction. Independent fix verification and human QA remain pending.
+  correction. All accepted fixes are committed at
+  `4c328f74a57076fa19f57937ae30867d5fabcbd2`; independent verification of the
+  High finding and human QA remain pending.
 
 ## Current Constraints
 

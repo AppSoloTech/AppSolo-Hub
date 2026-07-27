@@ -84,6 +84,10 @@ are binding for P004.
 - Review handoff: `notes/P004/implementation-handoff.md`.
 - Review: complete on 2026-07-27 with verdict `changes requested`; P004-F1
   through P004-F5 were accepted by the human for correction.
+- Review-fix SHA: `4c328f74a57076fa19f57937ae30867d5fabcbd2`.
+- Review-fix commit: `P004: address accepted review findings`.
+- Accepted-fix range:
+  `426e0491212d55ad4018055b7705779fab337062..4c328f74a57076fa19f57937ae30867d5fabcbd2`.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -128,13 +132,49 @@ Interim validation results are preserved honestly:
   and exact accessible controls; the authoritative rerun passed all 4 tests.
 - One prohibited-scope search matched table names in test-database truncation;
   the runtime-source and changed-path searches passed.
+- Candidate V16 covered only a successful request and did not exercise
+  database-error serialization. Claude's forced error-path probe superseded
+  that limited evidence and produced P004-F1.
+
+### Accepted Review-Fix Validation
+
+| Command                                                     | Result | Evidence                                                                                               |
+| ----------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| `pnpm docker:up`                                            | Passed | Existing local PostgreSQL Compose service reported healthy.                                            |
+| `pnpm db:migrate`                                           | Passed | All checked-in migrations applied; the accepted fixes add no migration.                                |
+| `pnpm db:seed` twice                                        | Passed | Both idempotence runs reported seed data present.                                                      |
+| `pnpm --filter @appsolo/database generate`                  | Passed | Drizzle reported `No schema changes, nothing to migrate`.                                              |
+| `pnpm lint`                                                 | Passed | ESLint and Prettier passed.                                                                            |
+| `pnpm typecheck`                                            | Passed | Strict shared, database, API, and web checks passed.                                                   |
+| `pnpm test`                                                 | Passed | 17 shared and 8 database tests passed, including null-character rejection.                             |
+| `pnpm test:api`                                             | Passed | 44 tests in 6 files passed, including field-specific null validation and forced error-log redaction.   |
+| `pnpm test:web`                                             | Passed | 26 tests in 8 files passed, including created-comment targeting and exact-full pagination boundaries.  |
+| `pnpm build`                                                | Passed | All four workspace builds completed.                                                                   |
+| `pnpm test:e2e`                                             | Passed | All 4 real browser/API/PostgreSQL flows passed.                                                        |
+| scaffolding, phase-index, and P004 validation               | Passed | 27 required files, 11 phases, current generated index, and valid P004 structure.                       |
+| review-fix `git diff --check` and scope/dependency searches | Passed | No whitespace error, dependency change, deferred mutation, service/chat, AWS, or later-phase addition. |
+
+Accepted-fix totals are 17 shared, 8 database, 44 API, 26 component, and 4
+Playwright tests: 99 passing tests across all required layers.
+
+Accepted-fix interim results are preserved honestly:
+
+- The first forced database-error log test failed because `pino-http`
+  installed its own request-child `err` serializer. The safe serializer was
+  added to both the base and HTTP logger configurations; the focused and final
+  44-test API reruns passed without the sentinel, query, parameters, stack, or
+  driver message.
+- The first accepted-fix `pnpm test` attempt passed all shared tests but five
+  database assertions received sandbox `EPERM` instead of PostgreSQL `23514`.
+  The exact approved local-database rerun passed all 17 shared and 8 database
+  tests.
 
 ## Completion Gate
 
-- Requirements implemented: Yes at the immutable candidate SHA.
-- Automated validation: Passed as recorded above.
-- Independent review clear: No; accepted findings are being corrected and
-  P004-F1 requires independent verification.
-- Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted.
+- Requirements implemented: Yes, including P004-F1 through P004-F5 at
+  `4c328f74a57076fa19f57937ae30867d5fabcbd2`.
+- Automated validation: Passed for the candidate and accepted-fix boundaries.
+- Independent review clear: No; P004-F1 requires independent fix verification.
+- Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted and fixed.
 - Required human QA complete: No.
 - Human integration and completion approval: No.

@@ -8,13 +8,13 @@ Allowed dispositions are `Accepted`, `Rejected`, `Deferred`, and
 
 ## Findings
 
-| Finding | Severity | Disposition | Reason                                                                                 | Destination                                                         |
-| ------- | -------- | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| P004-F1 | High     | Accepted    | Comment bodies, especially internal-only content, must never enter application logs.   | `phase/P004-comments-and-clarification` review-fix commit (pending) |
-| P004-F2 | Medium   | Accepted    | Invalid text input must receive a safe field-specific validation response.             | `phase/P004-comments-and-clarification` review-fix commit (pending) |
-| P004-F3 | Medium   | Accepted    | A newly created comment must remain visible and must not appear lost after pagination. | `phase/P004-comments-and-clarification` review-fix commit (pending) |
-| P004-F4 | Low      | Accepted    | Exact-page boundaries must not offer navigation to a misleading empty page.            | `phase/P004-comments-and-clarification` review-fix commit (pending) |
-| P004-F5 | Low      | Accepted    | Every request-specific composer must start from the safe internal visibility default.  | `phase/P004-comments-and-clarification` review-fix commit (pending) |
+| Finding | Severity | Disposition | Reason                                                                                 | Destination                                |
+| ------- | -------- | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| P004-F1 | High     | Accepted    | Comment bodies, especially internal-only content, must never enter application logs.   | `4c328f74a57076fa19f57937ae30867d5fabcbd2` |
+| P004-F2 | Medium   | Accepted    | Invalid text input must receive a safe field-specific validation response.             | `4c328f74a57076fa19f57937ae30867d5fabcbd2` |
+| P004-F3 | Medium   | Accepted    | A newly created comment must remain visible and must not appear lost after pagination. | `4c328f74a57076fa19f57937ae30867d5fabcbd2` |
+| P004-F4 | Low      | Accepted    | Exact-page boundaries must not offer navigation to a misleading empty page.            | `4c328f74a57076fa19f57937ae30867d5fabcbd2` |
+| P004-F5 | Low      | Accepted    | Every request-specific composer must start from the safe internal visibility default.  | `4c328f74a57076fa19f57937ae30867d5fabcbd2` |
 
 ## Product Or Architecture Decisions
 

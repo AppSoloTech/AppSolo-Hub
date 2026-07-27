@@ -1,7 +1,7 @@
 # P004 Implementation Handoff For Claude
 
-> Status: Review pending. Candidate implementation is immutable; independent
-> review and human QA have not started.
+> Status: Accepted review fixes committed and validated. Independent
+> verification of P004-F1 and human QA remain pending.
 
 ## Review Target
 
@@ -16,6 +16,10 @@
 - Exact diff check:
   `git diff --check c64e42d6f08901b7dd72be9d11bfc37ed3af3149..f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`
 - Candidate size: 31 files, 3,432 insertions, 51 deletions.
+- Review-fix SHA: `4c328f74a57076fa19f57937ae30867d5fabcbd2`
+- Review-fix commit: `P004: address accepted review findings`
+- Accepted-fix range:
+  `426e0491212d55ad4018055b7705779fab337062..4c328f74a57076fa19f57937ae30867d5fabcbd2`
 
 Local `main` was authoritative, clean, and exactly
 `06c1e0714ea18b1b37173917a45c023220f49e30` before approval. The local approval
@@ -63,6 +67,21 @@ remote creation, AWS action, or external-service action occurred.
 - API, data, security, integration, testing, architecture, README, and accepted
   tenant-authorization ADR updates.
 
+## Accepted Review Fixes
+
+- P004-F1: both base and request-child error serializers now emit only safe
+  error type/code metadata. A forced PostgreSQL insert failure proves internal
+  body, SQL, parameters, stack, and driver message are absent from captured
+  logs and the client receives only the safe `500` envelope.
+- P004-F2: the shared/API comment schema rejects `U+0000` with a field-specific
+  `400 VALIDATION_ERROR` before PostgreSQL receives the value.
+- P004-F3: after creation, the UI locates the returned comment ID through
+  authorized filtered pages and opens the exact 20-comment page containing it.
+- P004-F4: the feed requests one lookahead row, renders only 20, and offers
+  later-page navigation only when that lookahead row exists.
+- P004-F5: request detail keys the conversation section by request ID, forcing
+  every request-specific composer to mount with `INTERNAL_ONLY`.
+
 ## Requirement And Acceptance Mapping
 
 | Requirement | Acceptance criteria | Primary evidence                                                                                              |
@@ -71,10 +90,10 @@ remote creation, AWS action, or external-service action occurred.
 | R2          | AC4-AC7             | Strict shared schema, server-owned create, SQL body check, equal-time order, concurrency, and route search.   |
 | R3          | AC8-AC11            | SQL pre-pagination visibility predicate, filtered page counts, safe 403/404, explicit six-field DTO tests.    |
 | R4          | AC12-AC14           | Clarification state/history comparison and revision-submission test retaining reason/comments/visibility.     |
-| R5          | AC15-AC16           | Strict list/create route/query/body tests, envelopes/request IDs, and captured structured-log sentinel probe. |
-| R6          | AC17-AC20           | Four component tests plus real internal/client Playwright clarification flow and narrow-layout CSS.           |
+| R5          | AC15-AC16           | Strict route/input tests plus forced database-error logging proof that body/SQL/parameters/stacks are absent. |
+| R6          | AC17-AC20           | Six component tests cover safe reset, created-comment targeting, exact-full pages, and prior UI behavior.     |
 | R7          | AC21-AC22           | Migration/snapshot, `23514` probes/tests, stable indexes, no drift, twice-idempotent deterministic seed.      |
-| R8          | AC23-AC24           | 96 passing automated tests, P001/P002/P003 regressions, contracts, exact Git evidence, and scope searches.    |
+| R8          | AC23-AC24           | 99 passing automated tests, P001/P002/P003 regressions, contracts, exact Git evidence, and scope searches.    |
 
 ## Migration And Seed Evidence
 
@@ -115,8 +134,8 @@ remote creation, AWS action, or external-service action occurred.
 | V19 | prohibited implementation/dependency searches   | Passed | No deferred mutations, service/chat dependencies, or prohibited-scope paths.                         |
 | V20 | `node scripts/validate-phase.mjs P004`          | Passed | Phase and pending review/disposition/QA note structure valid.                                        |
 
-Test totals are 17 shared, 8 database, 43 API, 24 component, and 4 Playwright:
-96 passing tests across all required layers.
+Candidate test totals were 17 shared, 8 database, 43 API, 24 component, and 4
+Playwright: 96 passing tests across all required layers.
 
 ## Direct Probe Details
 
@@ -147,9 +166,40 @@ Test totals are 17 shared, 8 database, 43 API, 24 component, and 4 Playwright:
 - An initial broad prohibited-scope search matched fixture table names in test
   reset SQL; runtime and changed-path searches passed.
 
+## Accepted Review-Fix Validation
+
+| Command                                                     | Result | Evidence                                                                                               |
+| ----------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| `pnpm docker:up`                                            | Passed | Existing local PostgreSQL Compose service reported healthy.                                            |
+| `pnpm db:migrate`                                           | Passed | All checked-in migrations applied; the accepted fixes add no migration.                                |
+| `pnpm db:seed` twice                                        | Passed | Both idempotence runs reported seed data present.                                                      |
+| `pnpm --filter @appsolo/database generate`                  | Passed | Drizzle reported `No schema changes, nothing to migrate`.                                              |
+| `pnpm lint`                                                 | Passed | ESLint and Prettier passed.                                                                            |
+| `pnpm typecheck`                                            | Passed | Strict shared, database, API, and web checks passed.                                                   |
+| `pnpm test`                                                 | Passed | 17 shared and 8 database tests passed.                                                                 |
+| `pnpm test:api`                                             | Passed | 44 tests in 6 files, including null validation and forced error-path logging.                          |
+| `pnpm test:web`                                             | Passed | 26 tests in 8 files, including created-comment targeting and exact-full pagination.                    |
+| `pnpm build`                                                | Passed | Shared, database, API, and web builds completed.                                                       |
+| `pnpm test:e2e`                                             | Passed | All 4 real browser/API/PostgreSQL flows passed.                                                        |
+| scaffolding, phase-index, and P004 validation               | Passed | 27 required files, 11 phases, current generated index, and valid P004 structure.                       |
+| review-fix `git diff --check` and scope/dependency searches | Passed | No whitespace error, dependency change, deferred mutation, AWS, service/chat, or later-phase addition. |
+
+Accepted-fix totals are 17 shared, 8 database, 44 API, 26 component, and 4
+Playwright: 99 passing tests across all required layers.
+
+Accepted-fix interim results are preserved honestly:
+
+- The first forced error-log test failed because `pino-http` replaced the base
+  logger's serializer for request child loggers. The serializer was installed
+  at both layers; focused and authoritative API reruns passed.
+- The first sandboxed `pnpm test` run passed shared tests but five database
+  assertions received `EPERM` before connecting. The exact approved local
+  rerun passed all 25 tests.
+
 ## Known Limitations And Non-Goals
 
-- Independent Claude review, finding disposition, and human Q1-Q10 QA have not
+- Claude's candidate review is complete and every finding is accepted/fixed.
+  P004-F1 still requires independent verification, and human Q1-Q10 QA has not
   run. P004 is not complete and must not be integrated yet.
 - The implementation remains local-only with development authentication.
 - No real-time transport, threading, edit/delete, rich text, moderation,
@@ -158,25 +208,21 @@ Test totals are 17 shared, 8 database, 43 API, 24 component, and 4 Playwright:
 - Comments remain available for every active request status by approved design;
   they never transition request or estimate state.
 
-## Independent Review Focus
+## Independent Fix Verification Focus
 
-- Challenge the repository visibility predicate and pagination/count metadata
-  for every client-oracle edge, including exact-full pages and arbitrary
-  offsets.
-- Recheck the create transaction's active membership/capability lock and its
-  behavior during concurrent membership suspension.
-- Verify historical author joins never require current author membership and
-  expose only safe display names.
-- Confirm no comment mutation reaches P003 request/estimate/response/history
-  state, including revision submission after clarification.
-- Inspect safe-default reset, identity-scoped cache invalidation, client
-  artifact absence, focus/announcement behavior, long wrapping, and narrow
-  layout.
-- Verify the index replacement and body constraint are additive for the
-  authoritative pre-P004 data and match the Drizzle snapshot.
+- Reproduce P004-F1 against the accepted-fix SHA and confirm request-child
+  error logs contain type/code only, including forced database failures.
+- Confirm `U+0000` returns the documented field-specific `400` without an
+  insert or error-level database failure.
+- Recheck that the 21-row lookahead cannot expose internal-comment existence
+  and that posting from an earlier/later page opens the page containing the
+  returned comment without duplication.
+- Confirm request-ID keyed composition restores `INTERNAL_ONLY` for a fresh
+  internal composer.
 
 ## Completion Status
 
-- Candidate implementation and all automated validation are complete.
-- Independent review, human finding disposition, and Q1-Q10 QA remain pending.
-- Phase status is `review_pending`; Codex has not marked P004 complete.
+- Candidate implementation, human finding disposition, accepted fixes, and all
+  automated validation are complete.
+- Independent verification of P004-F1 and human Q1-Q10 QA remain pending.
+- Phase status is `changes_requested`; Codex has not marked P004 complete.
