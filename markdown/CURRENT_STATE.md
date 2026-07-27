@@ -69,8 +69,9 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 - Independent review: Claude returned `changes requested` with P005-F1 through
   P005-F6. The human accepted F1–F5 for correction and accepted F6 as a
   documented P005 scaling limitation with no runtime change. Accepted fixes are
-  implemented and their applicable validation passes; the immutable review-fix
-  commit and independent re-verification remain required before human QA.
+  implemented and their applicable validation passes at immutable review-fix
+  commit `eb5821202696da134fa26094ce2a44f5a45f670f`; independent
+  re-verification remains required before human QA.
 
 ## Current Constraints
 
@@ -86,8 +87,8 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 - Attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
-- P005 awaits its immutable review-fix commit, independent Claude
-  re-verification, and human Q1–Q10 QA. It is not complete and has not been
-  integrated or pushed.
+- P005 awaits independent Claude re-verification of the immutable review-fix
+  commit and human Q1–Q10 QA. It is not complete and has not been integrated or
+  pushed.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

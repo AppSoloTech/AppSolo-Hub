@@ -1,7 +1,7 @@
 # P005 Review Disposition
 
-> Status: Human disposition recorded; accepted corrections implemented and
-> validated, with immutable review-fix commit pending.
+> Status: Human disposition recorded; accepted corrections committed and
+> validated, with independent re-verification pending.
 
 ## Review Boundary
 
@@ -12,20 +12,20 @@
 
 ## Findings
 
-| Finding | Severity | Disposition | Human rationale                                                                                                                                                                                  | Implementation destination                                                                                                                                       |
-| ------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P005-F1 | High     | Accepted    | Private-time void behavior must not disclose whether an in-tenant row exists to client roles. Preserve `403` for an internal developer who can view time but cannot void another author's entry. | Review-fix commit pending: return the same `404` response for client-role void attempts against existing and missing time-entry IDs, with API regression probes. |
-| P005-F2 | Medium   | Accepted    | Every private-time route must expose the same protected surface to client roles.                                                                                                                 | Review-fix commit pending: apply the private-time view gate before create authority and add client-admin/member API coverage.                                    |
-| P005-F3 | Medium   | Accepted    | Void affordance, recoverable conflict behavior, and pagination require direct component evidence.                                                                                                | Review-fix commit pending: cover own-only permission, exact void command and `409` recovery, plus forward/back transitions for both paginators.                  |
-| P005-F4 | Low      | Accepted    | Review response should follow the established membership-lock discipline for P005 mutations.                                                                                                     | Review-fix commit pending: include `organization_memberships` in the handoff-response row lock.                                                                  |
-| P005-F5 | Low      | Accepted    | Deterministic lifecycle fixtures should contain the durable creation and work-start events a real request would write.                                                                           | Review-fix commit pending: add fixed-ID/timestamp initial `SUBMITTED` rows and the missing ready/completed `APPROVED -> IN_PROGRESS` rows.                       |
-| P005-F6 | Low      | Accepted    | The current in-memory history assembly is acceptable at P005's local scale; no P005 runtime redesign is authorized.                                                                              | Documented as a known scaling characteristic in `markdown/ARCHITECTURE.md` and `notes/P005/implementation-handoff.md`; no code change.                           |
+| Finding | Severity | Disposition | Human rationale                                                                                                                                                                                  | Implementation destination                                      |
+| ------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| P005-F1 | High     | Accepted    | Private-time void behavior must not disclose whether an in-tenant row exists to client roles. Preserve `403` for an internal developer who can view time but cannot void another author's entry. | `eb5821202696da134fa26094ce2a44f5a45f670f`                      |
+| P005-F2 | Medium   | Accepted    | Every private-time route must expose the same protected surface to client roles.                                                                                                                 | `eb5821202696da134fa26094ce2a44f5a45f670f`                      |
+| P005-F3 | Medium   | Accepted    | Void affordance, recoverable conflict behavior, and pagination require direct component evidence.                                                                                                | `eb5821202696da134fa26094ce2a44f5a45f670f`                      |
+| P005-F4 | Low      | Accepted    | Review response should follow the established membership-lock discipline for P005 mutations.                                                                                                     | `eb5821202696da134fa26094ce2a44f5a45f670f`                      |
+| P005-F5 | Low      | Accepted    | Deterministic lifecycle fixtures should contain the durable creation and work-start events a real request would write.                                                                           | `eb5821202696da134fa26094ce2a44f5a45f670f`                      |
+| P005-F6 | Low      | Accepted    | The current in-memory history assembly is acceptable at P005's local scale; no P005 runtime redesign is authorized.                                                                              | `eb5821202696da134fa26094ce2a44f5a45f670f` (documentation only) |
 
 ## Decision
 
 - Human finding disposition: complete for P005-F1 through P005-F6.
 - Accepted-fix implementation: complete and validated for P005-F1 through
-  P005-F5; immutable review-fix commit pending.
+  P005-F5 at `eb5821202696da134fa26094ce2a44f5a45f670f`.
 - P005-F6: documentation-only scaling limitation; no runtime change.
 - Independent re-verification: required after the review-fix candidate is
   committed and validated.

@@ -1,14 +1,16 @@
 # P005 Implementation Handoff
 
-> Status: Accepted review corrections implemented and validated; immutable
-> review-fix commit pending.
+> Status: Immutable review-fix candidate ready for independent re-verification.
 
 ## Git Boundary
 
 - Base branch: `main`.
 - Base SHA: `96f3d6158e2971f49a1b7e832dc6c2292001580e`.
 - Candidate SHA: `df588175193707db9a65446eebb29de76e44eb21`.
-- Review-fix SHA: Pending.
+- Review-fix SHA: `eb5821202696da134fa26094ce2a44f5a45f670f`.
+- Review-fix commit: `P005: address accepted review findings`.
+- Accepted-fix range:
+  `9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f`.
 - Implementation branch:
   `phase/P005-time-tracking-status-and-completion`.
 - No remote was created, no branch was pushed, and P005 was not integrated into
@@ -99,7 +101,7 @@ P005-F1–F5 corrections and documenting P005-F6.
 | V15 | Passed  | V11 directly probes both client roles against create and existing/missing identifier-rooted void routes, retains the internal `403` distinction, and preserves concurrency assertions. V10 verifies each corrected seed chronology from PostgreSQL.                                                                                                                          |
 | V16 | Passed  | The forced-database-failure redaction test passed inside V11; no logging path changed.                                                                                                                                                                                                                                                                                       |
 | V17 | Passed  | `node scripts/generate-phase-index.mjs --check` — `PHASE_INDEX.md is current` with P005 at `changes_requested`.                                                                                                                                                                                                                                                              |
-| V18 | Not run | Requires the immutable review-fix SHA; it will be run and recorded immediately after that commit.                                                                                                                                                                                                                                                                            |
+| V18 | Passed  | `git diff --check 9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f` and `git diff --check df588175193707db9a65446eebb29de76e44eb21..eb5821202696da134fa26094ce2a44f5a45f670f` — both exact ranges produced no output and exited 0.                                                                                                         |
 | V19 | Passed  | Three manifest/import/runtime `rg` scans returned no dependency, SDK, Cognito, billing, timer, assignment, queue, notification, deployment, or production-session behavior.                                                                                                                                                                                                  |
 | V20 | Passed  | `node scripts/validate-phase.mjs P005` — `P005 phase structure is valid` with human dispositions recorded and P005 at `changes_requested`.                                                                                                                                                                                                                                   |
 
@@ -137,8 +139,7 @@ P005-F1–F5 corrections and documenting P005-F6.
 - Phase status: `changes_requested`.
 - Human implementation approval: Granted on 2026-07-27.
 - Automated validation: applicable review-fix checks pass; V2 and V4 were not
-  applicable to the dependency- and migration-neutral fix, and V18 awaits the
-  immutable fix SHA.
+  run because the accepted fix changed no dependency or migration.
 - Human QA: Not run.
 - Independent review: Initial review complete with `changes requested`;
   accepted-fix re-verification pending.

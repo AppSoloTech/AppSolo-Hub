@@ -95,7 +95,13 @@ binding for P005.
   no code change.
 - Accepted fixes: P005-F1 through P005-F5 are implemented and applicable
   validation passes; P005-F6 is documented without a runtime change.
-- Review-fix candidate: immutable commit pending.
+- Review-fix SHA: `eb5821202696da134fa26094ce2a44f5a45f670f`.
+- Review-fix commit: `P005: address accepted review findings`.
+- Accepted-fix range:
+  `9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f`.
+- Review-fix verification: applicable V1–V20 checks pass or are honestly marked
+  not run where the fix changed no dependency or migration; exact-range V18
+  passes. Independent Claude re-verification is pending.
 - Human QA: not started.
 - Completion: not eligible.
 
