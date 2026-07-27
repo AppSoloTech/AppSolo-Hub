@@ -32,9 +32,16 @@ const sharedComment = {
   authorDisplayName: 'Casey Admin',
   createdAt: '2026-07-26T14:00:00.000Z',
 };
+const commentAt = (position: number) => ({
+  ...sharedComment,
+  id: `60000000-0000-4000-8000-${position.toString().padStart(12, '0')}`,
+  body: `Comment ${position}`,
+});
+const commentsFrom = (start: number, count: number) =>
+  Array.from({ length: count }, (_, index) => commentAt(start + index));
 const internalMeta = {
   count: 1,
-  limit: 20,
+  limit: 21,
   offset: 0,
   canCreateClientComments: true,
   canViewInternalComments: true,
@@ -120,8 +127,8 @@ describe('request conversation UI', () => {
   it('connects clarification guidance to discussion and supports deterministic pagination', async () => {
     list
       .mockResolvedValueOnce({
-        data: [sharedComment],
-        meta: { ...internalMeta, count: 20 },
+        data: commentsFrom(1, 21),
+        meta: { ...internalMeta, count: 21 },
       })
       .mockResolvedValue({
         data: [{ ...sharedComment, id: '60000000-0000-4000-8000-000000000004' }],
@@ -134,8 +141,68 @@ describe('request conversation UI', () => {
     expect(screen.getByText(/adding a comment does not resolve the clarification/i)).toBeVisible();
     expect(screen.queryByRole('button', { name: /resolve/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Later comments' }));
-    expect(list).toHaveBeenLastCalledWith(changeRequestId, 20, 20);
+    expect(list).toHaveBeenLastCalledWith(changeRequestId, 21, 20);
     expect(await screen.findByText('Comments 21–21')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Earlier comments' })).toBeEnabled();
+  });
+
+  it('keeps a newly created comment visible when posting from a later page', async () => {
+    const createdComment = {
+      ...commentAt(41),
+      body: 'Visible after paginated creation.',
+    };
+    let created = false;
+    list.mockImplementation((_requestId: string, limit: number, offset: number) => {
+      if (limit === 100) {
+        return Promise.resolve({
+          data: [...commentsFrom(21, 20), ...(created ? [createdComment] : [])],
+          meta: { ...internalMeta, count: created ? 21 : 20, limit, offset },
+        });
+      }
+      if (offset === 0) {
+        return Promise.resolve({
+          data: commentsFrom(1, 21),
+          meta: { ...internalMeta, count: 21, limit, offset },
+        });
+      }
+      if (offset === 20) {
+        return Promise.resolve({
+          data: [...commentsFrom(21, 20), ...(created ? [createdComment] : [])],
+          meta: { ...internalMeta, count: created ? 21 : 20, limit, offset },
+        });
+      }
+      return Promise.resolve({
+        data: created ? [createdComment] : [],
+        meta: { ...internalMeta, count: created ? 1 : 0, limit, offset },
+      });
+    });
+    create.mockImplementation(() => {
+      created = true;
+      return Promise.resolve({ data: createdComment, meta: {} });
+    });
+    const user = userEvent.setup();
+    renderSection();
+
+    await user.click(await screen.findByRole('button', { name: 'Later comments' }));
+    expect(await screen.findByText('Comments 21–40')).toBeVisible();
+    await user.type(screen.getByLabelText('Comment'), createdComment.body);
+    await user.click(screen.getByRole('button', { name: 'Add comment' }));
+
+    expect(await screen.findByText(createdComment.body)).toBeVisible();
+    expect(screen.getByText('Comments 41–41')).toBeVisible();
+    expect(list).toHaveBeenCalledWith(changeRequestId, 100, 20);
+    expect(list).toHaveBeenCalledWith(changeRequestId, 21, 40);
+  });
+
+  it('does not offer a misleading later page when the final page is exactly full', async () => {
+    list.mockResolvedValue({
+      data: commentsFrom(1, 20),
+      meta: { ...internalMeta, count: 20 },
+    });
+    renderSection();
+
+    expect(await screen.findByText('Showing 20 comments')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Later comments' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Comments 21–20')).not.toBeInTheDocument();
   });
 });

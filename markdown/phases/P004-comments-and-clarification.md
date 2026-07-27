@@ -1,7 +1,7 @@
 ---
 id: P004
 title: Comments And Clarification
-status: review_pending
+status: changes_requested
 owner: codex
 reviewer: claude
 prompt: prompts/active/P004-comments-and-clarification.md
@@ -82,7 +82,8 @@ are binding for P004.
 - Candidate SHA: `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`.
 - Candidate commit: `P004: implement comments and clarification`.
 - Review handoff: `notes/P004/implementation-handoff.md`.
-- Review: not started.
+- Review: complete on 2026-07-27 with verdict `changes requested`; P004-F1
+  through P004-F5 were accepted by the human for correction.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -132,7 +133,8 @@ Interim validation results are preserved honestly:
 
 - Requirements implemented: Yes at the immutable candidate SHA.
 - Automated validation: Passed as recorded above.
-- Independent review clear: No; review has not started.
-- Findings dispositioned: not applicable yet.
+- Independent review clear: No; accepted findings are being corrected and
+  P004-F1 requires independent verification.
+- Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted.
 - Required human QA complete: No.
 - Human integration and completion approval: No.

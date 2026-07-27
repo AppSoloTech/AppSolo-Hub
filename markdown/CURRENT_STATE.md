@@ -40,7 +40,7 @@ approved completion and local integration on 2026-07-27.
 ## Active Phase
 
 - Active phase: `P004 — Comments And Clarification`.
-- P004 status: `review_pending`.
+- P004 status: `changes_requested`.
 - P004 prompt: specification version 1 under `prompts/active/`.
 - P004 implementation approval: granted by the human on 2026-07-27, including
   all twelve binding decisions.
@@ -49,8 +49,9 @@ approved completion and local integration on 2026-07-27.
 - Implementation branch: `phase/P004-comments-and-clarification`, based on
   immutable approval commit `c64e42d6f08901b7dd72be9d11bfc37ed3af3149`.
 - Immutable candidate:
-  `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`; independent Claude review and
-  human QA remain pending.
+  `f7d5d43fa43fafbccbc8f2525b31c9d01a87b045`; Claude completed its candidate
+  review with five findings, and the human accepted P004-F1 through P004-F5 for
+  correction. Independent fix verification and human QA remain pending.
 
 ## Current Constraints
 

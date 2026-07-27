@@ -87,7 +87,9 @@ page counting for client roles. Missing and inaccessible identifiers share
 - Estimate scope, response notes, hours, rates, and monetary write bodies remain
   covered by whole-body redaction.
 - Do not log comment bodies, attachment content, authorization headers, cookies, or database URLs.
-- Internal errors may include stack traces in local logs, but never in client responses.
+- Request-path internal errors are serialized to safe error type/code metadata;
+  raw error messages, stacks, SQL, and parameter values are omitted from
+  application logs and client responses.
 - Authentication failures should avoid exposing whether another tenant resource exists beyond the agreed status behavior.
 
 ## HTTP Baseline

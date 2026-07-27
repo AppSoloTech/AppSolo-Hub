@@ -299,8 +299,9 @@ Internal-organization membership alone grants no access.
   SQL before pagination, and orders by `createdAt` then ID ascending.
 - `POST /api/v1/change-requests/:changeRequestId/comments` accepts exactly a
   trimmed 1–5,000 character `body` and explicit `CLIENT_VISIBLE` or
-  `INTERNAL_ONLY` visibility. Request, author, ID, and timestamps are
-  server-owned.
+  `INTERNAL_ONLY` visibility. PostgreSQL-incompatible null characters are
+  rejected with a field-specific `400 VALIDATION_ERROR`. Request, author, ID,
+  and timestamps are server-owned.
 
 Every active client-tenant role can list and create client-visible comments.
 Only `OWNER`, `ADMIN`, and `DEVELOPER` can list or create internal-only

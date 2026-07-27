@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
-import pino from 'pino';
+import pino, { type DestinationStream } from 'pino';
 import { pinoHttp } from 'pino-http';
 import { ZodError } from 'zod';
 import type { Database } from '@appsolo/database';
@@ -31,6 +31,7 @@ type AppDependencies = {
   config: ApiConfig;
   clock?: Clock;
   tokenGenerator?: TokenGenerator;
+  logDestination?: DestinationStream;
 };
 const toDetails = (error: ZodError) =>
   error.issues.map((issue) => ({ path: issue.path.join('.') || 'request', message: issue.message }));
@@ -38,20 +39,43 @@ const bodyErrorType = (error: unknown): string | undefined =>
   typeof error === 'object' && error !== null && 'type' in error && typeof error.type === 'string'
     ? error.type
     : undefined;
+const stringProperty = (value: unknown, property: string): string | undefined =>
+  typeof value === 'object' &&
+  value !== null &&
+  property in value &&
+  typeof value[property as keyof typeof value] === 'string'
+    ? value[property as keyof typeof value]
+    : undefined;
+const safeErrorSerializer = (error: unknown) => {
+  const type =
+    error instanceof Error
+      ? error.name
+      : (stringProperty(error, 'name') ?? stringProperty(error, 'type') ?? 'UnknownError');
+  const code =
+    stringProperty(error, 'code') ??
+    (typeof error === 'object' && error !== null && 'cause' in error
+      ? stringProperty(error.cause, 'code')
+      : undefined);
+  return code ? { type, code } : { type };
+};
 
 export function createApp(dependencies: AppDependencies): Express {
   const { db, config } = dependencies;
   const app = express();
-  const logger = pino({
-    level: config.LOG_LEVEL,
-    redact: [
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'req.headers.x-dev-user-id',
-      'req.body',
-      'DATABASE_URL',
-    ],
-  });
+  const logger = pino(
+    {
+      level: config.LOG_LEVEL,
+      redact: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.headers.x-dev-user-id',
+        'req.body',
+        'DATABASE_URL',
+      ],
+      serializers: { err: safeErrorSerializer },
+    },
+    dependencies.logDestination,
+  );
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
   app.use(
@@ -59,6 +83,7 @@ export function createApp(dependencies: AppDependencies): Express {
       logger,
       genReqId: (request) => request.requestId,
       quietReqLogger: true,
+      serializers: { err: safeErrorSerializer },
       customAttributeKeys: { reqId: 'requestId' },
       customProps: (request) =>
         request.authenticatedUser ? { userId: request.authenticatedUser.userId } : {},

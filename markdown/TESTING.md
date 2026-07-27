@@ -117,14 +117,17 @@ history.
 ### P004 Coverage
 
 Shared and database tests cover strict trimmed bodies, visibility, pagination
-defaults, unknown/server-owned fields, and the PostgreSQL body check. API
-integration tests cover the exact role matrix, active tenant lifecycle,
-internal filtering before pagination, safe `403`/`404` behavior, explicit DTOs,
-deterministic equal-time ordering, concurrent creation, suspended authorship,
-and no P003 lifecycle mutation. Component tests cover internal-safe reset,
-client-only composition, validation/server recovery, labels, clarification
-guidance, and pagination. Playwright covers persisted internal and shared
-clarification discussion against the isolated test database.
+defaults, unsupported null characters, unknown/server-owned fields, and the
+PostgreSQL body check. API integration tests cover the exact role matrix, active
+tenant lifecycle, internal filtering before pagination, safe `403`/`404`
+behavior, explicit DTOs, deterministic equal-time ordering, concurrent
+creation, suspended authorship, no P003 lifecycle mutation, and a forced
+database-error log capture that proves bodies/query parameters are absent.
+Component tests cover internal-safe reset, client-only composition,
+validation/server recovery, labels, clarification guidance, exact-page
+lookahead, and relocation to a newly created comment on paginated feeds.
+Playwright covers persisted internal and shared clarification discussion
+against the isolated test database.
 
 ## Database Test Isolation
 

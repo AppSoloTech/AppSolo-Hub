@@ -5,6 +5,23 @@ import { ApiError, commentsApi, currentDevelopmentUserId } from '../../api.js';
 import styles from './CommentSection.module.css';
 
 const PAGE_SIZE = 20;
+const PAGE_FETCH_SIZE = PAGE_SIZE + 1;
+const PAGE_SCAN_SIZE = 100;
+
+async function findCommentPageOffset(
+  changeRequestId: string,
+  commentId: string,
+  startOffset: number,
+): Promise<number> {
+  let scanOffset = startOffset;
+  while (true) {
+    const page = await commentsApi.list(changeRequestId, PAGE_SCAN_SIZE, scanOffset);
+    const index = page.data.findIndex((comment) => comment.id === commentId);
+    if (index >= 0) return scanOffset + Math.floor(index / PAGE_SIZE) * PAGE_SIZE;
+    if (page.data.length < PAGE_SCAN_SIZE) return startOffset;
+    scanOffset += PAGE_SCAN_SIZE;
+  }
+}
 
 export function CommentSection({
   changeRequestId,
@@ -22,10 +39,10 @@ export function CommentSection({
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
-  const queryKey = ['comments', identity, changeRequestId, PAGE_SIZE, offset] as const;
+  const queryKey = ['comments', identity, changeRequestId, PAGE_FETCH_SIZE, offset] as const;
   const query = useQuery({
     queryKey,
-    queryFn: () => commentsApi.list(changeRequestId, PAGE_SIZE, offset),
+    queryFn: () => commentsApi.list(changeRequestId, PAGE_FETCH_SIZE, offset),
   });
 
   useEffect(() => {
@@ -46,10 +63,16 @@ export function CommentSection({
     setFeedback(null);
     setBusy(true);
     try {
-      await commentsApi.create(changeRequestId, parsed.data);
+      const created = await commentsApi.create(changeRequestId, parsed.data);
       setBody('');
       setVisibility('INTERNAL_ONLY');
-      setOffset(0);
+      let targetOffset = offset;
+      try {
+        targetOffset = await findCommentPageOffset(changeRequestId, created.data.id, offset);
+      } catch {
+        targetOffset = offset;
+      }
+      setOffset(targetOffset);
       await queryClient.invalidateQueries({
         queryKey: ['comments', identity, changeRequestId],
       });
@@ -86,9 +109,10 @@ export function CommentSection({
     );
   }
 
-  const { data: comments, meta } = query.data;
+  const { data, meta } = query.data;
+  const comments = data.slice(0, PAGE_SIZE);
   const hasPrevious = offset > 0;
-  const hasNext = meta.count === PAGE_SIZE;
+  const hasNext = data.length > PAGE_SIZE;
 
   return (
     <section className={styles.section} aria-labelledby="conversation-heading">
@@ -98,7 +122,7 @@ export function CommentSection({
           <h2 id="conversation-heading">Request conversation</h2>
         </div>
         <span>
-          Showing {meta.count} comment{meta.count === 1 ? '' : 's'}
+          Showing {comments.length} comment{comments.length === 1 ? '' : 's'}
         </span>
       </div>
 
@@ -144,7 +168,7 @@ export function CommentSection({
             Earlier comments
           </button>
           <span>
-            Comments {offset + 1}–{offset + meta.count}
+            Comments {offset + 1}–{offset + comments.length}
           </span>
           <button
             type="button"

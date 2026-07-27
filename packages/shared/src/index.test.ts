@@ -51,8 +51,8 @@ describe('P004 comment contracts', () => {
     expect(commentPaginationSchema.parse({})).toEqual({ limit: 50, offset: 0 });
   });
 
-  it('rejects empty, over-limit, non-string, unknown, and server-owned fields', () => {
-    for (const body of ['', '   ', 'x'.repeat(5001), 42]) {
+  it('rejects empty, over-limit, unsupported, non-string, unknown, and server-owned fields', () => {
+    for (const body of ['', '   ', 'x'.repeat(5001), 'before\u0000after', 42]) {
       expect(() => createCommentSchema.parse({ body, visibility: 'INTERNAL_ONLY' })).toThrow();
     }
     expect(() =>

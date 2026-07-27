@@ -47,7 +47,7 @@ export function ChangeRequestDetail() {
         </dl>
       </article>
       <EstimateSection changeRequestId={request.id} requestStatus={request.status} />
-      <CommentSection changeRequestId={request.id} requestStatus={request.status} />
+      <CommentSection key={request.id} changeRequestId={request.id} requestStatus={request.status} />
     </>
   );
 }

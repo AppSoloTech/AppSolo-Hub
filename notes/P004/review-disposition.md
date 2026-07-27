@@ -1,15 +1,22 @@
 # P004 Review Disposition
 
-> Owner: Human. No independent finding exists yet.
+> Owner: Human. P004-F1 through P004-F5 were accepted on 2026-07-27 by the
+> explicit instruction to address them.
 
 Allowed dispositions are `Accepted`, `Rejected`, `Deferred`, and
-`Clarification required`. The human must disposition every future finding
-before Codex applies any review fix.
+`Clarification required`.
 
 ## Findings
 
-Pending independent review.
+| Finding | Severity | Disposition | Reason                                                                                 | Destination                                                         |
+| ------- | -------- | ----------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| P004-F1 | High     | Accepted    | Comment bodies, especially internal-only content, must never enter application logs.   | `phase/P004-comments-and-clarification` review-fix commit (pending) |
+| P004-F2 | Medium   | Accepted    | Invalid text input must receive a safe field-specific validation response.             | `phase/P004-comments-and-clarification` review-fix commit (pending) |
+| P004-F3 | Medium   | Accepted    | A newly created comment must remain visible and must not appear lost after pagination. | `phase/P004-comments-and-clarification` review-fix commit (pending) |
+| P004-F4 | Low      | Accepted    | Exact-page boundaries must not offer navigation to a misleading empty page.            | `phase/P004-comments-and-clarification` review-fix commit (pending) |
+| P004-F5 | Low      | Accepted    | Every request-specific composer must start from the safe internal visibility default.  | `phase/P004-comments-and-clarification` review-fix commit (pending) |
 
 ## Product Or Architecture Decisions
 
-No post-candidate product or architecture decision has been made.
+No post-candidate product or architecture decision has been made. These
+accepted corrections preserve the approved P004 outcome and contracts.

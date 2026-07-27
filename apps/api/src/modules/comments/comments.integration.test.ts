@@ -1,5 +1,6 @@
 import { createDatabase, resolvedTestDatabaseUrl } from '@appsolo/database';
 import { seedDatabase, seedIds } from '@appsolo/database/seed';
+import type { DestinationStream } from 'pino';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.js';
@@ -218,6 +219,17 @@ describe('comment API integration', () => {
       expect(response.body).toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
       expect(JSON.stringify(response.body)).not.toContain('developer@appsolo.test');
     }
+    const unsupportedText = await request(app)
+      .post(path(seedIds.requestOne))
+      .set(auth(seedIds.owner))
+      .send({ body: 'before\u0000after', visibility: 'CLIENT_VISIBLE' });
+    expect(unsupportedText.status).toBe(400);
+    expect(unsupportedText.body).toMatchObject({
+      error: {
+        code: 'VALIDATION_ERROR',
+        details: [{ path: 'body', message: 'Comment contains an unsupported character.' }],
+      },
+    });
     const unknownQuery = await request(app)
       .get(path(seedIds.requestOne, '?visibility=INTERNAL_ONLY'))
       .set(auth(seedIds.owner));
@@ -238,6 +250,61 @@ describe('comment API integration', () => {
         error: { code: 'NOT_FOUND', message: 'The requested resource was not found.' },
       });
     }
+  });
+
+  it('omits comment bodies and database details from error-path application logs', async () => {
+    const sentinel = 'P004_INTERNAL_LOG_SENTINEL';
+    const logLines: string[] = [];
+    const logDestination: DestinationStream = {
+      write(message) {
+        logLines.push(message);
+      },
+    };
+    const loggingApp = createApp({
+      db,
+      config: { ...config, LOG_LEVEL: 'error' },
+      logDestination,
+    });
+
+    await pool.query(`
+      CREATE FUNCTION appsolo_test_reject_comment_insert()
+      RETURNS trigger
+      LANGUAGE plpgsql
+      AS $$
+      BEGIN
+        RAISE EXCEPTION 'forced comment insert failure';
+      END;
+      $$
+    `);
+    await pool.query(`
+      CREATE TRIGGER appsolo_test_reject_comment_insert
+      BEFORE INSERT ON comments
+      FOR EACH ROW
+      EXECUTE FUNCTION appsolo_test_reject_comment_insert()
+    `);
+
+    try {
+      const response = await request(loggingApp)
+        .post(path(seedIds.requestOne))
+        .set(auth(seedIds.owner))
+        .send({ body: sentinel, visibility: 'INTERNAL_ONLY' });
+      expect(response.status).toBe(500);
+      expect(response.body).toMatchObject({
+        error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
+      });
+    } finally {
+      await pool.query('DROP TRIGGER appsolo_test_reject_comment_insert ON comments');
+      await pool.query('DROP FUNCTION appsolo_test_reject_comment_insert()');
+    }
+
+    const serializedLogs = logLines.join('');
+    expect(serializedLogs).toContain('unhandled request error');
+    expect(serializedLogs).toContain('"err":{"type":');
+    expect(serializedLogs).not.toContain(sentinel);
+    expect(serializedLogs).not.toContain('"params"');
+    expect(serializedLogs).not.toContain('"query"');
+    expect(serializedLogs).not.toContain('"stack"');
+    expect(serializedLogs).not.toContain('forced comment insert failure');
   });
 
   it('orders equal timestamps by ID, paginates deterministically, and retains concurrent creates', async () => {

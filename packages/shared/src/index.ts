@@ -89,13 +89,14 @@ export const commentPaginationSchema = z
   })
   .strict();
 
+const safeTextSchema = (schema: z.ZodString) =>
+  schema.refine((value) => !value.includes('\u0000'), 'Comment contains an unsupported character.');
+
 export const createCommentSchema = z
   .object({
-    body: z
-      .string()
-      .trim()
-      .min(1, 'Comment is required.')
-      .max(5000, 'Comment must be at most 5,000 characters.'),
+    body: safeTextSchema(
+      z.string().trim().min(1, 'Comment is required.').max(5000, 'Comment must be at most 5,000 characters.'),
+    ),
     visibility: z.enum(commentVisibilities),
   })
   .strict();
