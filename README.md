@@ -90,6 +90,10 @@ pnpm dev
 - API: <http://localhost:4000>
 - Health: <http://localhost:4000/api/v1/health>
 
+The development web server uses port 5173 strictly. If that port is already in
+use, a second startup exits with a clear error instead of silently moving to a
+port that is not in the API's explicit CORS allowlist.
+
 On the first local visit, `VITE_DEV_AUTH_USER_ID` may initialize the browser identity. Use **Sign out** to reach the clearly labeled email-only development sign-in screen. This is intentionally insecure local behavior, not production authentication.
 
 Seeded development identities include:
@@ -165,6 +169,10 @@ PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e
 - **Migration says a relation already exists:** confirm `.env` points at `appsolo_client_hub_dev`, not another application's database. P001 migrations are initial-schema migrations and must not be applied to an unrelated database.
 - **`db:reset` refuses to run:** it intentionally requires a local `appsolo_client_hub_dev` target; `test:prepare` accepts only the separate `appsolo_client_hub_test` target.
 - **Browser shows a retryable error:** verify the API health endpoint and that `CORS_ORIGIN` includes the web origin (`localhost` and `127.0.0.1` are included in the examples).
+- **Web startup says port 5173 is in use:** use the already-running app at
+  <http://localhost:5173> or stop that known AppSolo development process before
+  starting a replacement. The server intentionally does not auto-select 5174,
+  because the API CORS allowlist is explicit.
 - **Development sign-in returns 401:** use an active seeded email. Invited and globally suspended users are denied until their lifecycle permits sign-in.
 - **Invitation link is invalid:** only the newest link survives resend; revoked, accepted, rotated, and unknown tokens share a safe invalid response. Expired invitations can be resent.
 - **Membership update conflicts:** refresh the access page. Updates use `expectedUpdatedAt`, and self-suspension/last-owner lockout are deliberately rejected.

@@ -90,6 +90,10 @@ Docker initialization should create a separate `appsolo_client_hub_test` databas
 - Health: `http://localhost:4000/api/v1/health`
 - PostgreSQL: `localhost:5432`
 
+The Vite development server treats port 5173 as strict. If the port is already
+occupied, startup must fail rather than auto-select an origin outside the API's
+explicit `CORS_ORIGIN` allowlist.
+
 If Codex changes a port because of an actual conflict, it must update examples, tests, README, and contracts together.
 
 ## Environment Validation Requirements
