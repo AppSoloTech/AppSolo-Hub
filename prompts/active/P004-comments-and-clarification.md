@@ -1,19 +1,18 @@
 ---
 phase: P004
 spec_version: 1
-status: draft
-approved_by: null
-approved_date: null
+status: approved
+approved_by: human
+approved_date: 2026-07-27
 drafted_date: 2026-07-27
-last_verified_sha: a6a3e728e67fa43004bb08d4b64b0e48aec5372f
+last_verified_sha: 06c1e0714ea18b1b37173917a45c023220f49e30
 ---
 
 # P004 — Comments And Clarification
 
-> Drafted with human authorization on 2026-07-27 from authoritative local
-> `main` at `a6a3e728e67fa43004bb08d4b64b0e48aec5372f`. This draft is
-> non-authorizing: implementation must not begin until the human approves this
-> exact consolidated prompt revision.
+> Approved by the human on 2026-07-27. This is the canonical P004
+> implementation work order, revalidated against authoritative local `main` at
+> `06c1e0714ea18b1b37173917a45c023220f49e30`.
 
 ## Problem
 
@@ -322,10 +321,9 @@ Contract rules:
 - AC24 maps to R8: contracts, exact SHAs, validation evidence, candidate
   handoff, and prohibited-scope searches are complete.
 
-## Proposed Binding Decisions For Human Approval
+## Approved Binding Decisions
 
-These decisions become binding only if the human approves this exact prompt
-revision.
+The human approved these twelve binding decisions on 2026-07-27.
 
 1. **Conversation model:** P004 uses one flat request-level conversation ordered
    oldest-first, not nested threads.
@@ -541,6 +539,5 @@ commands and counts or reasons.
 
 ## Open Human Decisions
 
-Approval of this prompt must explicitly accept or revise the twelve proposed
-binding decisions above. No additional material product, security, data,
-architecture, external-service, or cost decision is known at draft version 1.
+No additional material product, security, data, architecture, external-service,
+or cost decision is known at approved specification version 1.

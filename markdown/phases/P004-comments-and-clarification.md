@@ -1,11 +1,10 @@
 ---
 id: P004
 title: Comments And Clarification
-status: draft
+status: approved
 owner: codex
 reviewer: claude
-prompt: null
-draft_prompt: prompts/drafts/P004-comments-and-clarification.md
+prompt: prompts/active/P004-comments-and-clarification.md
 depends_on: [P003]
 base_branch: main
 base_sha: null
@@ -20,7 +19,7 @@ human_qa_required: true
 
 Add request communication while preserving strict internal-only and client-visible boundaries.
 
-## Draft Scope
+## Approved Scope
 
 - Create and list authorized comments.
 - Internal-only visibility enforcement.
@@ -29,7 +28,7 @@ Add request communication while preserving strict internal-only and client-visib
 - Client-safe DTOs and tests.
 - Additive data integrity and deterministic seed coverage.
 
-## Draft Non-Goals
+## Approved Non-Goals
 
 - Real-time chat.
 - Comment editing, deletion, reactions, or nested threads.
@@ -40,29 +39,46 @@ Add request communication while preserving strict internal-only and client-visib
 
 ## Approval State
 
-This phase remains a non-authorizing draft.
+The human approved P004 specification version 1 and all twelve binding decisions
+on 2026-07-27.
 
-- Prompt: draft version 1 created with human drafting authorization on
-  2026-07-27.
+- Active prompt: `prompts/active/P004-comments-and-clarification.md`,
+  specification version 1.
 - Draft basis: authoritative local `main` at
   `a6a3e728e67fa43004bb08d4b64b0e48aec5372f`.
-- Human approval: not granted.
-- Implementation: must not begin.
+- Human approval: granted on 2026-07-27.
+- Binding decisions: all twelve approved without revision.
+- Implementation: authorized, subject to mandatory repository revalidation and
+  Git-boundary establishment.
 - Dependencies: P003 is complete and locally integrated.
 
-Before approval, the human must review and accept or revise the consolidated
-prompt, including its twelve proposed binding decisions and stable R, AC, V, Q,
-and NG identifiers.
+The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its
+conversation model, append-only behavior, capability matrix, safe internal
+default, body contract, clarification ownership, lifecycle availability,
+historical authorship, visibility-oracle prevention, and notification boundary
+are binding for P004.
 
 ## Evidence
 
 - Drafted: 2026-07-27.
+- Approved: 2026-07-27.
 - Draft basis SHA: `a6a3e728e67fa43004bb08d4b64b0e48aec5372f`.
-- Base branch: `main`; implementation base SHA remains pending human approval
-  and repository revalidation.
-- Draft prompt: `prompts/drafts/P004-comments-and-clarification.md`, version 1.
+- Approval boundary revalidated: authoritative local `main` at
+  `06c1e0714ea18b1b37173917a45c023220f49e30`.
+- Base branch: `main`; implementation base SHA remains pending approval commit
+  creation.
+- Active prompt: `prompts/active/P004-comments-and-clarification.md`, version 1.
 - Draft authorization: human, 2026-07-27.
 - Candidate SHA: pending.
 - Review: not started.
 - Human QA: not started.
 - Completion: not eligible.
+
+## Completion Gate
+
+- Requirements implemented: No; implementation has not started.
+- Automated validation: pending.
+- Independent review clear: No; review has not started.
+- Findings dispositioned: not applicable yet.
+- Required human QA complete: No.
+- Human integration and completion approval: No.
