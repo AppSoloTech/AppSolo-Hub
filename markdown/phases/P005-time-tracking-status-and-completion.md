@@ -118,8 +118,15 @@ binding for P005.
   P005 domain, privacy, tenancy, history, or provider boundaries. Lint, strict
   typecheck, 38/38 web tests, all workspace builds, and 6/6 isolated
   Playwright tests passed.
+- Pre-QA development correction: a duplicate `pnpm dev` silently selected web
+  port 5174 outside the explicit API CORS allowlist. Commit
+  `f295ff4bf221d73ad0cbabf4e9696cf7592265b9` makes Vite fail clearly when the
+  canonical 5173 port is occupied. The redundant process was stopped; the
+  original 4000/5173 stack and exact developer sign-in were verified. Lint,
+  strict typecheck, 38/38 web tests, all workspace builds, and 6/6 isolated
+  Playwright tests passed.
 - Human QA: not started; the application boundary is
-  `8a734cc36b1457051021b2277d768ff24c328940`.
+  `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`.
 - Completion: not eligible.
 
 ## Completion Gate

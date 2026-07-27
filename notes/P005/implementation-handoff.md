@@ -21,6 +21,10 @@
   `8a734cc36b1457051021b2277d768ff24c328940`.
 - Pre-QA dark-mode follow-up commit:
   `feat(web): add persistent dark mode`.
+- Pre-QA development-startup correction SHA:
+  `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`.
+- Pre-QA development-startup correction commit:
+  `fix(dev): prevent CORS-breaking port fallback`.
 - Implementation branch:
   `phase/P005-time-tracking-status-and-completion`.
 - No remote was created, no branch was pushed, and P005 was not integrated into
@@ -154,6 +158,25 @@ privacy boundaries.
 | Passed | `PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e` — 6/6 isolated full-stack browser tests passed, including applying dark mode and retaining it across reload.  |
 | Passed | `git diff --check` — no whitespace errors before the implementation commit.                                                                                                     |
 
+## Pre-QA Development-Startup Correction
+
+During pre-QA sign-in, a second root `pnpm dev` process found the canonical web
+port occupied and Vite silently moved its web child to 5174. The API correctly
+kept its explicit 5173-only CORS policy, so browser preflight from 5174 was
+rejected. The correction makes the canonical development web port strict;
+future duplicate startup fails visibly instead of producing a partially usable
+stack. The redundant 5174 process was stopped without interrupting the original
+API and web processes.
+
+| Result | Command and evidence                                                                                                                                                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passed | Browser-equivalent preflight probes reproduced the mismatch: origin `http://localhost:5174` received no `Access-Control-Allow-Origin`, while the configured `http://localhost:5173` origin was allowed. |
+| Passed | Listener and process inspection identified 5174 as the web child of a second root `pnpm dev`; the original app remained on API 4000 and web 5173 after the duplicate was stopped.                       |
+| Passed | Direct `POST /api/v1/development/session` from origin `http://localhost:5173` with `developer@appsolo.test` returned `200` and the expected active internal and Northstar memberships.                  |
+| Passed | A deliberate second `pnpm --filter @appsolo/web dev` now exits with `Error: Port 5173 is already in use`; no 5174 listener is created.                                                                  |
+| Passed | `pnpm lint`, `pnpm typecheck`, `pnpm test:web` (38/38), `pnpm build`, generated phase-index check, P005 structure validation, and `git diff --check` passed.                                            |
+| Passed | `PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e` — the explicit isolated-port override remains supported and all 6/6 workflows passed, including development sign-in.                  |
+
 ## Coverage Summary
 
 - Shared: 20 tests.
@@ -180,9 +203,10 @@ privacy boundaries.
   final verdict `ready with non-blocking observations`; the human accepted the
   resulting Low F7 seed observation, and its correction is committed and
   validated.
-- The existing local development servers were preserved. Formal Playwright
-  evidence used isolated ports 4100/5273; the temporary direct-probe API on
-  port 4200 was stopped after the probes.
+- The original local development servers were preserved; only the confirmed
+  redundant 5174 web process was stopped. Formal Playwright evidence used
+  isolated ports 4100/5273; the temporary direct-probe API on port 4200 was
+  stopped after the probes.
 
 ## Completion Status
 

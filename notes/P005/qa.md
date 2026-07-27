@@ -6,7 +6,7 @@
 
 - Operating system: Not supplied.
 - Browser/version: Not supplied.
-- Application boundary: `8a734cc36b1457051021b2277d768ff24c328940`.
+- Application boundary: `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`.
 - Development identity/tenant: Not run.
 
 ## Pre-QA UI Follow-Up
@@ -16,6 +16,11 @@
   before human QA.
 - Automated checks passed: lint, strict typecheck, 38/38 web tests, all
   workspace production builds, and 6/6 isolated Playwright tests.
+- Pre-QA startup correction
+  `f295ff4bf221d73ad0cbabf4e9696cf7592265b9` pins Vite strictly to port 5173,
+  preventing a duplicate startup from silently moving to the CORS-disallowed
+  port 5174. The duplicate process was stopped, the normal 4000/5173 stack was
+  preserved, and direct `developer@appsolo.test` sign-in returned `200`.
 - Before Q1, select **Dark mode** in the sidebar, reload the page, and confirm
   the dark preference remains applied. This visual check is supplemental and
   does not replace Q1–Q10.
