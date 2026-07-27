@@ -42,7 +42,9 @@ approved completion and local integration on 2026-07-27.
 - No phase is approved or active.
 - Next roadmap candidate: `P004 — Comments And Clarification`.
 - P004 status: `draft`.
-- P004 prompt: not drafted.
+- P004 prompt: non-authorizing draft version 1 exists at
+  `prompts/drafts/P004-comments-and-clarification.md` from authoritative local
+  `main` at `a6a3e728e67fa43004bb08d4b64b0e48aec5372f`.
 - P004 implementation approval: not granted.
 
 ## Current Constraints
@@ -59,8 +61,8 @@ approved completion and local integration on 2026-07-27.
 - Comments, time tracking, attachments, notifications, AWS infrastructure,
   delivery automation, production authentication, and production hardening
   remain in their sequenced future phases.
-- P004 requires a consolidated non-authorizing prompt with stable requirements,
-  acceptance criteria, validation, QA, non-goal identifiers, and resolved
-  material product decisions before human approval.
+- P004's consolidated non-authorizing prompt has stable requirements,
+  acceptance criteria, validation, QA, and non-goal identifiers. Its twelve
+  proposed binding decisions must be accepted or revised before human approval.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

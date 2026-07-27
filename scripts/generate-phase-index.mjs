@@ -53,7 +53,11 @@ const lines = [
 
 for (const phase of phases) {
   const phaseLink = `[${phase.id}](phases/${phase.file})`;
-  const prompt = phase.prompt ? `[active prompt](../${phase.prompt})` : 'Not drafted';
+  const prompt = phase.prompt
+    ? `[active prompt](../${phase.prompt})`
+    : phase.draft_prompt
+      ? `[draft prompt](../${phase.draft_prompt})`
+      : 'Not drafted';
   lines.push(
     `| ${phaseLink} | ${phase.title ?? ''} | \`${phase.status ?? ''}\` | ${phase.risk ?? ''} | ${phase.depends_on ?? '[]'} | ${prompt} |`,
   );
