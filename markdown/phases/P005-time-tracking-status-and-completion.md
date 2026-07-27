@@ -1,10 +1,10 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: draft
+status: approved
 owner: codex
 reviewer: claude
-prompt: null
+prompt: prompts/active/P005-time-tracking-status-and-completion.md
 depends_on: [P004]
 base_branch: main
 base_sha: null
@@ -19,34 +19,71 @@ human_qa_required: true
 
 Record work, controlled status transitions, release notes, review handoff, and completion history.
 
-## Candidate Scope
+## Approved Scope
 
-- Time-entry lifecycle.
-- Status transition policy.
-- Release notes and completion details.
-- Complete authorized history view.
+- Private time create-and-void lifecycle with internal-only totals.
+- Controlled work, review, completion, and cancellation transitions.
+- Immutable versioned work handoffs and client-administrator responses.
+- Complete role-filtered request chronology.
+- Additive data integrity, deterministic seed, and regression coverage.
 
-## Candidate Non-Goals
+## Approved Non-Goals
 
-- Payroll.
-- Invoicing.
-- Calendar scheduling.
+- Billing, invoicing, payroll, estimate-versus-actual cost, and accounting.
+- Running timers, calendar scheduling, assignments, and broad project
+  management.
+- Time editing/hard-delete, client-visible time, or completed/cancelled reopen.
+- Attachments, notifications, production authentication, AWS, and deployment.
 
 ## Approval State
 
-This phase is a roadmap record only.
+The human approved P005 specification version 1 and all fifteen binding
+decisions without revision on 2026-07-27.
 
-- Prompt: not drafted.
-- Human approval: not granted.
-- Implementation: must not begin.
-- Dependencies: P004 must be complete or explicitly waived.
+- Active prompt: `prompts/active/P005-time-tracking-status-and-completion.md`,
+  specification version 1.
+- Draft basis: authoritative local `main` at
+  `33e233130579cc4be479e588bc1229f2a8a94579`.
+- Revalidation classification: valid with required specification update; the
+  outcome remains one cohesive phase and is not split, deferred, superseded, or
+  cancelled.
+- Human approval: granted on 2026-07-27.
+- Binding decisions: all fifteen approved without revision.
+- Implementation: authorized, subject to the immutable approval boundary and
+  prescribed phase branch.
+- Dependencies: P004 is complete and locally integrated.
 
-Before approval, create a consolidated prompt with stable R, AC, V, Q, and NG identifiers and resolve material product decisions.
+The approved prompt contains stable R, AC, V, Q, and NG identifiers. Its
+private-time boundary, durable void correction, exact transition authority,
+versioned handoff/review model, cancellation policy, terminal states, complete
+chronology, visibility-oracle protections, and notification boundary are
+binding for P005.
 
 ## Evidence
 
-- Base SHA: pending.
+- Drafted: 2026-07-27.
+- Approved: 2026-07-27.
+- Draft basis SHA: `33e233130579cc4be479e588bc1229f2a8a94579`.
+- Approval boundary revalidated: authoritative local `main` at
+  `33e233130579cc4be479e588bc1229f2a8a94579`.
+- Base branch: `main`; implementation base SHA remains pending approval commit
+  creation.
+- Revalidated: 2026-07-27; approved assumptions match the current schema, seed,
+  capability policy, API composition, request detail UI, P003/P004 lifecycle
+  boundaries, log redaction, dependency manifests, and local toolchain.
+- Active prompt:
+  `prompts/active/P005-time-tracking-status-and-completion.md`, version 1.
+- Draft authorization: human, 2026-07-27.
 - Candidate SHA: pending.
 - Review: not started.
 - Human QA: not started.
 - Completion: not eligible.
+
+## Completion Gate
+
+- Requirements implemented: No; implementation has not started.
+- Automated validation: pending.
+- Independent review clear: No; review has not started.
+- Findings dispositioned: not applicable yet.
+- Required human QA complete: No.
+- Human integration and completion approval: No.

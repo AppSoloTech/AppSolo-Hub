@@ -9,7 +9,7 @@
 | [P002](phases/P002-authentication-and-invitations.md)                     | Authentication And Invitations                     | `complete` | high   | [P001]     | [active prompt](../prompts/active/P002-authentication-and-invitations.md)                     |
 | [P003](phases/P003-estimates-and-approval-workflow.md)                    | Estimates And Approval Workflow                    | `complete` | high   | [P002]     | [active prompt](../prompts/active/P003-estimates-and-approval-workflow.md)                    |
 | [P004](phases/P004-comments-and-clarification.md)                         | Comments And Clarification                         | `complete` | high   | [P003]     | [active prompt](../prompts/active/P004-comments-and-clarification.md)                         |
-| [P005](phases/P005-time-tracking-status-and-completion.md)                | Time Tracking, Status, And Completion              | `draft`    | high   | [P004]     | Not drafted                                                                                   |
+| [P005](phases/P005-time-tracking-status-and-completion.md)                | Time Tracking, Status, And Completion              | `approved` | high   | [P004]     | [active prompt](../prompts/active/P005-time-tracking-status-and-completion.md)                |
 | [P006](phases/P006-attachments-with-s3.md)                                | Attachments With S3                                | `draft`    | high   | [P005]     | Not drafted                                                                                   |
 | [P007](phases/P007-email-notifications-with-ses.md)                       | Email Notifications With SES                       | `draft`    | medium | [P006]     | Not drafted                                                                                   |
 | [P008](phases/P008-cognito-integration.md)                                | Cognito Integration                                | `draft`    | high   | [P007]     | Not drafted                                                                                   |
@@ -19,4 +19,4 @@
 
 ## Active Work
 
-No active phase.
+- **P005 — Time Tracking, Status, And Completion**: `approved`.
