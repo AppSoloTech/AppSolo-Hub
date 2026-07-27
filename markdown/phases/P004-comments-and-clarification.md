@@ -92,8 +92,11 @@ are binding for P004.
   verified P004-F1 through P004-F5 fixed at
   `4c328f74a57076fa19f57937ae30867d5fabcbd2` and issued final verdict
   `ready with non-blocking observations`.
-- Human QA: not started.
-- Completion: not eligible.
+- Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27; see
+  `notes/P004/qa.md`.
+- Human completion and local integration approval: not yet granted.
+- Completion: all implementation, validation, review, disposition, and QA gates
+  are satisfied; explicit human integration/completion approval remains.
 
 ## Validation Evidence
 
@@ -183,5 +186,8 @@ Accepted-fix interim results are preserved honestly:
   observations.
 - Findings dispositioned: Yes; P004-F1 through P004-F5 are accepted, fixed,
   and independently verified.
-- Required human QA complete: No.
+- Required human QA complete: Yes; Q1-Q10 passed by explicit human attestation
+  on 2026-07-27.
 - Human integration and completion approval: No.
+- Ready for integration: Yes, pending explicit human integration/completion
+  approval.

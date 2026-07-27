@@ -54,7 +54,9 @@ approved completion and local integration on 2026-07-27.
   correction. All accepted fixes are committed at
   `4c328f74a57076fa19f57937ae30867d5fabcbd2`; Claude independently verified
   P004-F1 through P004-F5 fixed with final verdict
-  `ready with non-blocking observations`. Human QA remains pending.
+  `ready with non-blocking observations`. The human passed Q1-Q10 by explicit
+  attestation on 2026-07-27. Local integration and completion approval remain
+  pending.
 
 ## Current Constraints
 
@@ -67,9 +69,9 @@ approved completion and local integration on 2026-07-27.
 
 ## Significant Gaps
 
-- P004 comments are implemented as a review candidate but are not shipped until
-  independent review, finding disposition, human QA, completion approval, and
-  local integration are complete.
+- P004 comments are implemented, independently reviewed, corrected, and
+  human-QA accepted, but are not shipped until the human explicitly approves
+  completion and local integration.
 - Time tracking, attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
