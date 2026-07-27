@@ -1,6 +1,7 @@
 # P005 Implementation Handoff
 
-> Status: Immutable review-fix candidate ready for independent re-verification.
+> Status: Independent review clear; accepted P005-F7 correction validated;
+> human QA pending.
 
 ## Git Boundary
 
@@ -11,6 +12,11 @@
 - Review-fix commit: `P005: address accepted review findings`.
 - Accepted-fix range:
   `9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f`.
+- P005-F7 fix SHA: `0480a392b734750fe4612d353ea534bfd832de75`.
+- P005-F7 fix commit:
+  `P005: correct accepted seed chronology observation`.
+- P005-F7 fix range:
+  `50a6b8bf384385b08303ceb44fd5f8af012bd98a..0480a392b734750fe4612d353ea534bfd832de75`.
 - Implementation branch:
   `phase/P005-time-tracking-status-and-completion`.
 - No remote was created, no branch was pushed, and P005 was not integrated into
@@ -105,10 +111,30 @@ P005-F1–F5 corrections and documenting P005-F6.
 | V19 | Passed  | Three manifest/import/runtime `rg` scans returned no dependency, SDK, Cognito, billing, timer, assignment, queue, notification, deployment, or production-session behavior.                                                                                                                                                                                                  |
 | V20 | Passed  | `node scripts/validate-phase.mjs P005` — `P005 phase structure is valid` with human dispositions recorded and P005 at `changes_requested`.                                                                                                                                                                                                                                   |
 
+## Accepted P005-F7 Validation
+
+The Low post-verification observation changes only deterministic seed timestamps
+and their database regression evidence. The two historical entries now follow
+the seeded `IN_PROGRESS` transition, and guarded updates correct only the exact
+legacy fixture timestamps in an already-seeded local database.
+
+| Result  | Command and evidence                                                                                                                                                                                                                                                                   |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passed  | `pnpm --filter @appsolo/database test:prepare` — isolated migrations and corrected seed completed.                                                                                                                                                                                     |
+| Passed  | `pnpm db:seed` twice — both local development seed runs reported `Seed data is present`; the second run made no further change.                                                                                                                                                        |
+| Passed  | Read-only `psql` probe — the existing local fixture timestamps are 09:10, 09:20, and 09:30 UTC after the 09:00 `IN_PROGRESS` event.                                                                                                                                                    |
+| Passed  | `pnpm lint` — ESLint and Prettier pass.                                                                                                                                                                                                                                                |
+| Passed  | `pnpm typecheck` — strict shared, database, API, and web checks pass.                                                                                                                                                                                                                  |
+| Passed  | `pnpm test` — shared 20/20 and database 16/16 pass, including the new all-time-entries-after-start assertion.                                                                                                                                                                          |
+| Passed  | `pnpm test:api` — 7 files and 52/52 PostgreSQL integration tests pass.                                                                                                                                                                                                                 |
+| Passed  | `pnpm build` — shared, database, API, and Vite web builds pass.                                                                                                                                                                                                                        |
+| Passed  | `git diff --check 50a6b8bf384385b08303ceb44fd5f8af012bd98a..0480a392b734750fe4612d353ea534bfd832de75` — no output, exit 0.                                                                                                                                                             |
+| Not run | `pnpm install`, `pnpm db:migrate`, schema drift generation, web component tests, and Playwright were not rerun because F7 changes no dependency, migration/schema, API/UI behavior, or browser flow. Their previously passing evidence remains at the independently reviewed boundary. |
+
 ## Coverage Summary
 
 - Shared: 20 tests.
-- Database: 15 tests against PostgreSQL invariants and deterministic lifecycle
+- Database: 16 tests against PostgreSQL invariants and deterministic lifecycle
   chronology.
 - API: 52 tests across seven files against isolated PostgreSQL.
 - Web: 34 tests across nine files.
@@ -127,20 +153,21 @@ P005-F1–F5 corrections and documenting P005-F6.
 - There is no running timer, time edit/hard-delete, assignment, scheduling,
   reopen, arbitrary status patch, notification/outbox, attachment work, AWS,
   deployment, or production authentication.
-- Human Q1–Q10 QA has not started. Claude's initial review returned
-  `changes requested`; the human accepted F1–F5 for correction and F6 as the
-  documented scaling limitation above.
+- Human Q1–Q10 QA has not started. Claude independently verified F1–F6 with
+  final verdict `ready with non-blocking observations`; the human accepted the
+  resulting Low F7 seed observation, and its correction is committed and
+  validated.
 - The existing local development servers were preserved. Formal Playwright
   evidence used isolated ports 4100/5273; the temporary direct-probe API on
   port 4200 was stopped after the probes.
 
 ## Completion Status
 
-- Phase status: `changes_requested`.
+- Phase status: `qa_pending`.
 - Human implementation approval: Granted on 2026-07-27.
 - Automated validation: applicable review-fix checks pass; V2 and V4 were not
   run because the accepted fix changed no dependency or migration.
 - Human QA: Not run.
-- Independent review: Initial review complete with `changes requested`;
-  accepted-fix re-verification pending.
+- Independent review: Clear; final verdict
+  `ready with non-blocking observations`.
 - Human integration/completion approval: Not granted.

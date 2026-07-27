@@ -1,7 +1,7 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: changes_requested
+status: qa_pending
 owner: codex
 reviewer: claude
 prompt: prompts/active/P005-time-tracking-status-and-completion.md
@@ -99,19 +99,31 @@ binding for P005.
 - Review-fix commit: `P005: address accepted review findings`.
 - Accepted-fix range:
   `9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f`.
-- Review-fix verification: applicable V1–V20 checks pass or are honestly marked
-  not run where the fix changed no dependency or migration; exact-range V18
-  passes. Independent Claude re-verification is pending.
+- Review-fix verification: Claude independently verified P005-F1 through
+  P005-F6 on 2026-07-27 with final verdict
+  `ready with non-blocking observations`; applicable checks reproduced and V2
+  and V4 were correctly not run for the dependency- and migration-neutral fix.
+- Follow-up observation: Claude reported Low P005-F7 for seeded time entries
+  predating the seeded work-start event. The human accepted F7 on 2026-07-27.
+- P005-F7 fix SHA: `0480a392b734750fe4612d353ea534bfd832de75`.
+- P005-F7 fix commit:
+  `P005: correct accepted seed chronology observation`.
+- P005-F7 fix range:
+  `50a6b8bf384385b08303ceb44fd5f8af012bd98a..0480a392b734750fe4612d353ea534bfd832de75`.
+- P005-F7 validation: lint, typecheck, shared/database tests (20/20 and
+  16/16), API tests (52/52), builds, isolated test preparation, two local seed
+  runs, exact diff check, and a direct local SQL chronology probe passed.
 - Human QA: not started.
 - Completion: not eligible.
 
 ## Completion Gate
 
-- Requirements implemented: Yes at immutable candidate
-  `df588175193707db9a65446eebb29de76e44eb21`.
+- Requirements implemented: Yes through accepted observation fix
+  `0480a392b734750fe4612d353ea534bfd832de75`.
 - Automated validation: V1–V20 passed.
-- Independent review clear: No; accepted High and release-critical Medium
-  findings require correction and Claude re-verification.
-- Findings dispositioned: Yes; F1–F6 were accepted by the human on 2026-07-27.
+- Independent review clear: Yes. Claude independently verified the accepted
+  findings fixed. Final verdict: `ready with non-blocking observations`.
+- Findings dispositioned: Yes; F1–F7 were accepted by the human, and all
+  accepted corrections are implemented.
 - Required human QA complete: No.
 - Human integration and completion approval: No.

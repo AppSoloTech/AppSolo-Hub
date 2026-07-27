@@ -311,7 +311,7 @@ I added one temporary integration file, ran it, deleted it, and re-verified a cl
 - **Human QA.** Q1–Q10 have not run. Q4 in particular should be executed after P005-F1 and
   P005-F2 are dispositioned, since it tests exactly that behavior.
 
-## Verdict
+## Initial Verdict (candidate `df58817`)
 
 `changes requested`
 
@@ -323,3 +323,172 @@ finding (P005-F1) is a narrow but reproducible violation of a binding P005 decis
 shipped API contract already claims is handled; its fix is small and local, and P005-F2 shares
 the same fix site. I recommend correcting P005-F1 and P005-F2 together, dispositioning P005-F3
 through P005-F6, and rerunning V11, V12, and V20 before human QA.
+
+---
+
+# Re-Verification — Review-Fix Commit
+
+> Re-verification date: 2026-07-27.
+> Review-fix SHA: `eb5821202696da134fa26094ce2a44f5a45f670f`.
+> Evidence-only SHA: `50a6b8bf384385b08303ceb44fd5f8af012bd98a`.
+> Accepted-fix range: `9e739e8dc86ec4411cb956745ef4494623836440..eb5821202696da134fa26094ce2a44f5a45f670f`.
+
+## Re-Verification Boundary
+
+Both SHAs exist and match the disposition record. The working tree was clean before and after
+my probes. `git diff --check` over the accepted-fix range exits 0 with no output.
+
+The fix commit touches 15 files. The runtime change is four lines across two files
+([service.ts](apps/api/src/modules/work/service.ts),
+[repository.ts](apps/api/src/modules/work/repository.ts)); the remainder is test coverage, seed
+fixtures, contract text, and evidence. The evidence-only commit `50a6b8b` touches only
+`markdown/CURRENT_STATE.md`, the P005 phase record, `notes/P005/implementation-handoff.md`, and
+`notes/P005/review-disposition.md` — no code. Nothing beyond the accepted findings entered the
+fix; no requirement was reinterpreted and no scope was expanded.
+
+## Independent Validation Rerun (review-fix commit)
+
+| ID  | Result  | Evidence                                                                                             |
+| --- | ------- | ---------------------------------------------------------------------------------------------------- |
+| V1  | Passed  | `node scripts/check-scaffolding.mjs` — 27 required files, 11 phase records.                          |
+| V2  | Not run | `pnpm install` — no manifest or lockfile change in the fix range. Correctly recorded as not run.     |
+| V4  | Not run | `pnpm db:migrate` — no migration or snapshot change in the fix range. Correctly recorded as not run. |
+| V6  | Passed  | `pnpm --filter @appsolo/database test:prepare` — reapplied to the isolated test database only.       |
+| V7  | Passed  | `pnpm --filter @appsolo/database generate` — `No schema changes, nothing to migrate`.                |
+| V8  | Passed  | `pnpm lint` — ESLint clean; Prettier clean.                                                          |
+| V9  | Passed  | `pnpm typecheck` — all four package checks.                                                          |
+| V10 | Passed  | `pnpm test` — shared 20/20, database **15/15** (was 11; +4 lifecycle-chronology assertions).         |
+| V11 | Passed  | `pnpm test:api` — 7 files, **52/52** (existing tests extended in place).                             |
+| V12 | Passed  | `pnpm test:web` — 9 files, **34/34** (was 31; +3 void/pagination tests).                             |
+| V13 | Passed  | `pnpm build` — shared, database, API, and Vite web builds.                                           |
+| V17 | Passed  | `node scripts/generate-phase-index.mjs --check` — `PHASE_INDEX.md is current`.                       |
+| V18 | Passed  | `git diff --check <candidate>..<review-fix>` — no output, exit 0.                                    |
+| V20 | Passed  | `node scripts/validate-phase.mjs P005` — `P005 phase structure is valid`.                            |
+
+The handoff's own V2/V4 "not run" entries are accurate and correctly justified — neither a
+dependency nor a migration changed in the fix range. No result was overstated.
+
+## Finding-By-Finding Re-Verification
+
+I reran my original probes plus regression probes against the fixed code.
+
+### P005-F1 — **Fixed and verified**
+
+[repository.ts:233](apps/api/src/modules/work/repository.ts#L233) adds
+`if (!canView(row.role)) return { outcome: 'NOT_FOUND' }` **after** the scoped row lookup and
+**before** the `allowed` computation, which is exactly the right placement: it collapses the
+client-role branch to `404` without disturbing the internal-role `403`.
+
+Probe results:
+
+| Caller          | Existing entry | Missing UUID | Error bodies identical (excluding `requestId`) |
+| --------------- | -------------- | ------------ | ---------------------------------------------- |
+| `CLIENT_ADMIN`  | `404`          | `404`        | Yes                                            |
+| `CLIENT_MEMBER` | `404`          | `404`        | Yes                                            |
+| Other tenant    | `404`          | —            | —                                              |
+| Internal-only   | `404`          | —            | —                                              |
+
+The existence oracle is closed: status code, error code, message, and details are byte-identical
+for a real in-tenant entry and an unused UUID.
+
+**Regression preserved as the human required:** developer voiding another author's entry → `403
+FORBIDDEN`; developer voiding their own entry → `200`; owner voiding any entry → `200`. Q4's
+distinction survives intact. The behavior is now covered in-suite by the added assertions in
+[work.integration.test.ts](apps/api/src/modules/work/work.integration.test.ts), which check both
+the status and the exact error envelope.
+
+### P005-F2 — **Fixed and verified**
+
+[service.ts:148](apps/api/src/modules/work/service.ts#L148) adds the `VIEW_PRIVATE_TIME` →
+`notFound()` gate ahead of the `CREATE_PRIVATE_TIME` check. Probe: `CLIENT_ADMIN` and
+`CLIENT_MEMBER` now receive `404 NOT_FOUND` on both `POST` and `GET` for the same collection, and
+the `time_entries` row count is unchanged (3) after the client attempts — no mutation occurred on
+the denial path. Internal behavior is intact: developer create → `201`, and create outside
+`IN_PROGRESS` → `409`.
+
+All three private-time routes now present one consistent surface: `404` for client roles, `403`
+for internal roles that lack only the specific action.
+
+### P005-F3 — **Fixed and verified**
+
+[WorkSection.test.tsx](apps/web/src/features/work/WorkSection.test.tsx) gains the three tests I
+recommended, and they are behavioral rather than implementation-detail assertions:
+
+- another author's entry with `canVoidOwn: true, canManage: false` renders **no** `Void entry`
+  control while the entry itself stays visible;
+- an own entry opens the confirm form, submits the exact `voidTimeEntry(id, { reason,
+expectedUpdatedAt })` payload, surfaces the `409` message through `role="alert"`, and keeps the
+  typed reason recoverable;
+- both paginators move forward and back, asserted through the real request offsets
+  (`timeEntries(id, 6, 5)` and `history(id, 11, 10)`) and the rendered page content.
+
+Web suite is 34/34.
+
+### P005-F4 — **Fixed and verified**
+
+[repository.ts:417-419](apps/api/src/modules/work/repository.ts#L417-L419) adds
+`organizationMemberships` to the `FOR UPDATE OF` list, matching the other five P005 mutations.
+Probe confirms the widened lock does not break the path: a client-administrator acceptance still
+returns `200 COMPLETED`, and an owner attempting to respond still returns `403`.
+
+### P005-F5 — **Fixed and verified**
+
+[seed.ts](packages/database/src/seed.ts) adds six status-history rows: an initial `SUBMITTED`
+event for each of the four new requests, plus the intermediate `APPROVED -> IN_PROGRESS` rows for
+the ready-for-review and completed fixtures. The new
+[index.test.ts](packages/database/src/index.test.ts) table-driven test pins the exact ordered
+status sequence per fixture, so the chronologies cannot silently regress. Probe confirms all four
+authorized chronologies now begin at request creation:
+
+- in progress → `SUBMITTED, IN_PROGRESS` (plus time events);
+- ready for review → `SUBMITTED, IN_PROGRESS, READY_FOR_REVIEW, WORK_HANDOFF`;
+- completed → `SUBMITTED` through both review cycles to `COMPLETED`;
+- cancelled → `SUBMITTED, CANCELLED`.
+
+### P005-F6 — **Accepted as documented, verified**
+
+[ARCHITECTURE.md](markdown/ARCHITECTURE.md) records the in-memory assembly, why it is kept (it
+makes filtering-before-ordering explicit and verifiable), the linear per-page growth, and the
+condition under which a later phase should revisit it. No runtime change was made, which matches
+the disposition.
+
+## New Non-Blocking Observation
+
+### P005-F7 — Seeded time entries predate the seeded `IN_PROGRESS` transition
+
+- **Severity:** Low
+- **Requirement affected:** R8 (deterministic fake seed data); R2's "time may be created only
+  while the request is exactly `IN_PROGRESS`" as reflected in fixtures. Surfaced by the F5 fix,
+  which made the fixture chronology complete enough to compare against.
+- **Evidence:** In [seed.ts](packages/database/src/seed.ts), `requestInProgress` enters
+  `IN_PROGRESS` at `2026-07-27T09:00:00.000Z`, but `voidedTimeEntry` has `createdAt`
+  `2026-07-26T15:00:00.000Z` and `suspendedAuthorTimeEntry` has `2026-07-25T15:00:00.000Z`. The
+  now-complete internal chronology reads
+  `SUBMITTED, TIME_CREATED, TIME_CREATED, IN_PROGRESS, TIME_CREATED, TIME_VOIDED` — two time
+  events before the request could legally accept time.
+- **Impact:** None functionally. The API correctly rejects such a create (`409` outside
+  `IN_PROGRESS`, verified by probe), no test depends on the ordering, and the void/suspended-author
+  fixtures still serve their purpose. It only means the seeded chronology shows a sequence the
+  application would not produce, which is the same fidelity concern F5 raised.
+- **Recommended correction:** Move the two `created_at` values after `2026-07-27T09:00:00.000Z`,
+  or move the `IN_PROGRESS` transition earlier. Safe to defer; it changes no behavior.
+
+## Re-Verification Verdict
+
+`ready with non-blocking observations`
+
+All five accepted findings are genuinely fixed, not merely test-adjusted. P005-F1 — the only
+High — is closed at the correct layer, with client roles now receiving byte-identical `404`
+responses for existing and missing private-time identifiers while the internal developer/owner
+`403`/`200` distinction that Q4 depends on is preserved and covered in-suite. P005-F2 through
+P005-F5 are each fixed with matching automated coverage, and P005-F6 is documented as the
+disposition specified. I reran the applicable validation independently; every result reproduced,
+and the two skipped checks (V2, V4) are correctly and honestly justified by an unchanged
+dependency and migration surface.
+
+One new Low observation (P005-F7) remains open for human disposition. It changes no behavior and
+does not block.
+
+No Blocker or High finding remains open. P005 is ready to proceed to human Q1–Q10 QA. Q4 should
+still be executed deliberately, since it exercises exactly the boundary that P005-F1 and P005-F2
+corrected. Completion and integration remain the human's decision.
