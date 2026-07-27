@@ -1,14 +1,14 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: implementing
+status: review_pending
 owner: codex
 reviewer: claude
 prompt: prompts/active/P005-time-tracking-status-and-completion.md
 depends_on: [P004]
 base_branch: main
 base_sha: 96f3d6158e2971f49a1b7e832dc6c2292001580e
-candidate_sha: null
+candidate_sha: df588175193707db9a65446eebb29de76e44eb21
 risk: high
 human_qa_required: true
 ---
@@ -80,21 +80,23 @@ binding for P005.
 - Draft authorization: human, 2026-07-27.
 - Implementation started: 2026-07-27 on
   `phase/P005-time-tracking-status-and-completion`.
-- Candidate SHA: pending.
-- Implementation: complete on the phase branch; immutable candidate creation
-  and SHA-dependent validation remain.
-- Automated validation: V1–V17 and V19 passed. V8 initially found
+- Candidate SHA: `df588175193707db9a65446eebb29de76e44eb21`.
+- Candidate commit: `P005: implement time tracking status and completion`.
+- Implementation: complete at the immutable candidate boundary.
+- Automated validation: V1–V19 passed. V8 initially found
   formatting-only differences and passed after formatting. V14 exposed and
   corrected legacy locator ambiguity plus isolated invitation-origin setup
-  before the final 5/5 pass. V18 and V20 await the candidate SHA.
+  before the final 5/5 pass. V18 passed against the exact base-to-candidate
+  range, and V20 passed after the candidate and handoff state were recorded.
 - Review: not started.
 - Human QA: not started.
 - Completion: not eligible.
 
 ## Completion Gate
 
-- Requirements implemented: Yes on the phase branch; candidate commit pending.
-- Automated validation: V1–V17 and V19 passed; V18/V20 pending candidate SHA.
+- Requirements implemented: Yes at immutable candidate
+  `df588175193707db9a65446eebb29de76e44eb21`.
+- Automated validation: V1–V20 passed.
 - Independent review clear: No; review has not started.
 - Findings dispositioned: not applicable yet.
 - Required human QA complete: No.
