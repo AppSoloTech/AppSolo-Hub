@@ -1,13 +1,15 @@
 # P005 Human QA
 
-> Status: Not run.
+> Status: Passed by explicit human attestation on 2026-07-27.
 
 ## Environment
 
-- Operating system: Not supplied.
-- Browser/version: Not supplied.
+- Operating system: Not supplied with the human attestation.
+- Browser/version: Not supplied with the human attestation.
 - Application boundary: `f295ff4bf221d73ad0cbabf4e9696cf7592265b9`.
-- Development identity/tenant: Not run.
+- Development identity/tenant: Human attested that Q1-Q10 passed using the
+  seeded Northstar role/tenant scenarios from the approved walkthrough; exact
+  session sequence was not separately supplied.
 
 ## Pre-QA UI Follow-Up
 
@@ -27,21 +29,26 @@
 
 ## Test Cases
 
-| ID  | Status  | Evidence |
-| --- | ------- | -------- |
-| Q1  | Not run | Pending. |
-| Q2  | Not run | Pending. |
-| Q3  | Not run | Pending. |
-| Q4  | Not run | Pending. |
-| Q5  | Not run | Pending. |
-| Q6  | Not run | Pending. |
-| Q7  | Not run | Pending. |
-| Q8  | Not run | Pending. |
-| Q9  | Not run | Pending. |
-| Q10 | Not run | Pending. |
+| ID  | Status | Evidence                                                                                                                   |
+| --- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Passed | Human attested normal startup/health and representative P001–P004 regression behavior pass.                                |
+| Q2  | Passed | Human attested authorized start, refresh persistence, one history event, and repeat/stale/unauthorized denial pass.        |
+| Q3  | Passed | Human attested internal-role time creation, totals, pagination, allowed void, replacement, and immutable attribution pass. |
+| Q4  | Passed | Human attested own/all void authority and complete client-role time redaction without existence signals pass.              |
+| Q5  | Passed | Human attested handoff, client change request, return to work, version 2, and immutable version 1/history pass.            |
+| Q6  | Passed | Human attested client-admin completion, terminal behavior, persisted history, and read-only controls pass.                 |
+| Q7  | Passed | Human attested authorized cancellation, role denials, atomic history, and terminal-state no-reopen behavior pass.          |
+| Q8  | Passed | Human attested tenant/lifecycle/identifier/stale/concurrency denials and no partial durable state pass.                    |
+| Q9  | Passed | Human attested stable mixed-history pagination, completeness, and client filtering without visibility oracles pass.        |
+| Q10 | Passed | Human attested keyboard, narrow-viewport, feedback, validation, conflict, failure recovery, focus, and wrapping pass.      |
 
 ## QA Decision
 
-- Required QA complete: No.
-- Human acceptance: Not run.
-- P005 completion and integration approval: Not granted.
+- Required QA complete: Yes.
+- Human QA acceptance: Granted by the explicit statement, “the manual QA is
+  done and it passes,” on 2026-07-27.
+- No additional command transcript, screenshots, browser/version,
+  operating-system details, or exact session sequence were supplied; those
+  limitations are preserved rather than inferred.
+- Final integration/completion approval: Explicitly granted by the human on
+  2026-07-27 for local integration to `main`.
