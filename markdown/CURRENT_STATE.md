@@ -4,6 +4,7 @@
 
 P001 — Local Foundation And Change-Request Vertical Slice is complete and integrated locally.
 P002 — Authentication And Invitations is complete and integrated locally.
+P003 — Estimates And Approval Workflow is complete and integrated locally.
 
 The shipped local application includes:
 
@@ -16,9 +17,13 @@ The shipped local application includes:
   handling and lockout protection;
 - immutable tenant-scoped access audit history and role-aware access-management UI;
 - authorized change-request list, detail, and transactional creation behavior;
+- exact versioned estimate drafting/submission with immutable terms, optimistic
+  concurrency, and additive PostgreSQL invariants;
+- client-admin-only approval, rejection, and clarification decisions with
+  durable response/status history and role-aware accessible UI;
 - meaningful unit, API integration, component, and Playwright browser tests;
 - reviewed error handling, request correlation, environment isolation, redaction,
-  and durable P001/P002 evidence.
+  and durable P001/P002/P003 evidence.
 
 P001's final reviewed, validated, and human-QA boundary is `54c6e274fa0aa3d5b7d2498a60235b93b0cf2e5b`. Claude reported no open finding, and the human passed Q1-Q8 and approved integration on 2026-07-26.
 
@@ -27,12 +32,18 @@ P002's final reviewed, validated, and human-QA boundary is
 P002-F7 fixed with no open finding, the human passed Q1-Q10, accepted the
 implementation state, and marked P002 complete on 2026-07-26.
 
+P003's final reviewed, validated, and human-QA boundary is
+`cd8dcba9afcb72eee04ad4af1d909756d79bb07f`. Claude verified P003-F1 through
+P003-F7 fixed with final verdict `ready`; the human passed Q1-Q10 and explicitly
+approved completion and local integration on 2026-07-27.
+
 ## Active Phase
 
-- Active phase: `P003 — Estimates And Approval Workflow`.
-- P003 status: `review_pending`.
-- P003 prompt: specification version 1 under `prompts/active/`.
-- P003 implementation approval: granted by the human on 2026-07-26.
+- No phase is approved or active.
+- Next roadmap candidate: `P004 — Comments And Clarification`.
+- P004 status: `draft`.
+- P004 prompt: not drafted.
+- P004 implementation approval: not granted.
 
 ## Current Constraints
 
@@ -45,18 +56,11 @@ implementation state, and marked P002 complete on 2026-07-26.
 
 ## Significant Gaps
 
-- No estimate or client approval workflow is shipped yet.
 - Comments, time tracking, attachments, notifications, AWS infrastructure,
   delivery automation, production authentication, and production hardening
   remain in their sequenced future phases.
-- P003 has an immutable local candidate at
-  `9c9ab03899a5295cbcd54a3f22279c1280b5911f`. Claude completed the candidate
-  review with verdict `ready with non-blocking observations`; the human accepted
-  P003-F1 through P003-F7, and immutable review-fix commit
-  `5de9490cf80c3cdda286f0565608f415ee75241f` applies them. Claude independently
-  verified all seven fixes and issued final verdict `ready`; no finding remains
-  open. The human attested Q1-Q10 passed on 2026-07-27 at
-  `d277584c87eb90498060bc9d2279d9abf7292f5a`. Explicit human integration and
-  completion approval remains pending. P003 is not shipped or complete.
+- P004 requires a consolidated non-authorizing prompt with stable requirements,
+  acceptance criteria, validation, QA, non-goal identifiers, and resolved
+  material product decisions before human approval.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

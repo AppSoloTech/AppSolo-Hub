@@ -37,4 +37,6 @@
   this limitation is preserved rather than inferred.
 - Evidence-record validation initially found only Prettier formatting in this
   expanded QA note; formatting was normalized before the final passing checks.
-- Final integration/completion approval: Not yet granted.
+- Final integration/completion approval: Explicitly granted by the human on
+  2026-07-27 for local fast-forward integration to `main`, with no push or
+  remote action.

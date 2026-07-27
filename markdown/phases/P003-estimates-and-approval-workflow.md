@@ -1,7 +1,7 @@
 ---
 id: P003
 title: Estimates And Approval Workflow
-status: review_pending
+status: complete
 owner: codex
 reviewer: claude
 prompt: prompts/active/P003-estimates-and-approval-workflow.md
@@ -81,7 +81,10 @@ response-note requirements, and concurrency behavior are binding for P003.
 - Human QA: Q1-Q10 passed by explicit human attestation on 2026-07-27 at
   `d277584c87eb90498060bc9d2279d9abf7292f5a`; browser/version, OS details, and
   screenshots were not supplied.
-- Completion: not eligible.
+- Final reviewed, validated, and human-QA boundary:
+  `cd8dcba9afcb72eee04ad4af1d909756d79bb07f`.
+- Completion: explicitly granted by the human on 2026-07-27; approved for local
+  fast-forward integration to `main` with no push or remote action.
 
 ## Validation Evidence
 
@@ -158,7 +161,9 @@ Interim validation results are preserved honestly:
   open finding.
 - Human QA Q1-Q10: passed by explicit human attestation on 2026-07-27; see
   `notes/P003/qa.md`.
-- No push, remote creation, pull, origin reset, history rewrite, or merge occurred.
+- Human completion and local integration approval: explicitly granted on
+  2026-07-27.
+- No push, remote creation, pull, origin reset, or history rewrite occurred.
 
 ## Completion Gate
 
@@ -169,6 +174,7 @@ Interim validation results are preserved honestly:
 - Findings dispositioned: Yes; P003-F1 through P003-F7 were accepted, fixed,
   and verified.
 - Required human QA complete: Yes; Q1-Q10 passed by explicit human attestation.
-- Human integration and completion approval: No.
-- Ready for integration: Yes; awaiting explicit human integration/completion
-  approval.
+- Human integration and completion approval: Yes; explicitly granted on
+  2026-07-27.
+- Ready for integration: Yes; approved for local fast-forward integration to
+  `main`.
