@@ -133,6 +133,12 @@ Middleware constructs request IDs, logging context, parsed authentication contex
 - Private time and internal comments are excluded at source-query time for
   client roles. The service orders only authorized events by event time, event
   kind, and source ID before applying pagination.
+- At P005's local scale, each history page reads all authorized source rows,
+  assembles the mixed chronology in memory, and then paginates it. This keeps
+  filtering-before-ordering explicit and verifiable, but per-page work grows
+  linearly with a request's retained history. A later phase should bound the
+  source queries or move mixed ordering into SQL if profiling shows slow
+  long-lived request detail.
 - Work commands update request status and insert one status-history row in the
   same transaction. Handoffs and responses are append-only, request-versioned
   records; time corrections preserve the original row through all-or-none void

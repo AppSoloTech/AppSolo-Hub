@@ -192,6 +192,7 @@ export class WorkRepository {
     timeEntryId: string,
     userId: string,
     input: VoidTimeEntryInput,
+    canView: CapabilityCheck,
     canVoidOwn: CapabilityCheck,
     canManage: CapabilityCheck,
   ): Promise<TimeMutationResult> {
@@ -229,6 +230,7 @@ export class WorkRepository {
         .for('update', { of: [timeEntries, organizationMemberships] });
       const row = rows[0];
       if (!row) return { outcome: 'NOT_FOUND' };
+      if (!canView(row.role)) return { outcome: 'NOT_FOUND' };
       const allowed = canManage(row.role) || (row.entryUserId === userId && canVoidOwn(row.role));
       if (!allowed) return { outcome: 'FORBIDDEN' };
       if (row.voidedAt !== null || row.entryUpdatedAt.toISOString() !== input.expectedUpdatedAt)
@@ -412,7 +414,9 @@ export class WorkRepository {
           ),
         )
         .limit(1)
-        .for('update', { of: [changeRequests, workReviewHandoffs] });
+        .for('update', {
+          of: [changeRequests, workReviewHandoffs, organizationMemberships],
+        });
       const row = rows[0];
       if (!row) return { outcome: 'NOT_FOUND' };
       if (!canRespond(row.role)) return { outcome: 'FORBIDDEN' };

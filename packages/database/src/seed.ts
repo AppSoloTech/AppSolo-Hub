@@ -728,6 +728,50 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
             note: 'The client no longer needs this requested change.',
             createdAt: new Date('2026-07-27T11:00:00.000Z'),
           },
+          {
+            id: '70000000-0000-4000-8000-000000000017',
+            changeRequestId: seedIds.requestInProgress,
+            changedByUserId: seedIds.clientAdmin,
+            newStatus: 'SUBMITTED',
+            createdAt: new Date('2026-07-20T09:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000018',
+            changeRequestId: seedIds.requestReadyForReview,
+            changedByUserId: seedIds.clientMember,
+            newStatus: 'SUBMITTED',
+            createdAt: new Date('2026-07-20T10:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000019',
+            changeRequestId: seedIds.requestReadyForReview,
+            changedByUserId: seedIds.owner,
+            previousStatus: 'APPROVED',
+            newStatus: 'IN_PROGRESS',
+            createdAt: new Date('2026-07-27T11:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000020',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.clientAdmin,
+            newStatus: 'SUBMITTED',
+            createdAt: new Date('2026-07-19T09:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000021',
+            changeRequestId: seedIds.requestCompleted,
+            changedByUserId: seedIds.owner,
+            previousStatus: 'APPROVED',
+            newStatus: 'IN_PROGRESS',
+            createdAt: new Date('2026-07-27T12:00:00.000Z'),
+          },
+          {
+            id: '70000000-0000-4000-8000-000000000022',
+            changeRequestId: seedIds.requestCancelled,
+            changedByUserId: seedIds.clientMember,
+            newStatus: 'SUBMITTED',
+            createdAt: new Date('2026-07-18T09:00:00.000Z'),
+          },
         ])
         .onConflictDoNothing();
       await tx

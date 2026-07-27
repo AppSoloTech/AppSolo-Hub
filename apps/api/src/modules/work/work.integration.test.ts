@@ -144,6 +144,22 @@ describe('P005 work API integration', () => {
       expect(denied.status).toBe(404);
       expect(JSON.stringify(denied.body)).not.toContain(seedIds.activeTimeEntry);
       expect(JSON.stringify(denied.body)).not.toContain('150');
+      const deniedCreate = await request(app)
+        .post(timePath(seedIds.requestInProgress))
+        .set(auth(userId))
+        .send({
+          durationMinutes: 30,
+          description: 'Client roles cannot create private time.',
+          workDate: '2026-07-27',
+        });
+      expect(deniedCreate.status).toBe(404);
+      expect(deniedCreate.body).toMatchObject({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'The requested resource was not found.',
+          details: [],
+        },
+      });
     }
     const invalidState = await request(app)
       .post(timePath(seedIds.requestApproved))
@@ -157,6 +173,30 @@ describe('P005 work API integration', () => {
   });
 
   it('voids durably with exact own/all authority and one concurrent success', async () => {
+    for (const userId of [seedIds.clientAdmin, seedIds.clientMember]) {
+      const input = {
+        reason: 'Client roles cannot inspect or void private time.',
+        expectedUpdatedAt: '2026-07-27T09:30:00.000Z',
+      };
+      const existing = await request(app)
+        .post(`/api/v1/time-entries/${seedIds.activeTimeEntry}/void`)
+        .set(auth(userId))
+        .send(input);
+      const missing = await request(app)
+        .post('/api/v1/time-entries/61000000-0000-4000-8000-000000000099/void')
+        .set(auth(userId))
+        .send(input);
+      expect(existing.status).toBe(404);
+      expect(missing.status).toBe(404);
+      expect(existing.body).toMatchObject({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'The requested resource was not found.',
+          details: [],
+        },
+      });
+    }
+
     const developerOwn = await request(app)
       .post(`/api/v1/time-entries/${seedIds.activeTimeEntry}/void`)
       .set(auth(seedIds.developer))
@@ -398,8 +438,15 @@ describe('P005 work API integration', () => {
       const next = await request(app)
         .get(historyPath(seedIds.requestInProgress, '?limit=1&offset=1'))
         .set(auth(userId));
-      expect(next.body).toMatchObject({ data: [], meta: { count: 0 } });
-      const text = JSON.stringify([client.body, next.body]);
+      expect(next.body).toMatchObject({
+        data: [{ kind: 'STATUS_CHANGED' }],
+        meta: { count: 1, limit: 1, offset: 1 },
+      });
+      const exhausted = await request(app)
+        .get(historyPath(seedIds.requestInProgress, '?limit=1&offset=2'))
+        .set(auth(userId));
+      expect(exhausted.body).toMatchObject({ data: [], meta: { count: 0 } });
+      const text = JSON.stringify([client.body, next.body, exhausted.body]);
       expect(text).not.toContain('TIME_');
       expect(text).not.toContain(seedIds.activeTimeEntry);
       expect(text).not.toContain('private');

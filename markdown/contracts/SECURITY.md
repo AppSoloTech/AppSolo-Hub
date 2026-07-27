@@ -71,6 +71,9 @@ comments before ordering, pagination, counting, or DTO construction; mutable
 estimate drafts are not history events for any role. Work transitions,
 handoffs, review responses, cancellation, and time voids are protected by
 scoped locks, exact source states, and optimistic timestamps.
+Client-role list, create, and identifier-rooted void attempts all return the
+same `404` private-surface response; existing and missing time-entry identifiers
+are indistinguishable.
 
 ## Input And Output
 

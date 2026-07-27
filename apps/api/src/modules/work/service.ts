@@ -145,6 +145,7 @@ export class WorkService {
 
   async createTimeEntry(changeRequestId: string, userId: string, input: CreateTimeEntryInput) {
     const context = await this.requestContext(changeRequestId, userId);
+    if (!canViewTime(context.role)) throw notFound();
     if (!canCreateTime(context.role)) throw forbidden();
     const result = this.timeMutation(
       await this.repository.createTimeEntry(changeRequestId, userId, input, canCreateTime),
@@ -156,7 +157,7 @@ export class WorkService {
 
   async voidTimeEntry(timeEntryId: string, userId: string, input: VoidTimeEntryInput) {
     const result = this.timeMutation(
-      await this.repository.voidTimeEntry(timeEntryId, userId, input, canVoidOwn, canManageTime),
+      await this.repository.voidTimeEntry(timeEntryId, userId, input, canViewTime, canVoidOwn, canManageTime),
     );
     const row = await this.repository.findTimeEntry(result.changeRequestId, result.timeEntryId);
     if (!row) throw notFound();

@@ -118,4 +118,23 @@ describe('P005 time and review database invariants', () => {
       ),
     ).rejects.toMatchObject({ code: '23514' });
   });
+
+  it.each([
+    [seedIds.requestInProgress, ['SUBMITTED', 'IN_PROGRESS']],
+    [seedIds.requestReadyForReview, ['SUBMITTED', 'IN_PROGRESS', 'READY_FOR_REVIEW']],
+    [
+      seedIds.requestCompleted,
+      ['SUBMITTED', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'IN_PROGRESS', 'READY_FOR_REVIEW', 'COMPLETED'],
+    ],
+    [seedIds.requestCancelled, ['SUBMITTED', 'CANCELLED']],
+  ])('seeds a durable lifecycle chronology for %s', async (changeRequestId, expectedStatuses) => {
+    const result = await pool.query<{ new_status: string }>(
+      `SELECT new_status
+         FROM status_history
+        WHERE change_request_id = $1
+        ORDER BY created_at, id`,
+      [changeRequestId],
+    );
+    expect(result.rows.map((row) => row.new_status)).toEqual(expectedStatuses);
+  });
 });

@@ -1,7 +1,7 @@
 ---
 id: P005
 title: Time Tracking, Status, And Completion
-status: review_pending
+status: changes_requested
 owner: codex
 reviewer: claude
 prompt: prompts/active/P005-time-tracking-status-and-completion.md
@@ -88,7 +88,14 @@ binding for P005.
   corrected legacy locator ambiguity plus isolated invitation-origin setup
   before the final 5/5 pass. V18 passed against the exact base-to-candidate
   range, and V20 passed after the candidate and handoff state were recorded.
-- Review: not started.
+- Review: Claude completed review on 2026-07-27 with verdict
+  `changes requested`.
+- Finding disposition: the human accepted P005-F1 through P005-F5 for
+  correction and accepted P005-F6 as a documented P005 scaling limitation with
+  no code change.
+- Accepted fixes: P005-F1 through P005-F5 are implemented and applicable
+  validation passes; P005-F6 is documented without a runtime change.
+- Review-fix candidate: immutable commit pending.
 - Human QA: not started.
 - Completion: not eligible.
 
@@ -97,7 +104,8 @@ binding for P005.
 - Requirements implemented: Yes at immutable candidate
   `df588175193707db9a65446eebb29de76e44eb21`.
 - Automated validation: V1–V20 passed.
-- Independent review clear: No; review has not started.
-- Findings dispositioned: not applicable yet.
+- Independent review clear: No; accepted High and release-critical Medium
+  findings require correction and Claude re-verification.
+- Findings dispositioned: Yes; F1–F6 were accepted by the human on 2026-07-27.
 - Required human QA complete: No.
 - Human integration and completion approval: No.

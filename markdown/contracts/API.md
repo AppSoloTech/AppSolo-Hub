@@ -329,11 +329,14 @@ strict; write fields not named below are rejected.
 - `POST /api/v1/change-requests/:changeRequestId/time-entries` accepts exactly
   `durationMinutes` (integer 1–1,440), trimmed `description` (3–2,000), and a
   valid calendar `workDate`. It records the authenticated internal actor only
-  while the request is `IN_PROGRESS` and returns `201`.
+  while the request is `IN_PROGRESS` and returns `201`. Client roles receive
+  the same `404` private-surface response as the list route.
 - `POST /api/v1/time-entries/:timeEntryId/void` accepts a required trimmed
   `reason` (3–2,000) and `expectedUpdatedAt`. A developer can void an active
   entry they authored; owner/admin can void any authorized entry. Stale or
-  repeated attempts return `409`.
+  repeated attempts return `409`. Client roles receive identical `404`
+  responses for existing and missing private-time identifiers; an internal
+  role that can view time but lacks void authority receives `403`.
 - `POST /api/v1/change-requests/:changeRequestId/work/start` accepts only
   `expectedUpdatedAt` and performs `APPROVED -> IN_PROGRESS`.
 - `POST /api/v1/change-requests/:changeRequestId/review-handoffs` accepts

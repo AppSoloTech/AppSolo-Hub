@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChangeRequestDto } from '@appsolo/shared';
+import type { ChangeRequestDto, RequestHistoryItem, TimeEntryDto } from '@appsolo/shared';
 import { WorkSection } from './WorkSection.js';
 
 const api = vi.hoisted(() => ({
@@ -65,6 +65,22 @@ const historyItem = {
   note: null,
 };
 
+const timeEntry = {
+  id: '61000000-0000-4000-8000-000000000001',
+  changeRequestId: request.id,
+  durationMinutes: 45,
+  description: 'Verified the complete workflow.',
+  workDate: '2026-07-27',
+  authorUserId: '20000000-0000-4000-8000-000000000001',
+  authorDisplayName: 'Avery Owner',
+  createdAt: '2026-07-27T12:00:00.000Z',
+  updatedAt: '2026-07-27T12:00:00.000Z',
+  voidedAt: null,
+  voidReason: null,
+  voidedByUserId: null,
+  voidedByDisplayName: null,
+} satisfies TimeEntryDto;
+
 const historyResponse = (
   overrides: Partial<{
     canManageWork: boolean;
@@ -73,10 +89,11 @@ const historyResponse = (
     canViewPrivateTime: boolean;
     currentHandoff: typeof handoff | null;
   }> = {},
+  data: RequestHistoryItem[] = [historyItem],
 ) => ({
-  data: [historyItem],
+  data,
   meta: {
-    count: 1,
+    count: data.length,
     limit: 11,
     offset: 0,
     canManageWork: false,
@@ -193,6 +210,127 @@ describe('P005 work and history UI', () => {
       'This request changed or is no longer actionable.',
     );
     expect(screen.getByLabelText('Work description')).toHaveValue('  Verified the complete workflow.  ');
+  });
+
+  it('shows no own-only void control for another author', async () => {
+    api.history.mockResolvedValue(
+      historyResponse({
+        canManageWork: true,
+        canViewPrivateTime: true,
+      }),
+    );
+    api.timeEntries.mockResolvedValue({
+      data: [
+        {
+          ...timeEntry,
+          authorUserId: '20000000-0000-4000-8000-000000000002',
+          authorDisplayName: 'Devon Developer',
+        },
+      ],
+      meta: {
+        count: 1,
+        limit: 6,
+        offset: 0,
+        activeDurationMinutes: 45,
+        canCreate: true,
+        canVoidOwn: true,
+        canManage: false,
+      },
+    });
+    renderSection({ ...request, status: 'IN_PROGRESS' });
+
+    expect(await screen.findByText('Verified the complete workflow.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Void entry' })).not.toBeInTheDocument();
+  });
+
+  it('voids an own entry with the exact command and preserves the reason on conflict', async () => {
+    api.history.mockResolvedValue(
+      historyResponse({
+        canManageWork: true,
+        canViewPrivateTime: true,
+      }),
+    );
+    api.timeEntries.mockResolvedValue({
+      data: [timeEntry],
+      meta: {
+        count: 1,
+        limit: 6,
+        offset: 0,
+        activeDurationMinutes: 45,
+        canCreate: true,
+        canVoidOwn: true,
+        canManage: false,
+      },
+    });
+    const { ApiError } = await import('../../api.js');
+    api.voidTimeEntry.mockRejectedValue(new ApiError(409, 'CONFLICT', 'Conflict'));
+    const user = userEvent.setup();
+    renderSection({ ...request, status: 'IN_PROGRESS' });
+
+    await user.click(await screen.findByRole('button', { name: 'Void entry' }));
+    await user.type(screen.getByLabelText('Void reason'), 'Duplicate work record.');
+    await user.click(screen.getByRole('button', { name: 'Confirm void' }));
+    expect(api.voidTimeEntry).toHaveBeenCalledWith(timeEntry.id, {
+      reason: 'Duplicate work record.',
+      expectedUpdatedAt: timeEntry.updatedAt,
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'This request changed or is no longer actionable.',
+    );
+    expect(screen.getByLabelText('Void reason')).toHaveValue('Duplicate work record.');
+  });
+
+  it('moves forward and backward through private-time and history pages', async () => {
+    const historyItems = Array.from({ length: 11 }, (_, index) => ({
+      ...historyItem,
+      id: `STATUS_CHANGED:70000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      sourceId: `70000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      note: `History event ${index + 1}`,
+    }));
+    const timeEntries = Array.from({ length: 6 }, (_, index) => ({
+      ...timeEntry,
+      id: `61000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      description: `Time entry ${index + 1}`,
+    }));
+    api.history.mockImplementation((_changeRequestId: string, _limit: number, offset: number) =>
+      Promise.resolve(
+        historyResponse(
+          {
+            canManageWork: true,
+            canViewPrivateTime: true,
+          },
+          offset === 0 ? historyItems : historyItems.slice(10),
+        ),
+      ),
+    );
+    api.timeEntries.mockImplementation((_changeRequestId: string, _limit: number, offset: number) =>
+      Promise.resolve({
+        data: offset === 0 ? timeEntries : timeEntries.slice(5),
+        meta: {
+          count: offset === 0 ? 6 : 1,
+          limit: 6,
+          offset,
+          activeDurationMinutes: 270,
+          canCreate: true,
+          canVoidOwn: true,
+          canManage: true,
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    renderSection({ ...request, status: 'IN_PROGRESS' });
+
+    await user.click(await screen.findByRole('button', { name: 'Older entries' }));
+    await waitFor(() => expect(api.timeEntries).toHaveBeenCalledWith(request.id, 6, 5));
+    expect(await screen.findByText('Time entry 6')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Newer entries' }));
+    expect(await screen.findByText('Time entry 1')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Later events' }));
+    await waitFor(() => expect(api.history).toHaveBeenCalledWith(request.id, 11, 10));
+    expect(await screen.findByText('History event 11')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Earlier events' }));
+    expect(await screen.findByText('History event 1')).toBeVisible();
   });
 
   it('requires client change reasons and sends the exact review command', async () => {

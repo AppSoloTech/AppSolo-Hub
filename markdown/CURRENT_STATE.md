@@ -51,7 +51,7 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 ## Active Phase
 
 - Active phase: `P005 — Time Tracking, Status, And Completion`.
-- P005 status: `review_pending`.
+- P005 status: `changes_requested`.
 - P005 prompt: approved specification version 1 under `prompts/active/`.
 - P005 revalidation: passed against authoritative local `main` at
   `33e233130579cc4be479e588bc1229f2a8a94579`; the approved scope remains one
@@ -66,6 +66,11 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
   `df588175193707db9a65446eebb29de76e44eb21`.
 - Automated validation: V1–V20 passed and the implementation handoff is
   recorded.
+- Independent review: Claude returned `changes requested` with P005-F1 through
+  P005-F6. The human accepted F1–F5 for correction and accepted F6 as a
+  documented P005 scaling limitation with no runtime change. Accepted fixes are
+  implemented and their applicable validation passes; the immutable review-fix
+  commit and independent re-verification remain required before human QA.
 
 ## Current Constraints
 
@@ -81,7 +86,8 @@ human passed Q1-Q10 and explicitly approved completion and local integration on
 - Attachments, notifications, AWS infrastructure, delivery
   automation, production authentication, and production hardening remain in
   their sequenced future phases.
-- P005 awaits independent Claude review, human finding disposition, and human
-  Q1–Q10 QA. It is not complete and has not been integrated or pushed.
+- P005 awaits its immutable review-fix commit, independent Claude
+  re-verification, and human Q1–Q10 QA. It is not complete and has not been
+  integrated or pushed.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

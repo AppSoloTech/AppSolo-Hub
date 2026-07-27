@@ -1,13 +1,14 @@
 # P005 Implementation Handoff
 
-> Status: Immutable candidate ready for independent review.
+> Status: Accepted review corrections implemented and validated; immutable
+> review-fix commit pending.
 
 ## Git Boundary
 
 - Base branch: `main`.
 - Base SHA: `96f3d6158e2971f49a1b7e832dc6c2292001580e`.
 - Candidate SHA: `df588175193707db9a65446eebb29de76e44eb21`.
-- Review-fix SHA: Not applicable.
+- Review-fix SHA: Pending.
 - Implementation branch:
   `phase/P005-time-tracking-status-and-completion`.
 - No remote was created, no branch was pushed, and P005 was not integrated into
@@ -74,31 +75,71 @@
 | V19 | Passed | Manifest and import searches found no AWS/AWS SDK, Cognito, Amplify, Stripe, queue, scheduler, or cron dependency/import. Added runtime-line search found no billing, invoicing, payroll, timer, assignment, notification/outbox/webhook, AWS service, deployment, or production-session behavior. All three `rg` searches exited 1 with no matches.                                                                                                                                              |
 | V20 | Passed | `node scripts/validate-phase.mjs P005` — `P005 phase structure is valid` after the candidate SHA, final handoff, `review_pending` state, and generated phase index were recorded.                                                                                                                                                                                                                                                                                                                 |
 
+## Accepted Review-Fix Validation
+
+The following commands were run after implementing the human-accepted
+P005-F1–F5 corrections and documenting P005-F6.
+
+| ID  | Result  | Command and evidence                                                                                                                                                                                                                                                                                                                                                         |
+| --- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | Passed  | `node scripts/check-scaffolding.mjs` — 27 required files and 11 phase records valid.                                                                                                                                                                                                                                                                                         |
+| V2  | Not run | No dependency or lockfile changed in the review fix; all workspace commands resolved successfully against the candidate dependency state.                                                                                                                                                                                                                                    |
+| V3  | Passed  | `docker ps --filter name=appsolo-hub-postgres-1 --format '{{.Names}} {{.Status}}'` — `appsolo-hub-postgres-1` healthy.                                                                                                                                                                                                                                                       |
+| V4  | Not run | The accepted review fix has no schema or migration change. V6 reapplied the existing checked-in migrations to the isolated test database.                                                                                                                                                                                                                                    |
+| V5  | Passed  | `pnpm db:seed` run twice — both runs reported `Seed data is present` after adding fixed lifecycle-history fixtures.                                                                                                                                                                                                                                                          |
+| V6  | Passed  | `pnpm --filter @appsolo/database test:prepare` — isolated migrations and the corrected seed completed. The first sandboxed attempt failed before database access because `tsx` could not open its IPC pipe (`EPERM`); the authorized rerun passed.                                                                                                                           |
+| V7  | Passed  | `pnpm --filter @appsolo/database generate` — 15 tables inspected and `No schema changes, nothing to migrate`.                                                                                                                                                                                                                                                                |
+| V8  | Passed  | `pnpm lint` — ESLint and Prettier pass. Earlier iterations found only reviewer-Markdown formatting and then unsafe correlation-ID access in a new assertion; formatting and stable literal-envelope assertions corrected both before the final pass.                                                                                                                         |
+| V9  | Passed  | `pnpm typecheck` — strict shared, database, API, and web checks pass.                                                                                                                                                                                                                                                                                                        |
+| V10 | Passed  | `pnpm test` — shared 20/20 and database 15/15 pass, including four explicit seeded lifecycle chronology cases.                                                                                                                                                                                                                                                               |
+| V11 | Passed  | `pnpm test:api` — 7 files and 52/52 PostgreSQL integration tests pass. The first run reached 50/52 because two new tests compared per-request correlation IDs; stable error-envelope matching corrected the tests, and the full rerun passed. Client-admin/member create and existing/missing void probes all return `404`, while developer other-author void remains `403`. |
+| V12 | Passed  | `pnpm test:web` — 9 files and 34/34 component tests pass, including own-only void affordance, exact void payload, recoverable `409`, and forward/back navigation for both paginators.                                                                                                                                                                                        |
+| V13 | Passed  | `pnpm build` — shared, database, API, and Vite web production builds pass.                                                                                                                                                                                                                                                                                                   |
+| V14 | Passed  | `PLAYWRIGHT_API_PORT=4100 PLAYWRIGHT_WEB_PORT=5273 pnpm test:e2e` — 5/5 full-stack browser tests pass on isolated ports without touching the existing development servers.                                                                                                                                                                                                   |
+| V15 | Passed  | V11 directly probes both client roles against create and existing/missing identifier-rooted void routes, retains the internal `403` distinction, and preserves concurrency assertions. V10 verifies each corrected seed chronology from PostgreSQL.                                                                                                                          |
+| V16 | Passed  | The forced-database-failure redaction test passed inside V11; no logging path changed.                                                                                                                                                                                                                                                                                       |
+| V17 | Passed  | `node scripts/generate-phase-index.mjs --check` — `PHASE_INDEX.md is current` with P005 at `changes_requested`.                                                                                                                                                                                                                                                              |
+| V18 | Not run | Requires the immutable review-fix SHA; it will be run and recorded immediately after that commit.                                                                                                                                                                                                                                                                            |
+| V19 | Passed  | Three manifest/import/runtime `rg` scans returned no dependency, SDK, Cognito, billing, timer, assignment, queue, notification, deployment, or production-session behavior.                                                                                                                                                                                                  |
+| V20 | Passed  | `node scripts/validate-phase.mjs P005` — `P005 phase structure is valid` with human dispositions recorded and P005 at `changes_requested`.                                                                                                                                                                                                                                   |
+
 ## Coverage Summary
 
 - Shared: 20 tests.
-- Database: 11 tests against PostgreSQL invariants.
+- Database: 15 tests against PostgreSQL invariants and deterministic lifecycle
+  chronology.
 - API: 52 tests across seven files against isolated PostgreSQL.
-- Web: 31 tests across nine files.
+- Web: 34 tests across nine files.
 - Playwright: 5 full-stack workflows.
 
 ## Known Limitations And Non-Goals
 
+- Request history currently reads every authorized source row, assembles the
+  mixed chronology in memory, and only then applies page slicing. This preserves
+  the binding filter-before-order/count rule and is accepted for P005's local
+  scale, but per-page work grows linearly with retained request history. No P005
+  runtime change is authorized for P005-F6; later profiling may justify bounded
+  source queries or SQL-side mixed ordering.
 - Time remains private internal operational history; it is not billing,
   invoicing, payroll, estimate-versus-actual cost, or accounting data.
 - There is no running timer, time edit/hard-delete, assignment, scheduling,
   reopen, arbitrary status patch, notification/outbox, attachment work, AWS,
   deployment, or production authentication.
-- Human Q1–Q10 QA and independent Claude review have not started.
+- Human Q1–Q10 QA has not started. Claude's initial review returned
+  `changes requested`; the human accepted F1–F5 for correction and F6 as the
+  documented scaling limitation above.
 - The existing local development servers were preserved. Formal Playwright
   evidence used isolated ports 4100/5273; the temporary direct-probe API on
   port 4200 was stopped after the probes.
 
 ## Completion Status
 
-- Phase status: `review_pending`.
+- Phase status: `changes_requested`.
 - Human implementation approval: Granted on 2026-07-27.
-- Automated validation: V1–V20 passed.
+- Automated validation: applicable review-fix checks pass; V2 and V4 were not
+  applicable to the dependency- and migration-neutral fix, and V18 awaits the
+  immutable fix SHA.
 - Human QA: Not run.
-- Independent review: Not started.
+- Independent review: Initial review complete with `changes requested`;
+  accepted-fix re-verification pending.
 - Human integration/completion approval: Not granted.
