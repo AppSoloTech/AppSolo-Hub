@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   acceptInvitationSchema,
   calculateEstimatedCost,
+  commentPaginationSchema,
+  createCommentSchema,
   createChangeRequestSchema,
   createEstimateSchema,
   createInvitationSchema,
@@ -32,6 +34,35 @@ describe('createChangeRequestSchema', () => {
         extra: true,
       }),
     ).toThrow();
+  });
+});
+
+describe('P004 comment contracts', () => {
+  it('trims valid bodies, preserves explicit visibility, and defaults list pagination', () => {
+    expect(
+      createCommentSchema.parse({
+        body: '  A shared clarification follow-up.  ',
+        visibility: 'CLIENT_VISIBLE',
+      }),
+    ).toEqual({
+      body: 'A shared clarification follow-up.',
+      visibility: 'CLIENT_VISIBLE',
+    });
+    expect(commentPaginationSchema.parse({})).toEqual({ limit: 50, offset: 0 });
+  });
+
+  it('rejects empty, over-limit, non-string, unknown, and server-owned fields', () => {
+    for (const body of ['', '   ', 'x'.repeat(5001), 42]) {
+      expect(() => createCommentSchema.parse({ body, visibility: 'INTERNAL_ONLY' })).toThrow();
+    }
+    expect(() =>
+      createCommentSchema.parse({
+        body: 'Valid comment',
+        visibility: 'CLIENT_VISIBLE',
+        authorUserId: '20000000-0000-4000-8000-000000000001',
+      }),
+    ).toThrow();
+    expect(() => commentPaginationSchema.parse({ limit: 101, internal: true })).toThrow();
   });
 });
 

@@ -114,6 +114,18 @@ client-admin reason validation/actions, and stale feedback. Playwright covers a
 real manager draft/edit/submit to client-admin approval flow with persisted
 history.
 
+### P004 Coverage
+
+Shared and database tests cover strict trimmed bodies, visibility, pagination
+defaults, unknown/server-owned fields, and the PostgreSQL body check. API
+integration tests cover the exact role matrix, active tenant lifecycle,
+internal filtering before pagination, safe `403`/`404` behavior, explicit DTOs,
+deterministic equal-time ordering, concurrent creation, suspended authorship,
+and no P003 lifecycle mutation. Component tests cover internal-safe reset,
+client-only composition, validation/server recovery, labels, clarification
+guidance, and pagination. Playwright covers persisted internal and shared
+clarification discussion against the isolated test database.
+
 ## Database Test Isolation
 
 Docker Compose should initialize:
@@ -152,6 +164,10 @@ Codex should also perform a direct health request and a basic frontend-to-API re
 Claude should independently rerun the most important commands, especially typecheck, API integration tests, authorization tests, production build, and the browser smoke when the environment supports it.
 
 P002 uses the active prompt's V1-V20 sequence. `pnpm --filter @appsolo/database generate` must report no new migration after the checked-in P002 migration/snapshot, and `node scripts/validate-phase.mjs P002` must pass before handoff.
+
+P004 uses the active prompt's V1-V20 sequence. Drizzle generation must report
+no drift after the checked-in P004 migration/snapshot, and
+`node scripts/validate-phase.mjs P004` must pass before handoff.
 
 ## Validation Evidence
 

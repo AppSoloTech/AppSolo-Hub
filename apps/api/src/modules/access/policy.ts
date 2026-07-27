@@ -4,7 +4,10 @@ const requestCapabilities: Capability[] = [
   'VIEW_CHANGE_REQUESTS',
   'SUBMIT_CHANGE_REQUESTS',
   'VIEW_ESTIMATES',
+  'VIEW_COMMENTS',
+  'CREATE_CLIENT_COMMENTS',
 ];
+const internalCommentCapabilities: Capability[] = ['VIEW_INTERNAL_COMMENTS', 'CREATE_INTERNAL_COMMENTS'];
 const estimateManagementCapabilities: Capability[] = ['MANAGE_ESTIMATES'];
 const estimateResponseCapabilities: Capability[] = ['RESPOND_TO_ESTIMATES'];
 const administrationCapabilities: Capability[] = [
@@ -16,8 +19,14 @@ const administrationCapabilities: Capability[] = [
 
 export function capabilitiesForRole(role: OrganizationRole): Capability[] {
   if (role === 'OWNER' || role === 'ADMIN')
-    return [...requestCapabilities, ...estimateManagementCapabilities, ...administrationCapabilities];
-  if (role === 'DEVELOPER') return [...requestCapabilities, ...estimateManagementCapabilities];
+    return [
+      ...requestCapabilities,
+      ...internalCommentCapabilities,
+      ...estimateManagementCapabilities,
+      ...administrationCapabilities,
+    ];
+  if (role === 'DEVELOPER')
+    return [...requestCapabilities, ...internalCommentCapabilities, ...estimateManagementCapabilities];
   if (role === 'CLIENT_ADMIN')
     return [...requestCapabilities, ...estimateResponseCapabilities, ...administrationCapabilities];
   return [...requestCapabilities];

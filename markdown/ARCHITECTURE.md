@@ -77,6 +77,7 @@ apps/api/src/
 │   ├── session/
 │   ├── access/
 │   ├── estimates/
+│   ├── comments/
 │   └── change-requests/
 │       ├── change-request.routes.ts
 │       ├── change-request.controller.ts
@@ -108,6 +109,16 @@ Middleware constructs request IDs, logging context, parsed authentication contex
 - Public development-sign-in and invitation-acceptance routers are composed before the authenticated router.
 - The development adapter remains the only layer that reads `x-dev-user-id`; business modules receive `AuthenticatedUser`.
 - Invitation tokens use Node crypto, are stored only as SHA-256 hashes, and never cross repository output DTO boundaries.
+
+### P004 Comment Composition
+
+- `comments` owns request-level list/create routes, capability enforcement,
+  tenant-scoped persistence, visibility filtering, and explicit comment DTOs.
+- The service derives comment permissions from the centralized membership
+  policy. The repository applies `CLIENT_VISIBLE` filtering before pagination
+  for client roles and joins authors only for a safe display name.
+- Comment creation rechecks request scope and active membership inside its
+  transaction and mutates only the new comment row.
 
 ## Frontend Composition
 
@@ -147,6 +158,20 @@ Feature code may contain route components, queries, forms, and presentation comp
 5. The API returns the created DTO.
 6. TanStack Query updates or invalidates list/detail data.
 7. The user sees a clear success result and the persisted request.
+
+### List And Create Request Comments
+
+1. React requests a deterministic page for the current request and development
+   identity.
+2. The service resolves active client-tenant membership and comment
+   capabilities.
+3. The repository applies tenant scope and the viewer's visibility predicate
+   before ordering and pagination.
+4. Create accepts only body and visibility, then rechecks membership and
+   capability inside a transaction.
+5. React resets internal users to `INTERNAL_ONLY`, keeps client composition
+   explicitly shared, and invalidates only the current request/identity query.
+6. No comment operation calls estimate or request lifecycle mutation code.
 
 ### Accept Invitation
 

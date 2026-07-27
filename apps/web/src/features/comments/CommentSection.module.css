@@ -1,0 +1,114 @@
+.section {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.heading,
+.commentHeader,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.heading h2 {
+  margin: 2px 0 0;
+}
+
+.heading > span,
+.commentHeader > span,
+.pagination > span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.clarification {
+  border-left: 4px solid #a26400;
+  border-radius: 6px;
+  background: #fff8e7;
+  padding: 14px 16px;
+}
+
+.clarification p {
+  margin: 6px 0 0;
+}
+
+.feed {
+  display: grid;
+  gap: 12px;
+}
+
+.comment {
+  display: grid;
+  gap: 10px;
+}
+
+.comment p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.visibility {
+  width: fit-content;
+  border-radius: 999px;
+  background: #eef3fa;
+  color: #284c7a;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pagination {
+  justify-content: center;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+  border-color: #93b4e8;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field label {
+  font-weight: 700;
+}
+
+.field textarea,
+.field select {
+  border: 1px solid #b7c2d3;
+  border-radius: 6px;
+  padding: 10px;
+  background: white;
+  color: inherit;
+  font: inherit;
+}
+
+.field > span,
+.clientNotice {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.form button {
+  width: fit-content;
+}
+
+@media (max-width: 620px) {
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination button,
+  .form button {
+    width: 100%;
+  }
+}

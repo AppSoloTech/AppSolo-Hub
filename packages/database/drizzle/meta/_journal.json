@@ -43,6 +43,13 @@
       "when": 1785103880315,
       "tag": "0005_early_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785164273810,
+      "tag": "0006_rapid_blockbuster",
+      "breakpoints": true
     }
   ]
 }

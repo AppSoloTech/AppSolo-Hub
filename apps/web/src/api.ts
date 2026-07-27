@@ -1,6 +1,9 @@
 import type {
   AccessEventDto,
   ChangeRequestDto,
+  CommentDto,
+  CommentListMeta,
+  CreateCommentInput,
   CreateChangeRequestInput,
   CreateEstimateInput,
   CreateInvitationInput,
@@ -104,6 +107,18 @@ export const estimatesApi = {
     }),
   respond: (estimateId: string, input: RespondToEstimateInput) =>
     api<SuccessEnvelope<EstimateDto>>(`/estimates/${estimateId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+};
+
+export const commentsApi = {
+  list: (changeRequestId: string, limit: number, offset: number) =>
+    api<{ data: CommentDto[]; meta: CommentListMeta }>(
+      `/change-requests/${changeRequestId}/comments?limit=${limit}&offset=${offset}`,
+    ),
+  create: (changeRequestId: string, input: CreateCommentInput) =>
+    api<SuccessEnvelope<CommentDto>>(`/change-requests/${changeRequestId}/comments`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),

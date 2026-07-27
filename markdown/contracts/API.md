@@ -288,6 +288,29 @@ use the same `404 NOT_FOUND` behavior for missing and inaccessible resources.
 Duplicate drafts, stale writes, repeated decisions, and invalid lifecycle
 states return `409 CONFLICT`.
 
+## P004 Request Comment Routes
+
+All comment routes require an active user, active client organization, active
+project, and active membership in the request's owning client organization.
+Internal-organization membership alone grants no access.
+
+- `GET /api/v1/change-requests/:changeRequestId/comments` accepts strict
+  `limit`/`offset` pagination (defaults 50/0, maximum 100), filters visibility in
+  SQL before pagination, and orders by `createdAt` then ID ascending.
+- `POST /api/v1/change-requests/:changeRequestId/comments` accepts exactly a
+  trimmed 1–5,000 character `body` and explicit `CLIENT_VISIBLE` or
+  `INTERNAL_ONLY` visibility. Request, author, ID, and timestamps are
+  server-owned.
+
+Every active client-tenant role can list and create client-visible comments.
+Only `OWNER`, `ADMIN`, and `DEVELOPER` can list or create internal-only
+comments. A client attempt to create an internal-only comment returns `403`;
+missing and inaccessible request IDs share `404`. List metadata contains only
+the returned page count, limit, offset, and the current membership's comment
+capabilities. Comment creation returns `201` and never changes request,
+estimate, response, revision, supersession, or status-history state. P004
+exposes no edit or delete route.
+
 ## CORS And Body Limits
 
 - CORS allows only configured local web origins in development.

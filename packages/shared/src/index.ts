@@ -57,6 +57,10 @@ export const accessEventTypes = [
 export const capabilities = [
   'VIEW_CHANGE_REQUESTS',
   'SUBMIT_CHANGE_REQUESTS',
+  'VIEW_COMMENTS',
+  'CREATE_CLIENT_COMMENTS',
+  'VIEW_INTERNAL_COMMENTS',
+  'CREATE_INTERNAL_COMMENTS',
   'VIEW_ESTIMATES',
   'MANAGE_ESTIMATES',
   'RESPOND_TO_ESTIMATES',
@@ -74,6 +78,48 @@ export type InvitationStatus = (typeof invitationStatuses)[number];
 export type EffectiveInvitationStatus = (typeof effectiveInvitationStatuses)[number];
 export type AccessEventType = (typeof accessEventTypes)[number];
 export type Capability = (typeof capabilities)[number];
+
+export const commentVisibilities = ['CLIENT_VISIBLE', 'INTERNAL_ONLY'] as const;
+export type CommentVisibility = (typeof commentVisibilities)[number];
+
+export const commentPaginationSchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  })
+  .strict();
+
+export const createCommentSchema = z
+  .object({
+    body: z
+      .string()
+      .trim()
+      .min(1, 'Comment is required.')
+      .max(5000, 'Comment must be at most 5,000 characters.'),
+    visibility: z.enum(commentVisibilities),
+  })
+  .strict();
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+
+export const commentDtoSchema = z.object({
+  id: uuidSchema,
+  changeRequestId: uuidSchema,
+  body: z.string(),
+  visibility: z.enum(commentVisibilities),
+  authorDisplayName: z.string(),
+  createdAt: z.string().datetime(),
+});
+export type CommentDto = z.infer<typeof commentDtoSchema>;
+
+export const commentListMetaSchema = z.object({
+  count: z.number().int().nonnegative(),
+  limit: z.number().int().min(1).max(100),
+  offset: z.number().int().nonnegative(),
+  canCreateClientComments: z.boolean(),
+  canViewInternalComments: z.boolean(),
+  canCreateInternalComments: z.boolean(),
+});
+export type CommentListMeta = z.infer<typeof commentListMetaSchema>;
 
 export const estimateStatuses = [
   'DRAFT',

@@ -40,12 +40,14 @@ approved completion and local integration on 2026-07-27.
 ## Active Phase
 
 - Active phase: `P004 — Comments And Clarification`.
-- P004 status: `approved`.
+- P004 status: `implementing`.
 - P004 prompt: specification version 1 under `prompts/active/`.
 - P004 implementation approval: granted by the human on 2026-07-27, including
   all twelve binding decisions.
 - Approval boundary: authoritative local `main` at
   `06c1e0714ea18b1b37173917a45c023220f49e30`.
+- Implementation branch: `phase/P004-comments-and-clarification`, based on
+  immutable approval commit `c64e42d6f08901b7dd72be9d11bfc37ed3af3149`.
 
 ## Current Constraints
 
@@ -58,11 +60,10 @@ approved completion and local integration on 2026-07-27.
 
 ## Significant Gaps
 
-- Comments, time tracking, attachments, notifications, AWS infrastructure,
-  delivery automation, production authentication, and production hardening
-  remain in their sequenced future phases.
-- P004 is approved but not yet implemented. Codex must establish the immutable
-  approval/base commit, implement on the prescribed phase branch, and advance
-  the phase only through `review_pending`.
+- P004 comments are under implementation and are not shipped until review, QA,
+  human completion, and local integration are complete.
+- Time tracking, attachments, notifications, AWS infrastructure, delivery
+  automation, production authentication, and production hardening remain in
+  their sequenced future phases.
 
 Codex must update this file only when the actual shipped state changes. Do not describe planned work as completed work.

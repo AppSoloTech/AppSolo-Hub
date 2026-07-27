@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 const projectId = '10000000-0000-4000-8000-000000000003';
 const draftRequestId = '30000000-0000-4000-8000-000000000002';
+const clarificationRequestId = '30000000-0000-4000-8000-000000000006';
 test('seeded list, create, and refreshed detail persist through the real API', async ({ page }) => {
   const title = `Browser request ${Date.now()}`;
   await page.goto(`/projects/${projectId}/change-requests`);
@@ -96,4 +97,46 @@ test('internal exact draft submission and client approval persist through the re
   await expect(page.getByRole('heading', { name: 'Approved' })).toBeVisible();
   await expect(page.getByText('Approved through the browser workflow.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve estimate' })).not.toBeVisible();
+});
+
+test('internal-safe and client-visible clarification comments persist without resolving lifecycle', async ({
+  page,
+}) => {
+  const internalBody = `Internal browser context ${Date.now()}`;
+  const sharedBody = `Client clarification reply ${Date.now()}`;
+
+  await page.goto(`/projects/${projectId}/change-requests`);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('developer@appsolo.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByRole('heading', { name: 'Change requests' })).toBeVisible();
+  await page.goto(`/change-requests/${clarificationRequestId}`);
+
+  await expect(page.getByText('Which thresholds are included in the estimate?')).toBeVisible();
+  await expect(page.getByText('Clarification is needed.')).toBeVisible();
+  await expect(page.getByLabel('Who can see this?')).toHaveValue('INTERNAL_ONLY');
+  await page.getByRole('textbox', { name: 'Comment', exact: true }).fill(internalBody);
+  await page.getByRole('button', { name: 'Add comment' }).click();
+  await expect(page.getByText('Comment added.')).toBeVisible();
+  await expect(page.getByText(internalBody)).toBeVisible();
+  const internalArticle = page.locator('article').filter({ hasText: internalBody });
+  await expect(internalArticle.getByText('Internal only', { exact: true })).toBeVisible();
+  await expect(page.getByText('NEEDS CLARIFICATION · NORMAL priority')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByLabel('Email').fill('member@client.test');
+  await page.getByRole('button', { name: 'Sign in locally' }).click();
+  await expect(page.getByText('Morgan Member')).toBeVisible();
+  await page.goto(`/change-requests/${clarificationRequestId}`);
+  await expect(page.getByLabel('Who can see this?')).not.toBeVisible();
+  await expect(page.getByText(internalBody)).not.toBeVisible();
+  await expect(page.getByText('Internal only', { exact: true })).not.toBeVisible();
+  await page.getByRole('textbox', { name: 'Comment', exact: true }).fill(sharedBody);
+  await page.getByRole('button', { name: 'Add comment' }).click();
+  await expect(page.getByText('Comment added.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(sharedBody)).toBeVisible();
+  await expect(page.getByText('Shared with client').last()).toBeVisible();
+  await expect(page.getByText('Which thresholds are included in the estimate?')).toBeVisible();
+  await expect(page.getByText('NEEDS CLARIFICATION · NORMAL priority')).toBeVisible();
 });

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ApiError, requestsApi } from '../../api.js';
+import { CommentSection } from '../comments/CommentSection.js';
 import { EstimateSection } from '../estimates/EstimateSection.js';
 export function ChangeRequestDetail() {
   const { changeRequestId = '' } = useParams();
@@ -46,6 +47,7 @@ export function ChangeRequestDetail() {
         </dl>
       </article>
       <EstimateSection changeRequestId={request.id} requestStatus={request.status} />
+      <CommentSection changeRequestId={request.id} requestStatus={request.status} />
     </>
   );
 }

@@ -1,6 +1,11 @@
 # AppSolo Client Hub
 
-AppSolo Client Hub is a local multi-tenant portal for tracking client change requests, access, exact estimates, and client decisions. P001 delivers the request vertical slice. P002 adds provider-neutral local sessions and access administration. P003 adds versioned estimate drafting, submission, approval, rejection, clarification, and immutable response history.
+AppSolo Client Hub is a local multi-tenant portal for tracking client change
+requests, access, exact estimates, client decisions, and request conversation.
+P001 delivers the request vertical slice. P002 adds provider-neutral local
+sessions and access administration. P003 adds versioned estimate drafting,
+submission, approval, rejection, clarification, and immutable response history.
+P004 adds ordered client-visible and internal-only comments.
 
 Tenant authorization happens in the Express API. The React UI is a convenience layer, never the authorization boundary.
 
@@ -12,13 +17,13 @@ React + Vite (apps/web) -> Express /api/v1 (apps/api) -> Drizzle + PostgreSQL (p
                        shared Zod contracts (packages/shared)
 ```
 
-| Area                | Responsibility                                                        |
-| ------------------- | --------------------------------------------------------------------- |
-| `apps/web`          | React Router, session/access/estimate UI, TanStack Query, CSS Modules |
-| `apps/api`          | Express routes, local auth, access/estimate services, logging         |
-| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces                 |
-| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset    |
-| `e2e`               | Playwright request regression and invitation/session browser flow     |
+| Area                | Responsibility                                                     |
+| ------------------- | ------------------------------------------------------------------ |
+| `apps/web`          | React Router, session/access/estimate/comment UI and query state   |
+| `apps/api`          | Express routes, local auth, tenant-scoped domain services, logging |
+| `packages/shared`   | Zod schemas, DTOs, enums, provider-neutral interfaces              |
+| `packages/database` | Drizzle schema, checked-in migration, local seed and guarded reset |
+| `e2e`               | Playwright request regression and invitation/session browser flow  |
 
 `markdown/` is the canonical product and delivery control plane.
 
@@ -106,6 +111,13 @@ members have read-only submitted/history access. Drafts are completely absent
 for client roles. Hours, hourly rates, and server-derived USD costs use exact
 two-decimal strings and round-half-up behavior.
 
+The same request detail page includes an oldest-first conversation. Every active
+tenant role can read and add client-visible comments. Owners, administrators,
+and developers can also read/add internal-only comments, with every fresh
+internal composer defaulting to **Internal only**. Client roles receive no
+internal row, count, selector, or pagination gap. Comments do not resolve
+clarification or change request/estimate lifecycle state.
+
 ## Commands
 
 ```bash
@@ -119,7 +131,7 @@ pnpm test:e2e       # resets test DB, then Playwright browser smoke
 pnpm build          # production builds
 pnpm db:generate    # generate Drizzle migration from schema changes
 pnpm db:migrate     # apply checked-in migration to configured DB
-pnpm db:seed        # idempotently add fake P001/P002/P003 data
+pnpm db:seed        # idempotently add fake P001/P002/P003/P004 data
 pnpm db:reset       # guarded local configured DB reset
 pnpm docker:up      # start local PostgreSQL Compose service
 pnpm docker:down    # stop local PostgreSQL Compose service
@@ -139,10 +151,12 @@ The Playwright command always starts its own API and web processes. If either de
 
 ## Current limitations and future direction
 
-P003 deliberately excludes payments/invoicing, multiple currencies, line items,
-comments, time tracking/execution, attachments, notifications, Cognito,
-production sessions, AWS SDKs/resources, deployment, and CI/CD. A later phase
-can replace the development adapter with Cognito without changing business
-modules.
+P004 deliberately excludes real-time chat, editing/deletion, nested threads,
+attachments, notifications/delivery, time tracking/execution, payments,
+Cognito, production sessions, AWS SDKs/resources, deployment, and CI/CD. A
+later phase can replace the development adapter with Cognito without changing
+business modules.
 
-See [the current state](markdown/CURRENT_STATE.md), [architecture](markdown/ARCHITECTURE.md), and [P003 record](markdown/phases/P003-estimates-and-approval-workflow.md).
+See [the current state](markdown/CURRENT_STATE.md),
+[architecture](markdown/ARCHITECTURE.md), and
+[P004 record](markdown/phases/P004-comments-and-clarification.md).

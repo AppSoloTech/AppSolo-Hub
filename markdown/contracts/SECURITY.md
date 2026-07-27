@@ -54,6 +54,14 @@ Draft rows are omitted at the repository query for client roles, not merely
 hidden in React. Estimate identifier mutations recheck tenant membership,
 capability, lifecycle state, and optimistic timestamps under transaction locks.
 
+P004 adds centralized `VIEW_COMMENTS`, `CREATE_CLIENT_COMMENTS`,
+`VIEW_INTERNAL_COMMENTS`, and `CREATE_INTERNAL_COMMENTS` capabilities. Every
+comment operation resolves the active request tenant and membership. Repository
+queries remove internal-only rows before ordering, pagination, DTO mapping, and
+page counting for client roles. Missing and inaccessible identifiers share
+`404`; authorized client attempts to create internal-only content receive
+`403` without insertion.
+
 ## Input And Output
 
 - Zod validates all params, query values, and write bodies.
@@ -104,6 +112,8 @@ Rate limiting, CSRF strategy, Content Security Policy tuning, secure cookies, an
 - Invitations, memberships, and access-audit events have no hard-delete API. Access audit rows have no update API.
 - Estimates and immutable estimate responses have no hard-delete API.
 - Exact stored cost is protected by a PostgreSQL rounded-product check.
+- Comments have no update/delete API; trimmed body length is database-checked,
+  and deterministic indexes include the ID tie-breaker.
 
 ## Attachments
 

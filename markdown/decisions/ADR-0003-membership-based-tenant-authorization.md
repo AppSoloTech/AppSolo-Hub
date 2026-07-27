@@ -22,6 +22,9 @@ Client projects and their requests must be isolated. Internal AppSolo users also
 - PostgreSQL row-level security is deferred.
 - P002 suspends/reactivates membership rows instead of deleting them and centralizes role/capability ceilings in application policy.
 - Every invitation and membership access mutation creates an immutable organization-scoped audit event in the same transaction.
+- P004 request comments use the same active client-organization membership
+  boundary. Internal-only capability is role-specific, and its SQL visibility
+  predicate is applied before pagination or DTO construction.
 
 ## Alternatives Considered
 
@@ -37,3 +40,5 @@ Client projects and their requests must be isolated. Internal AppSolo users also
 - More granular project-only assignment may be added later if actual need appears.
 - Application-layer authorization is a critical review area.
 - Suspended membership must be included in every project/request and administration authorization query, never only hidden in React.
+- Historical comment authorship remains joinable after suspension, while the
+  suspended actor immediately loses authenticated tenant access.

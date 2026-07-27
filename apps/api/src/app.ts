@@ -15,6 +15,9 @@ import { AccessService, type Clock, type TokenGenerator } from './modules/access
 import { changeRequestRouter } from './modules/change-requests/change-request.routes.js';
 import { ChangeRequestRepository } from './modules/change-requests/repository.js';
 import { ChangeRequestService } from './modules/change-requests/service.js';
+import { commentRouter } from './modules/comments/comment.routes.js';
+import { CommentRepository } from './modules/comments/repository.js';
+import { CommentService } from './modules/comments/service.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { estimateRouter } from './modules/estimates/estimate.routes.js';
 import { EstimateRepository } from './modules/estimates/repository.js';
@@ -82,6 +85,7 @@ export function createApp(dependencies: AppDependencies): Express {
   app.use('/api/v1', publicInvitationRouter(accessService));
   const changeRequestRepository = new ChangeRequestRepository(db);
   const estimateService = new EstimateService(new EstimateRepository(db));
+  const commentService = new CommentService(new CommentRepository(db));
   app.use(
     '/api/v1',
     developmentAuthentication(config, sessionRepository),
@@ -89,6 +93,7 @@ export function createApp(dependencies: AppDependencies): Express {
     authenticatedAccessRouter(accessService),
     changeRequestRouter(new ChangeRequestService(changeRequestRepository)),
     estimateRouter(estimateService),
+    commentRouter(commentService),
   );
   app.use((_request, _response, next) =>
     next(new AppError('NOT_FOUND', 404, 'The requested resource was not found.')),

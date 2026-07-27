@@ -310,8 +310,14 @@ export const comments = pgTable(
     ...timestamps,
   },
   (t) => [
-    index('comments_request_created_idx').on(t.changeRequestId, t.createdAt),
-    index('comments_request_visibility_created_idx').on(t.changeRequestId, t.visibility, t.createdAt),
+    check('comments_body_length', sql`char_length(btrim(${t.body})) between 1 and 5000`),
+    index('comments_request_created_id_idx').on(t.changeRequestId, t.createdAt, t.id),
+    index('comments_request_visibility_created_id_idx').on(
+      t.changeRequestId,
+      t.visibility,
+      t.createdAt,
+      t.id,
+    ),
   ],
 );
 export const statusHistory = pgTable(

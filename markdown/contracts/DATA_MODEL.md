@@ -353,10 +353,15 @@ reason explicitly non-null before evaluating its trimmed length.
 
 Indexes:
 
-- `(change_request_id, created_at)`;
-- `(change_request_id, visibility, created_at)`.
+- `(change_request_id, created_at, id)`;
+- `(change_request_id, visibility, created_at, id)`.
 
-Client roles must never receive `INTERNAL_ONLY` rows. Comment APIs are deferred.
+The database requires `char_length(btrim(body))` from 1 through 5,000. The P004
+API is append-only, orders oldest-first with ID tie-breaking, and assigns
+request, author, ID, and timestamps server-side. Client roles never receive
+`INTERNAL_ONLY` rows or an existence signal; filtering occurs before
+pagination. Restrictive foreign keys preserve past authorship when an author's
+membership is later suspended.
 
 ### status_history
 
@@ -471,3 +476,8 @@ P002 adds a suspended membership, an invited user, a pending invitation with no 
 P003 adds deterministic draft, actionable submitted, approved, rejected,
 clarification-requested, superseded revision, and cross-tenant estimate
 fixtures plus immutable responses.
+
+P004 adds deterministic equal-time ordering, clarification follow-up,
+internal-only, client-visible, suspended-author history, and cross-tenant
+comment fixtures. The durable comment row is the notification-ready source;
+outboxes and delivery remain deferred.

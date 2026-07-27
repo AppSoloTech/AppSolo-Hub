@@ -48,6 +48,11 @@ P002 uses copy-only local invitation links and introduces no email adapter, outb
 
 When introduced, domain/use-case code should call a provider-neutral notification boundary rather than the SES client directly.
 
+P004 persists append-only request comments with stable request, author,
+visibility, ID, and creation time. That durable row is notification-ready input,
+not a delivery claim. P004 adds no outbox, preference, template, email adapter,
+queue, webhook, or provider integration; those decisions remain P007 scope.
+
 ## Logging And Monitoring
 
 P001 emits structured application logs through Pino. Business modules do not call CloudWatch APIs.

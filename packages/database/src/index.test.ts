@@ -45,3 +45,17 @@ describe('P003 estimate database invariants', () => {
     ).rejects.toMatchObject({ code: '23514' });
   });
 });
+
+describe('P004 comment database invariants', () => {
+  const { pool } = createDatabase(resolvedTestDatabaseUrl(process.env));
+
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it.each(['', '   ', 'x'.repeat(5001)])('rejects invalid stored comment body length', async (body) => {
+    await expect(
+      pool.query('UPDATE comments SET body = $1 WHERE id = $2', [body, seedIds.sharedComment]),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
+});

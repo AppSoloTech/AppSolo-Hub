@@ -43,6 +43,12 @@ export const seedIds = {
   revisionEstimate: '50000000-0000-4000-8000-000000000005',
   clarificationEstimate: '50000000-0000-4000-8000-000000000006',
   otherTenantEstimate: '50000000-0000-4000-8000-000000000007',
+  sharedComment: '60000000-0000-4000-8000-000000000001',
+  internalComment: '60000000-0000-4000-8000-000000000002',
+  clarificationSharedComment: '60000000-0000-4000-8000-000000000003',
+  clarificationInternalComment: '60000000-0000-4000-8000-000000000004',
+  suspendedAuthorComment: '60000000-0000-4000-8000-000000000005',
+  otherTenantComment: '60000000-0000-4000-8000-000000000006',
 } as const;
 
 export async function seedDatabase(databaseUrl?: string): Promise<void> {
@@ -395,18 +401,58 @@ export async function seedDatabase(databaseUrl?: string): Promise<void> {
         .insert(comments)
         .values([
           {
-            id: '60000000-0000-4000-8000-000000000001',
+            id: seedIds.sharedComment,
             changeRequestId: seedIds.requestOne,
             authorUserId: seedIds.clientAdmin,
             body: 'This will help our monthly reporting.',
             visibility: 'CLIENT_VISIBLE',
+            createdAt: new Date('2026-07-26T10:00:00.000Z'),
+            updatedAt: new Date('2026-07-26T10:00:00.000Z'),
           },
           {
-            id: '60000000-0000-4000-8000-000000000002',
+            id: seedIds.internalComment,
             changeRequestId: seedIds.requestOne,
             authorUserId: seedIds.developer,
             body: 'Internal implementation note for the future estimate.',
             visibility: 'INTERNAL_ONLY',
+            createdAt: new Date('2026-07-26T10:00:00.000Z'),
+            updatedAt: new Date('2026-07-26T10:00:00.000Z'),
+          },
+          {
+            id: seedIds.clarificationSharedComment,
+            changeRequestId: seedIds.requestClarification,
+            authorUserId: seedIds.clientAdmin,
+            body: 'The warning threshold should apply to monthly totals.',
+            visibility: 'CLIENT_VISIBLE',
+            createdAt: new Date('2026-07-26T14:00:00.000Z'),
+            updatedAt: new Date('2026-07-26T14:00:00.000Z'),
+          },
+          {
+            id: seedIds.clarificationInternalComment,
+            changeRequestId: seedIds.requestClarification,
+            authorUserId: seedIds.owner,
+            body: 'Internal only: confirm whether daily aggregation affects the estimate.',
+            visibility: 'INTERNAL_ONLY',
+            createdAt: new Date('2026-07-26T14:01:00.000Z'),
+            updatedAt: new Date('2026-07-26T14:01:00.000Z'),
+          },
+          {
+            id: seedIds.suspendedAuthorComment,
+            changeRequestId: seedIds.requestClarification,
+            authorUserId: seedIds.suspendedMember,
+            body: 'Historical shared context remains attributed after membership suspension.',
+            visibility: 'CLIENT_VISIBLE',
+            createdAt: new Date('2026-07-26T14:02:00.000Z'),
+            updatedAt: new Date('2026-07-26T14:02:00.000Z'),
+          },
+          {
+            id: seedIds.otherTenantComment,
+            changeRequestId: seedIds.otherTenantRequest,
+            authorUserId: seedIds.otherTenantUser,
+            body: 'This other-tenant comment must remain isolated.',
+            visibility: 'CLIENT_VISIBLE',
+            createdAt: new Date('2026-07-26T14:03:00.000Z'),
+            updatedAt: new Date('2026-07-26T14:03:00.000Z'),
           },
         ])
         .onConflictDoNothing();
